@@ -1,3 +1,7 @@
+extern crate cascadereconstruction_graphparallel;
+
+use cascadereconstruction_graphparallel::*;
+
 fn main() {
-    println!("Hello, world!");
+    println!("{}", greet());
 }
