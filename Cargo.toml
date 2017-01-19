@@ -1,0 +1,6 @@
+[package]
+name = "cascadereconstruction_graphparallel"
+version = "0.1.0"
+authors = ["BMeu <bastian@bastianmeyer.eu>"]
+
+[dependencies]
