@@ -7,4 +7,6 @@ authors = ["BMeu <bastian@bastianmeyer.eu>"]
 name = "cascadereconstruction_graphparallel_bin"
 
 [dependencies]
+fnv = "1.0.5"
 stopwatch = "0.0.7"
+timely = "0.1.0"
