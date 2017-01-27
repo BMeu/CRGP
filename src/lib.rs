@@ -2,14 +2,24 @@
 
 #![warn(missing_docs)]
 
+extern crate fnv;
+
 use std::collections::HashSet;
 use std::fs::File;
+use std::hash::*;
 use std::io::BufReader;
 use std::io::prelude::*;
 use std::path::Path;
 
 /// An edge in a graph.
 pub type Edge<T> = (T, T);
+
+/// Hash an item.
+pub fn hash<T: Hash>(item: &T) -> u64 {
+    let mut h: fnv::FnvHasher = Default::default();
+    item.hash(&mut h);
+    h.finish()
+}
 
 /// Expected lines: user_id:friend1_id,friend2_id,... (IDs are integers).
 pub fn load_social_network_from_file<P>(filename: P) -> HashSet<Edge<u64>>
