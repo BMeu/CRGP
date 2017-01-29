@@ -11,6 +11,7 @@ use timely::dataflow::operators::*;
 use timely::dataflow::operators::aggregation::Aggregate;
 
 use ccgp::*;
+use ccgp::timely_operators::*;
 
 fn main() {
     timely::execute_from_args(std::env::args(), |computation| {
@@ -20,7 +21,7 @@ fn main() {
         // Load the social graph, but only on the first worker.
         let dataset = "data/friends.txt";
         let friendships: HashSet<Edge<u64>> = if index == 0 {
-            let friendships = load_social_network_from_file(dataset);
+            let friendships = social_graph::load::from_file(dataset);
             println!("Time to load social network: {}", stopwatch);
             println!("#Friendships: {}", friendships.len());
             friendships
