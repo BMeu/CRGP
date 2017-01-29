@@ -46,7 +46,7 @@ fn main() {
                 .max()              // Compute the local maximums.
                 .exchange(|_| 0)    // Send all local maximums to a single worker to find the global maximum.
                 .max()              // Compute the global maximum.
-                .inspect(move |x: &Edge<u64>| println!("User {} has the most followers ({}).", x.0, x.1))
+                .inspect(move |x: &Edge<u64>| println!("User {} has the most followers: {}", x.0, x.1))
                 .probe().0;
 
             (input, probe)
