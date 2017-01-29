@@ -1,3 +1,5 @@
+//! Load a social graph from various sources.
+
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::BufReader;
@@ -6,7 +8,34 @@ use std::path::Path;
 
 use Edge;
 
-/// Expected lines: user_id:friend1_id,friend2_id,... (IDs are integers).
+/// Load a social graph from a text file.
+///
+/// For each user, the file contains a single line. The user's ID comes first and then, separated
+/// by a colon, a comma-separated list of the IDs of the user's friends. All IDs must be integers,
+/// no whitespace (except line-breaks).
+///
+/// # Examples
+///
+/// The file:
+///
+/// ```text
+/// # user_id:friend1_id,friend2_id,...
+/// 0:1,2
+/// 1:0,2
+/// 2:0
+/// 3:2
+/// ```
+///
+/// will result in the following directed edges:
+///
+/// ```text
+/// (0, 1)
+/// (0, 2)
+/// (1, 0)
+/// (1, 2)
+/// (2, 0)
+/// (3, 2)
+/// ```
 pub fn from_file<P>(filename: P) -> HashSet<Edge<u64>>
     where P: AsRef<Path> {
     let file = File::open(filename).expect("Could not open file.");
