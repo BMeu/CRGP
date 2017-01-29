@@ -1,4 +1,4 @@
-extern crate cascadereconstruction_graphparallel;
+extern crate ccgp;
 extern crate stopwatch;
 extern crate timely;
 
@@ -10,7 +10,7 @@ use timely::dataflow::*;
 use timely::dataflow::operators::*;
 use timely::dataflow::operators::aggregation::Aggregate;
 
-use cascadereconstruction_graphparallel::*;
+use ccgp::*;
 
 fn main() {
     timely::execute_from_args(std::env::args(), |computation| {

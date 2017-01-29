@@ -1,10 +1,10 @@
 [package]
-name = "cascadereconstruction_graphparallel"
+name = "ccgp"
 version = "0.1.0"
 authors = ["BMeu <bastian@bastianmeyer.eu>"]
 
 [[bin]]
-name = "cascadereconstruction_graphparallel_bin"
+name = "ccgp_bin"
 
 [dependencies]
 fnv = "1.0.5"
