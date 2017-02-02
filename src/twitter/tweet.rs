@@ -7,7 +7,7 @@ use super::User;
 /// Tweets are also known as "status updates." Tweets can be embedded, replied to, liked, unliked
 /// and deleted.
 ///
-/// This struct's field correspond directly to the fields of the same name in the Twitter API.
+/// This struct's fields correspond directly to the fields of the same name in the Twitter API.
 ///
 /// # See Also
 /// https://dev.twitter.com/overview/api/tweets

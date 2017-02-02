@@ -5,7 +5,7 @@
 /// Users tweet, follow, create lists, have a home timelin, can be mentioned, and can be looked up
 /// in bulk.
 ///
-/// This struct's field correspond directly to the fields of the same name in the Twitter API.
+/// This struct's fields correspond directly to the fields of the same name in the Twitter API.
 ///
 /// # See Also
 /// https://dev.twitter.com/overview/api/users
