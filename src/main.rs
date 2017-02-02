@@ -19,15 +19,28 @@ fn main() {
         let index = computation.index();
 
         // Load the social graph, but only on the first worker.
-        let dataset = "data/friends.txt";
+        let friendship_dataset = "data/friends_test.txt";
         let friendships: HashSet<Edge<u64>> = if index == 0 {
-            let friendships = social_graph::load::from_file(dataset);
+            let friendships = social_graph::load::from_file(friendship_dataset);
             println!("Time to load social network: {}", stopwatch);
             println!("#Friendships: {}", friendships.len());
             friendships
         } else {
             HashSet::new()
         };
+        stopwatch.restart();
+
+        // Load the retweets, but only on the first worker.
+        let retweet_dataset = "data/cascade_test.json";
+        let retweets: Vec<twitter::Tweet> = if index == 0 {
+            let retweets = twitter::load::from_file(retweet_dataset);
+            println!("Time to load retweets: {}", stopwatch);
+            println!("#Retweets: {}", retweets.len());
+            retweets
+        } else {
+            vec![]
+        };
+        stopwatch.restart();
 
         // Determine the user in the social graph who has the most followers.
         let (mut input, probe) = computation.scoped::<u64, _, _>(move |scope| {
