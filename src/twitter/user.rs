@@ -1,5 +1,7 @@
 //! Representations of Twitter users.
 
+use abomonation::Abomonation;
+
 /// Users can be anyone or anything.
 ///
 /// Users tweet, follow, create lists, have a home timelin, can be mentioned, and can be looked up
@@ -18,3 +20,5 @@ pub struct User {
     /// are unique, but subject to change.
     pub screen_name: String
 }
+
+unsafe_abomonate!(User : id, screen_name);

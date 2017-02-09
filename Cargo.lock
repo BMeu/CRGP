@@ -2,6 +2,7 @@
 name = "ccgp"
 version = "0.1.0"
 dependencies = [
+ "abomonation 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "fnv 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 0.9.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 0.9.5 (registry+https://github.com/rust-lang/crates.io-index)",

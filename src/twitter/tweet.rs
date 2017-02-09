@@ -1,5 +1,6 @@
 //! Representations of tweets.
 
+use abomonation::Abomonation;
 use super::User;
 
 /// Tweets are the basic atomic building block of all things Twitter.
@@ -33,3 +34,5 @@ pub struct Tweet {
     /// The user who posted this tweet.
     pub user: User
 }
+
+unsafe_abomonate!(Tweet : created_at, id, retweet_count, retweeted_status, text, user);
