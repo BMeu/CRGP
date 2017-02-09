@@ -3,7 +3,7 @@
 use abomonation::Abomonation;
 
 /// A directed edge between nodes of type ``T``.
-#[derive(Clone, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct DirectedEdge<T>
 where T: Abomonation {
     /// The source node.

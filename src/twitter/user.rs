@@ -11,7 +11,7 @@ use abomonation::Abomonation;
 ///
 /// # See Also
 /// https://dev.twitter.com/overview/api/users
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct User {
     /// Integer representation of the unique identifier for this user.
     pub id: u64,

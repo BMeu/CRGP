@@ -12,7 +12,7 @@ use super::User;
 ///
 /// # See Also
 /// https://dev.twitter.com/overview/api/tweets
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Tweet {
     /// UTC time when this tweet was created.
     pub created_at: u64,
