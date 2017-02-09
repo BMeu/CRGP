@@ -13,6 +13,7 @@ use timely::dataflow::operators::*;
 
 use ccgp::*;
 use ccgp::social_graph::DirectedEdge;
+use ccgp::twitter::*;
 
 fn main() {
     timely::execute_from_args(std::env::args(), |computation| {
@@ -58,10 +59,10 @@ fn main() {
                 .binary_stream(
                     &retweet_stream,
                     Exchange::new(|edge: &DirectedEdge<u64>| hash(&edge.source)),
-                    Exchange::new(|retweet: &(u64, (u64, u64))| hash(&retweet.0)),
+                    Exchange::new(|retweet: &Tweet| hash(&retweet.user.id)),
                     "Reconstruct",
                     move |edges, retweets, output| {
-                        // Input 1.
+                        // Input 1: Simply capture for each received user his friends.
                         edges.for_each(|_time, friendship_data| {
                             for ref friends in friendship_data.iter() {
                                 user_friends.entry(friends.source)
@@ -70,31 +71,35 @@ fn main() {
                             }
                         });
 
-                        // Input 2.
+                        // Input 2: Process the retweets.
                         retweets.for_each(|time, retweet_data| {
-                            for &retweet in retweet_data.iter() {
-                                let (user, original_tweet) = retweet;
+                            for ref retweet in retweet_data.iter() {
+                                // Skip all tweets that are not retweets.
+                                let original_tweet = match retweet.retweeted_status {
+                                    Some(ref t) => t,
+                                    None => continue
+                                };
 
-                                // Mark this user as active for this cascade.
+                                // Mark this user and the original user as active for this cascade.
                                 activated_users.borrow_mut()
-                                    .entry(original_tweet.0)
+                                    .entry(original_tweet.id)
                                     .or_insert_with(|| {
                                         let mut users = HashSet::new();
-                                        users.insert(original_tweet.1);
+                                        users.insert(original_tweet.user.id);
                                         users
                                     })
-                                    .insert(user);
+                                    .insert(retweet.user.id);
 
                                 // Get the user's friends.
-                                let friends = match user_friends.get(&user) {
+                                let friends = match user_friends.get(&retweet.user.id) {
                                     Some(friends) => friends,
                                     None => continue
                                 };
 
                                 // Pass on the possible edges.
                                 for &friend in friends {
-                                    let edge = DirectedEdge::new(user, friend);
-                                    output.session(&time).give((edge, original_tweet.0));
+                                    let edge = DirectedEdge::new(retweet.user.id, friend);
+                                    output.session(&time).give((edge, original_tweet.id));
                                 }
                             }
                         });
@@ -138,11 +143,6 @@ fn main() {
         // Introduce the retweets into the computation.
         stopwatch.restart();
         for retweet in retweets {
-            let original = match retweet.retweeted_status {
-                Some(original_tweet) => (original_tweet.id, original_tweet.user.id),
-                None => continue
-            };
-            let retweet = (retweet.user.id, original);
             retweet_input.send(retweet);
 
             // Process the retweet before continuing.
@@ -154,6 +154,8 @@ fn main() {
                 computation.step();
             }
         }
-        println!("Time to process retweets: {}", stopwatch);
+        if index == 0 {
+            println!("Time to process retweets: {}", stopwatch);
+        }
     }).unwrap();
 }
