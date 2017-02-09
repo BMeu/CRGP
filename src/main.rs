@@ -12,6 +12,7 @@ use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::operators::*;
 
 use ccgp::*;
+use ccgp::social_graph::DirectedEdge;
 
 fn main() {
     timely::execute_from_args(std::env::args(), |computation| {
@@ -20,7 +21,7 @@ fn main() {
 
         // Load the social graph, but only on the first worker.
         let friendship_dataset = "data/friends_test.txt";
-        let friendships: HashSet<Edge<u64>> = if index == 0 {
+        let friendships: HashSet<DirectedEdge<u64>> = if index == 0 {
             let friendships = social_graph::load::from_file(friendship_dataset);
             println!("Time to load social network: {}", stopwatch);
             println!("#Friendships: {}", friendships.len());
@@ -56,17 +57,16 @@ fn main() {
             let probe = graph_stream
                 .binary_stream(
                     &retweet_stream,
-                    Exchange::new(|edge: &Edge<u64>| hash(&edge.0)),
+                    Exchange::new(|edge: &DirectedEdge<u64>| hash(&edge.source)),
                     Exchange::new(|retweet: &(u64, (u64, u64))| hash(&retweet.0)),
                     "Reconstruct",
                     move |edges, retweets, output| {
                         // Input 1.
                         edges.for_each(|_time, friendship_data| {
-                            for &friends in friendship_data.iter() {
-                                let (user, friend) = friends;
-                                user_friends.entry(user)
+                            for ref friends in friendship_data.iter() {
+                                user_friends.entry(friends.source)
                                     .or_insert(HashSet::new())
-                                    .insert(friend);
+                                    .insert(friends.destination);
                             }
                         });
 
@@ -93,23 +93,23 @@ fn main() {
 
                                 // Pass on the possible edges.
                                 for &friend in friends {
-                                    let edge: Edge<u64> = (user, friend);
+                                    let edge = DirectedEdge::new(user, friend);
                                     output.session(&time).give((edge, original_tweet.0));
                                 }
                             }
                         });
                     }
                 )
-                .exchange(|edge: &(Edge<u64>, u64)| hash(&(edge.0).1))
-                .filter(move |data: &(Edge<u64>, u64)| {
-                    let (edge, original_id) = *data;
+                .exchange(|edge: &(DirectedEdge<u64>, u64)| hash(&(edge.0).destination))
+                .filter(move |data: &(DirectedEdge<u64>, u64)| {
+                    let (ref edge, original_id) = *data;
 
                     match captured_activated_users.borrow_mut().get(&original_id) {
-                        Some(users) => users.contains(&edge.1),
+                        Some(users) => users.contains(&edge.destination),
                         None => false
                     }
                 })
-                .map(|data: (Edge<u64>, u64)| ((data.0).1, (data.0).0))
+                .map(|data: (DirectedEdge<u64>, u64)| ((data.0).destination, (data.0).source))
                 .inspect(move |x| println!("Worker {}: {:?}", index, x))
                 .probe().0;
 

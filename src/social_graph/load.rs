@@ -6,7 +6,7 @@ use std::io::BufReader;
 use std::io::prelude::*;
 use std::path::Path;
 
-use Edge;
+use super::DirectedEdge;
 
 /// Load a social graph from a text file.
 ///
@@ -36,7 +36,7 @@ use Edge;
 /// (2, 0)
 /// (3, 2)
 /// ```
-pub fn from_file<P>(filename: P) -> HashSet<Edge<u64>>
+pub fn from_file<P>(filename: P) -> HashSet<DirectedEdge<u64>>
     where P: AsRef<Path> {
     let file = File::open(filename).expect("Could not open file.");
     let file = BufReader::new(file);
@@ -45,7 +45,7 @@ pub fn from_file<P>(filename: P) -> HashSet<Edge<u64>>
         .map(|line| line.expect("Error"))
         .collect();
 
-    let mut friendships: HashSet<Edge<u64>> = HashSet::new();
+    let mut friendships: HashSet<DirectedEdge<u64>> = HashSet::new();
     for user in users {
         let user: Vec<&str> = user.split(':').collect();
         if user.len() == 0 {
@@ -61,7 +61,7 @@ pub fn from_file<P>(filename: P) -> HashSet<Edge<u64>>
                 .collect();
 
             for friend_id in friends {
-                let friendship: Edge<u64> = (user_id, friend_id);
+                let friendship = DirectedEdge::new(user_id, friend_id);
                 friendships.insert(friendship);
             }
         }
