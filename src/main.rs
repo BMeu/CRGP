@@ -19,7 +19,7 @@ fn main() {
         let index = computation.index();
 
         // Load the social graph, but only on the first worker.
-        let friendship_dataset = "data/friends.txt";
+        let friendship_dataset = "data/friends_test.txt";
         let friendships: HashSet<Edge<u64>> = if index == 0 {
             let friendships = social_graph::load::from_file(friendship_dataset);
             println!("Time to load social network: {}", stopwatch);
@@ -31,7 +31,7 @@ fn main() {
         stopwatch.restart();
 
         // Load the retweets, but only on the first worker.
-        let retweet_dataset = "data/cascade3500.json";
+        let retweet_dataset = "data/cascade_test.json";
         let retweets: Vec<twitter::Tweet> = if index == 0 {
             let retweets = twitter::load::from_file(retweet_dataset);
             println!("Time to load retweets: {}", stopwatch);
@@ -42,7 +42,7 @@ fn main() {
         };
         stopwatch.restart();
 
-        // Determine the user in the social graph who has the most followers.
+        // Reconstruct the cascade.
         let (mut graph_input, mut retweet_input, probe) = computation.scoped::<u64, _, _>(move |scope| {
 
             // Create the inputs.
@@ -122,8 +122,6 @@ fn main() {
             graph_input.send(friendship);
         }
 
-            // Process the entire social graph before continuing.
-
         // Process the entire social graph before continuing.
         let next_graph = graph_input.epoch() + 1;
         let next_retweets = retweet_input.epoch() + 1;
@@ -132,11 +130,6 @@ fn main() {
         while probe.lt(graph_input.time()) {
             computation.step();
         }
-
-
-        /*let next = graph_input.epoch() + 1;
-        graph_input.advance_to(next);
-        computation.step();*/
 
         if index == 0 {
             println!("Time to process social network: {}", stopwatch);
