@@ -109,7 +109,7 @@ fn main() {
                 .filter(move |data: &(DirectedEdge<u64>, u64)| {
                     let (ref edge, original_id) = *data;
 
-                    match captured_activated_users.borrow_mut().get(&original_id) {
+                    match captured_activated_users.borrow().get(&original_id) {
                         Some(users) => users.contains(&edge.destination),
                         None => false
                     }
