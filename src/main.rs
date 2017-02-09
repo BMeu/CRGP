@@ -12,7 +12,7 @@ use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::operators::*;
 
 use ccgp::*;
-use ccgp::social_graph::DirectedEdge;
+use ccgp::social_graph::edge::*;
 use ccgp::twitter::*;
 
 fn main() {
@@ -96,25 +96,23 @@ fn main() {
                                     None => continue
                                 };
 
-                                // Pass on the possible edges.
+                                // Pass on the possible influence edges.
                                 for &friend in friends {
-                                    let edge = DirectedEdge::new(retweet.user.id, friend);
-                                    output.session(&time).give((edge, original_tweet.id));
+                                    let influence = InfluenceEdge::new(friend, retweet.user.id,
+                                        retweet.created_at, original_tweet.id);
+                                    output.session(&time).give(influence);
                                 }
                             }
                         });
                     }
                 )
-                .exchange(|edge: &(DirectedEdge<u64>, u64)| hash(&(edge.0).destination))
-                .filter(move |data: &(DirectedEdge<u64>, u64)| {
-                    let (ref edge, original_id) = *data;
-
-                    match captured_activated_users.borrow().get(&original_id) {
-                        Some(users) => users.contains(&edge.destination),
+                .exchange(|influence: &InfluenceEdge<u64>| hash(&(influence.influencer)))
+                .filter(move |influence: &InfluenceEdge<u64>| {
+                    match captured_activated_users.borrow().get(&influence.cascade_id) {
+                        Some(users) => users.contains(&influence.influencer),
                         None => false
                     }
                 })
-                .map(|data: (DirectedEdge<u64>, u64)| ((data.0).destination, (data.0).source))
                 .inspect(move |x| println!("Worker {}: {:?}", index, x))
                 .probe().0;
 
