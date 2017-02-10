@@ -9,5 +9,8 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate timely;
 
+pub use dataset::*;
+
+pub mod dataset;
 pub mod social_graph;
 pub mod twitter;

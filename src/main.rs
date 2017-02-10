@@ -16,12 +16,28 @@ use ccgp::social_graph::edge::*;
 use ccgp::twitter::*;
 
 fn main() {
-    timely::execute_from_args(std::env::args(), |computation| {
+    // Determine which data sets to use.
+    let dataset: DataSet = DataSet::from_string(&std::env::args().nth(1).unwrap());
+    let (friendship_dataset, retweet_dataset) = match dataset {
+        DataSet::TestSet => {
+            println!("Using test datasets.");
+            ("data/friends_test.txt", "data/cascade_test.json")
+        }
+        DataSet::RT3500Set => {
+            println!("Using datasets with 3500 retweets.");
+            ("data/friends.txt", "data/cascade3500.json")
+        }
+        DataSet::RT7226Set => {
+            println!("Using datasets with 7226 retweets.");
+            ("data/friends.txt", "data/cascade7226.json")
+        }
+    };
+
+    timely::execute_from_args(std::env::args().skip(1), move |computation| {
         let mut stopwatch = Stopwatch::start_new();
         let index = computation.index();
 
         // Load the social graph, but only on the first worker.
-        let friendship_dataset = "data/friends.txt";
         let friendships: HashSet<DirectedEdge<u64>> = if index == 0 {
             let friendships = social_graph::load::from_file(friendship_dataset);
             println!("Time to load social network: {}", stopwatch);
@@ -33,7 +49,6 @@ fn main() {
         stopwatch.restart();
 
         // Load the retweets, but only on the first worker.
-        let retweet_dataset = "data/cascade7226.json";
         let retweets: Vec<twitter::Tweet> = if index == 0 {
             let retweets = twitter::load::from_file(retweet_dataset);
             println!("Time to load retweets: {}", stopwatch);
