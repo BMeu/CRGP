@@ -21,7 +21,7 @@ fn main() {
         let index = computation.index();
 
         // Load the social graph, but only on the first worker.
-        let friendship_dataset = "data/friends_test.txt";
+        let friendship_dataset = "data/friends.txt";
         let friendships: HashSet<DirectedEdge<u64>> = if index == 0 {
             let friendships = social_graph::load::from_file(friendship_dataset);
             println!("Time to load social network: {}", stopwatch);
@@ -33,7 +33,7 @@ fn main() {
         stopwatch.restart();
 
         // Load the retweets, but only on the first worker.
-        let retweet_dataset = "data/cascade_test.json";
+        let retweet_dataset = "data/cascade7226.json";
         let retweets: Vec<twitter::Tweet> = if index == 0 {
             let retweets = twitter::load::from_file(retweet_dataset);
             println!("Time to load retweets: {}", stopwatch);
@@ -66,8 +66,8 @@ fn main() {
             let probe = graph_stream
                 .binary_stream(
                     &retweet_stream,
-                    Exchange::new(|edge: &DirectedEdge<u64>| hash(&edge.source)),
-                    Exchange::new(|retweet: &Tweet| hash(&retweet.user.id)),
+                    Exchange::new(|edge: &DirectedEdge<u64>| edge.source),
+                    Exchange::new(|retweet: &Tweet| retweet.user.id),
                     "Reconstruct",
                     move |edges, retweets, output| {
                         // Input 1: Simply capture for each received user his friends.
@@ -114,7 +114,7 @@ fn main() {
                         });
                     }
                 )
-                .exchange(|influence: &InfluenceEdge<u64>| hash(&(influence.influencer)))
+                .exchange(|influence: &InfluenceEdge<u64>| influence.influencer)
                 .filter(move |influence: &InfluenceEdge<u64>| {
                     match captured_activated_users.borrow().get(&influence.cascade_id) {
                         Some(users) => users.contains(&influence.influencer),

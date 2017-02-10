@@ -8,7 +8,6 @@ name = "ccgp_bin"
 
 [dependencies]
 abomonation = "0.4"
-fnv = "1.0.5"
 serde = "0.9"
 serde_derive = "0.9"
 serde_json = "0.9"

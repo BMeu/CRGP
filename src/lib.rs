@@ -9,8 +9,5 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate timely;
 
-pub use hash::*;
-
-mod hash;
 pub mod social_graph;
 pub mod twitter;
