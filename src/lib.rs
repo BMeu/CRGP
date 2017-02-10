@@ -13,5 +13,4 @@ pub use hash::*;
 
 mod hash;
 pub mod social_graph;
-pub mod timely_operators;
 pub mod twitter;
