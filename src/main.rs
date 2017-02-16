@@ -62,7 +62,7 @@ fn main() {
         // Reconstruct the cascade.
         // Algorithm:
         // 1. Send all friendship edges (u1 -> u2, u1 follows u2) to respective workers (based on u1).
-        // 2. Send a retweet of u* to the worker where u*'s friendship edges are.
+        // 2. Send a retweet made by u* to the worker where u*'s friendship edges are.
         // 3. On this worker: mark u* and the original user u as active for this cascade.
         // 4. On this worker: for all friends of u*, create (possible) influence edges (PIE) for this
         //    cascade, from the friend u' to u*, with timestamp of u*'s retweet.
