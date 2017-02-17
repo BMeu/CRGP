@@ -13,4 +13,5 @@ pub use dataset::*;
 
 pub mod dataset;
 pub mod social_graph;
+pub mod timely_operators;
 pub mod twitter;

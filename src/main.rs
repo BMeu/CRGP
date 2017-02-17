@@ -2,18 +2,17 @@ extern crate ccgp;
 extern crate stopwatch;
 extern crate timely;
 
-use std::collections::{HashMap, HashSet};
 use std::cell::RefCell;
+use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use stopwatch::Stopwatch;
 use timely::dataflow::*;
-use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::operators::*;
 
 use ccgp::*;
 use ccgp::social_graph::edge::*;
-use ccgp::twitter::*;
+use ccgp::timely_operators::*;
 
 fn main() {
     // Determine which data sets to use.
@@ -74,64 +73,17 @@ fn main() {
             let (graph_input, graph_stream) = scope.new_input();
             let (retweet_input, retweet_stream) = scope.new_input();
 
-            let mut user_friends: HashMap<u64, HashSet<u64>> = HashMap::new();  // [user, {friends}]
-            let activated_users: Rc<RefCell<HashMap<u64, HashSet<u64>>>> = Rc::new(RefCell::new(HashMap::new()));  // [cascade_id, {retweeting_users}]
-            let captured_activated_users = activated_users.clone();
+            // For each cascade, given by its ID, a set of activated users, given by their ID, i.e.
+            // those users who have retweeted within this cascade before, per worker. Since this map
+            // is required within two closures, dynamic borrow checks are required.
+            let activations_influences: Rc<RefCell<HashMap<u64, HashSet<u64>>>> = Rc::new(RefCell::new(HashMap::new()));
+            let activations_possible_influences = activations_influences.clone();
 
             let probe = graph_stream
-                .binary_stream(
-                    &retweet_stream,
-                    Exchange::new(|edge: &DirectedEdge<u64>| edge.source),
-                    Exchange::new(|retweet: &Tweet| retweet.user.id),
-                    "Reconstruct",
-                    move |edges, retweets, output| {
-                        // Input 1: Simply capture for each received user his friends.
-                        edges.for_each(|_time, friendship_data| {
-                            for ref friends in friendship_data.iter() {
-                                user_friends.entry(friends.source)
-                                    .or_insert(HashSet::new())
-                                    .insert(friends.destination);
-                            }
-                        });
-
-                        // Input 2: Process the retweets.
-                        retweets.for_each(|time, retweet_data| {
-                            for ref retweet in retweet_data.iter() {
-                                // Skip all tweets that are not retweets.
-                                let original_tweet = match retweet.retweeted_status {
-                                    Some(ref t) => t,
-                                    None => continue
-                                };
-
-                                // Mark this user and the original user as active for this cascade.
-                                activated_users.borrow_mut()
-                                    .entry(original_tweet.id)
-                                    .or_insert_with(|| {
-                                        let mut users = HashSet::new();
-                                        users.insert(original_tweet.user.id);
-                                        users
-                                    })
-                                    .insert(retweet.user.id);
-
-                                // Get the user's friends.
-                                let friends = match user_friends.get(&retweet.user.id) {
-                                    Some(friends) => friends,
-                                    None => continue
-                                };
-
-                                // Pass on the possible influence edges.
-                                for &friend in friends {
-                                    let influence = InfluenceEdge::new(friend, retweet.user.id,
-                                        retweet.created_at, original_tweet.id);
-                                    output.session(&time).give(influence);
-                                }
-                            }
-                        });
-                    }
-                )
+                .find_possible_influences(retweet_stream, activations_possible_influences)
                 .exchange(|influence: &InfluenceEdge<u64>| influence.influencer)
                 .filter(move |influence: &InfluenceEdge<u64>| {
-                    match captured_activated_users.borrow().get(&influence.cascade_id) {
+                    match activations_influences.borrow().get(&influence.cascade_id) {
                         Some(users) => users.contains(&influence.influencer),
                         None => false
                     }
