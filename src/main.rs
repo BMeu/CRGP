@@ -32,6 +32,9 @@ fn main() {
         }
     };
 
+    // Set the size of retweet batches.
+    let batch_size = 500;
+
     timely::execute_from_args(std::env::args().skip(1), move |computation| {
         let mut stopwatch = Stopwatch::start_new();
         let index = computation.index();
@@ -115,17 +118,23 @@ fn main() {
 
         // Introduce the retweets into the computation.
         stopwatch.restart();
+        let mut round = 0;
+        let number_of_retweets = retweets.len();
         for retweet in retweets {
             retweet_input.send(retweet);
 
             // Process the retweet before continuing.
-            let next_graph = graph_input.epoch() + 1;
-            let next_retweets = retweet_input.epoch() + 1;
-            graph_input.advance_to(next_graph);
-            retweet_input.advance_to(next_retweets);
-            while probe.lt(retweet_input.time()) {
-                computation.step();
+            if round % batch_size == (batch_size - 1) || round == (number_of_retweets - 1){
+                let next_graph = graph_input.epoch() + 1;
+                let next_retweets = retweet_input.epoch() + 1;
+                graph_input.advance_to(next_graph);
+                retweet_input.advance_to(next_retweets);
+                while probe.lt(retweet_input.time()) {
+                    computation.step();
+                }
             }
+
+            round += 1;
         }
         if index == 0 {
             println!("Time to process retweets: {}", stopwatch);
