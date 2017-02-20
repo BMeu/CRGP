@@ -123,8 +123,10 @@ fn main() {
         for retweet in retweets {
             retweet_input.send(retweet);
 
-            // Process the retweet before continuing.
-            if round % batch_size == (batch_size - 1) || round == (number_of_retweets - 1){
+            // Process the batch of retweets.
+            let is_batch_complete: bool = (round % batch_size == (batch_size - 1));
+            let is_last_retweet: bool = (round == (number_of_retweets - 1));
+            if is_batch_complete || is_last_retweet {
                 let next_graph = graph_input.epoch() + 1;
                 let next_retweets = retweet_input.epoch() + 1;
                 graph_input.advance_to(next_graph);
