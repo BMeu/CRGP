@@ -16,21 +16,8 @@ use ccgp::timely_operators::*;
 
 fn main() {
     // Determine which data sets to use.
-    let dataset: DataSet = DataSet::from_string(&std::env::args().nth(1).unwrap());
-    let (friendship_dataset, retweet_dataset) = match dataset {
-        DataSet::TestSet => {
-            println!("Using test datasets.");
-            ("data/friends_test.txt", "data/cascade_test.json")
-        }
-        DataSet::RT3500Set => {
-            println!("Using datasets with 3500 retweets.");
-            ("data/friends.txt", "data/cascade3500.json")
-        }
-        DataSet::RT7226Set => {
-            println!("Using datasets with 7226 retweets.");
-            ("data/friends.txt", "data/cascade7226.json")
-        }
-    };
+    let friendship_dataset = std::env::args().nth(1).unwrap();
+    let retweet_dataset = std::env::args().nth(2).unwrap();
 
     // Set the size of retweet batches.
     let batch_size = 500;
@@ -41,24 +28,26 @@ fn main() {
 
         // Load the social graph, but only on the first worker.
         let friendships: HashSet<DirectedEdge<u64>> = if index == 0 {
-            let friendships = social_graph::load::from_file(friendship_dataset);
+            let friendships = social_graph::load::from_file(&friendship_dataset);
             println!("Time to load social network: {}", stopwatch);
             println!("#Friendships: {}", friendships.len());
             friendships
         } else {
             HashSet::new()
         };
+        let number_of_friendships = friendships.len();
         stopwatch.restart();
 
         // Load the retweets, but only on the first worker.
         let retweets: Vec<twitter::Tweet> = if index == 0 {
-            let retweets = twitter::load::from_file(retweet_dataset);
+            let retweets = twitter::load::from_file(&retweet_dataset);
             println!("Time to load retweets: {}", stopwatch);
             println!("#Retweets: {}", retweets.len());
             retweets
         } else {
             vec![]
         };
+        let number_of_retweets = retweets.len();
         stopwatch.restart();
 
         // Reconstruct the cascade.
@@ -119,13 +108,12 @@ fn main() {
         // Introduce the retweets into the computation.
         stopwatch.restart();
         let mut round = 0;
-        let number_of_retweets = retweets.len();
         for retweet in retweets {
             retweet_input.send(retweet);
 
             // Process the batch of retweets.
-            let is_batch_complete: bool = (round % batch_size == (batch_size - 1));
-            let is_last_retweet: bool = (round == (number_of_retweets - 1));
+            let is_batch_complete: bool = round % batch_size == (batch_size - 1);
+            let is_last_retweet: bool = round == (number_of_retweets - 1);
             if is_batch_complete || is_last_retweet {
                 let next_graph = graph_input.epoch() + 1;
                 let next_retweets = retweet_input.epoch() + 1;
@@ -140,6 +128,8 @@ fn main() {
         }
         if index == 0 {
             println!("Time to process retweets: {}", stopwatch);
+            println!("#Friendships: {}", number_of_friendships);
+            println!("#Retweets: {}", number_of_retweets);
         }
     }).unwrap();
 }
