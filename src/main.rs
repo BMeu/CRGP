@@ -15,14 +15,14 @@ use ccgp::social_graph::edge::*;
 use ccgp::timely_operators::*;
 
 fn main() {
-    // Determine which data sets to use.
+    // Determine which data sets to use and the batch size.
     let friendship_dataset = std::env::args().nth(1).unwrap();
     let retweet_dataset = std::env::args().nth(2).unwrap();
+    let batch_size: usize = std::env::args().nth(3).unwrap().parse().unwrap();
 
-    // Set the size of retweet batches.
-    let batch_size = 500;
+    timely::execute_from_args(std::env::args().skip(3), move |computation| {
+        println!("Batch Size: {}", batch_size);
 
-    timely::execute_from_args(std::env::args().skip(1), move |computation| {
         let mut stopwatch = Stopwatch::start_new();
         let index = computation.index();
 
@@ -130,6 +130,7 @@ fn main() {
             println!("Time to process retweets: {}", stopwatch);
             println!("#Friendships: {}", number_of_friendships);
             println!("#Retweets: {}", number_of_retweets);
+            println!("Batch Size: {}", batch_size);
         }
     }).unwrap();
 }
