@@ -15,38 +15,37 @@ use ccgp::social_graph::edge::*;
 use ccgp::timely_operators::*;
 
 fn main() {
+    print_usage(&std::env::args().nth(0).unwrap());
+
     // Determine which data sets to use and the batch size.
     let friendship_dataset = std::env::args().nth(1).unwrap();
     let retweet_dataset = std::env::args().nth(2).unwrap();
     let batch_size: usize = std::env::args().nth(3).unwrap().parse().unwrap();
+    let print_result: bool = std::env::args().nth(4).unwrap().parse().unwrap();
 
-    timely::execute_from_args(std::env::args().skip(3), move |computation| {
-        println!("Batch Size: {}", batch_size);
-
+    timely::execute_from_args(std::env::args().skip(4), move |computation| {
         let mut stopwatch = Stopwatch::start_new();
         let index = computation.index();
 
         // Load the social graph, but only on the first worker.
         let friendships: HashSet<DirectedEdge<u64>> = if index == 0 {
             let friendships = social_graph::load::from_file(&friendship_dataset);
-            println!("Time to load social network: {}", stopwatch);
-            println!("#Friendships: {}", friendships.len());
             friendships
         } else {
             HashSet::new()
         };
+        let time_to_load_friendships = format!("{}", stopwatch);
         let number_of_friendships = friendships.len();
         stopwatch.restart();
 
         // Load the retweets, but only on the first worker.
         let retweets: Vec<twitter::Tweet> = if index == 0 {
             let retweets = twitter::load::from_file(&retweet_dataset);
-            println!("Time to load retweets: {}", stopwatch);
-            println!("#Retweets: {}", retweets.len());
             retweets
         } else {
             vec![]
         };
+        let time_to_load_retweets = format!("{}", stopwatch);
         let number_of_retweets = retweets.len();
         stopwatch.restart();
 
@@ -80,7 +79,11 @@ fn main() {
                         None => false
                     }
                 })
-                .inspect(move |x| println!("Worker {}: {:?}", index, x))
+                .inspect(move |x| {
+                    if print_result {
+                        println!("Worker {}: {:?}", index, x);
+                    }
+                })
                 .probe().0;
 
             (graph_input, retweet_input, probe)
@@ -101,9 +104,7 @@ fn main() {
             computation.step();
         }
 
-        if index == 0 {
-            println!("Time to process social network: {}", stopwatch);
-        }
+        let time_to_process_social_network = format!("{}", stopwatch);
 
         // Introduce the retweets into the computation.
         stopwatch.restart();
@@ -127,10 +128,22 @@ fn main() {
             round += 1;
         }
         if index == 0 {
-            println!("Time to process retweets: {}", stopwatch);
-            println!("#Friendships: {}", number_of_friendships);
-            println!("#Retweets: {}", number_of_retweets);
-            println!("Batch Size: {}", batch_size);
+            let time_to_process_retweets = format!("{}", stopwatch);
+            println!();
+            println!("Results:");
+            println!("  #Friendships: {}", number_of_friendships);
+            println!("  #Retweets: {}", number_of_retweets);
+            println!("  Batch Size: {}", batch_size);
+            println!();
+            println!("  Time to load social network: {}", time_to_load_friendships);
+            println!("  Time to load retweets: {}", time_to_load_retweets);
+            println!("  Time to process social network: {}", time_to_process_social_network);
+            println!("  Time to process retweets: {}", time_to_process_retweets);
         }
     }).unwrap();
+}
+
+fn print_usage(name: &str) {
+    println!("Usage: {} <Friend Data Set: Path> <Retweet Data Set: Path> <Batch Size: Int> <Print Result: Bool> [Timely Options]", name);
+    println!();
 }
