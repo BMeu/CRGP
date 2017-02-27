@@ -19,7 +19,8 @@ use ccgp::timely_operators::*;
 use ccgp::twitter::*;
 
 fn main() {
-    print_usage(&std::env::args().nth(0).unwrap());
+    println!("Usage: {} <Friend Data Set: Path> <Retweet Data Set: Path> <Batch Size: Int> <Print Result: Bool> [Timely Options]", name);
+    println!();
 
     // Parse the arguments.
     let friendship_dataset = std::env::args().nth(1).unwrap();
@@ -178,9 +179,4 @@ fn main() {
             println!("  Total time: {}ms", time_to_setup + time_to_process_social_network + time_to_process_retweets);
         }
     }).unwrap();
-}
-
-fn print_usage(name: &str) {
-    println!("Usage: {} <Friend Data Set: Path> <Retweet Data Set: Path> <Batch Size: Int> <Print Result: Bool> [Timely Options]", name);
-    println!();
 }
