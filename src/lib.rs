@@ -8,7 +8,8 @@ extern crate abomonation;
 extern crate serde_derive;
 extern crate serde_json;
 extern crate timely;
+extern crate timely_communication;
 
 pub mod social_graph;
-pub mod timely_operators;
+pub mod timely_extensions;
 pub mod twitter;
