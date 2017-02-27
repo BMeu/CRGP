@@ -1,4 +1,4 @@
-extern crate ccgp;
+extern crate crgp;
 extern crate serde_json;
 extern crate stopwatch;
 extern crate timely;
@@ -14,10 +14,10 @@ use stopwatch::Stopwatch;
 use timely::dataflow::*;
 use timely::dataflow::operators::*;
 
-use ccgp::social_graph::edge::*;
-use ccgp::timely_extensions::Sync;
-use ccgp::timely_extensions::operators::*;
-use ccgp::twitter::*;
+use crgp::social_graph::edge::*;
+use crgp::timely_extensions::Sync;
+use crgp::timely_extensions::operators::*;
+use crgp::twitter::*;
 
 fn main() {
     let name = &std::env::args().nth(0).unwrap();

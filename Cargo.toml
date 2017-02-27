@@ -1,10 +1,10 @@
 [package]
-name = "ccgp"
+name = "crgp"
 version = "0.1.0"
 authors = ["BMeu <bastian@bastianmeyer.eu>"]
 
 [[bin]]
-name = "ccgp_bin"
+name = "crgp_bin"
 
 [dependencies]
 abomonation = "0.4"
