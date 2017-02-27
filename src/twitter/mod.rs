@@ -3,6 +3,5 @@
 pub use self::tweet::Tweet;
 pub use self::user::User;
 
-pub mod load;
 pub mod tweet;
 pub mod user;

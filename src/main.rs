@@ -1,4 +1,5 @@
 extern crate ccgp;
+extern crate serde_json;
 extern crate stopwatch;
 extern crate timely;
 
@@ -13,33 +14,25 @@ use stopwatch::Stopwatch;
 use timely::dataflow::*;
 use timely::dataflow::operators::*;
 
-use ccgp::*;
 use ccgp::social_graph::edge::*;
 use ccgp::timely_operators::*;
+use ccgp::twitter::*;
 
 fn main() {
     print_usage(&std::env::args().nth(0).unwrap());
 
-    // Determine which data sets to use and the batch size.
+    // Parse the arguments.
     let friendship_dataset = std::env::args().nth(1).unwrap();
     let retweet_dataset = std::env::args().nth(2).unwrap();
     let batch_size: usize = std::env::args().nth(3).unwrap().parse().unwrap();
     let print_result: bool = std::env::args().nth(4).unwrap().parse().unwrap();
 
     timely::execute_from_args(std::env::args().skip(4), move |computation| {
-        let mut stopwatch = Stopwatch::start_new();
         let index = computation.index();
 
-        // Load the retweets, but only on the first worker.
-        let retweets: Vec<twitter::Tweet> = if index == 0 {
-            let retweets = twitter::load::from_file(&retweet_dataset);
-            retweets
-        } else {
-            vec![]
-        };
-        let time_to_load_retweets = format!("{}", stopwatch);
-        let number_of_retweets = retweets.len();
-        stopwatch.restart();
+        /******************
+         * DATAFLOW GRAPH *
+         ******************/
 
         // Reconstruct the cascade.
         // Algorithm:
@@ -81,11 +74,17 @@ fn main() {
             (graph_input, retweet_input, probe)
         });
 
-        // Load the social graph from a file into the computation.
-        stopwatch.restart();
+
+
+        /****************
+         * SOCIAL GRAPH *
+         ****************/
+
+        // Load the social graph from a file into the computation (only on the first worker).
+        let mut stopwatch = Stopwatch::start_new();
         let mut number_of_friendships: u64 = 0;
         if index == 0 {
-            let friendship_file = File::open(&friendship_dataset).expect("Could not open friendship dataset");
+            let friendship_file = File::open(&friendship_dataset).expect("Could not open friendship dataset.");
             let friendship_file = BufReader::new(friendship_file);
 
             // Each line contains all friendships of a single user.
@@ -117,42 +116,62 @@ fn main() {
         while probe.lt(graph_input.time()) {
             computation.step();
         }
-
         let time_to_process_social_network = format!("{}", stopwatch);
 
-        // Introduce the retweets into the computation.
+
+
+        /************
+         * RETWEETS *
+         ************/
+
+        // Load and process the retweets.
         stopwatch.restart();
-        let mut round = 0;
-        for retweet in retweets {
-            retweet_input.send(retweet);
-
-            // Process the batch of retweets.
-            let is_batch_complete: bool = round % batch_size == (batch_size - 1);
-            let is_last_retweet: bool = round == (number_of_retweets - 1);
-            if is_batch_complete || is_last_retweet {
-                let next_graph = graph_input.epoch() + 1;
-                let next_retweets = retweet_input.epoch() + 1;
-                graph_input.advance_to(next_graph);
-                retweet_input.advance_to(next_retweets);
-                while probe.lt(retweet_input.time()) {
-                    computation.step();
-                }
-            }
-
-            round += 1;
-        }
+        let mut number_of_retweets: usize = 0;
         if index == 0 {
-            let time_to_process_retweets = format!("{}", stopwatch);
+            let retweet_file = File::open(&retweet_dataset).expect("Could not open retweet file.");
+            let retweet_file = BufReader::new(retweet_file);
+
+            for line in retweet_file.lines().map(|l| serde_json::from_str::<Tweet>(&l.expect("{}")).unwrap()) {
+                retweet_input.send(line);
+
+                let is_batch_complete: bool = number_of_retweets % batch_size == (batch_size - 1);
+                if is_batch_complete {
+                    let next_graph = graph_input.epoch() + 1;
+                    let next_retweets = retweet_input.epoch() + 1;
+                    graph_input.advance_to(next_graph);
+                    retweet_input.advance_to(next_retweets);
+                    while probe.lt(retweet_input.time()) {
+                        computation.step();
+                    }
+                }
+
+                number_of_retweets += 1;
+            }
+            let next_graph = graph_input.epoch() + 1;
+            let next_retweets = retweet_input.epoch() + 1;
+            graph_input.advance_to(next_graph);
+            retweet_input.advance_to(next_retweets);
+            while probe.lt(retweet_input.time()) {
+                computation.step();
+            }
+        }
+        let time_to_process_retweets = format!("{}", stopwatch);
+
+
+
+        /***********
+         * RESULTS *
+         ***********/
+
+        if index == 0 {
             println!();
             println!("Results:");
             println!("  #Friendships: {}", number_of_friendships);
             println!("  #Retweets: {}", number_of_retweets);
             println!("  Batch Size: {}", batch_size);
             println!();
-            //println!("  Time to load social network: {}", time_to_load_friendships);
-            println!("  Time to load retweets: {}", time_to_load_retweets);
-            println!("  Time to process social network: {}", time_to_process_social_network);
-            println!("  Time to process retweets: {}", time_to_process_retweets);
+            println!("  Time to load and process social network: {}", time_to_process_social_network);
+            println!("  Time to load and process retweets: {}", time_to_process_retweets);
         }
     }).unwrap();
 }
