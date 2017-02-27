@@ -29,6 +29,7 @@ fn main() {
 
     timely::execute_from_args(std::env::args().skip(4), move |computation| {
         let index = computation.index();
+        let mut stopwatch = Stopwatch::start_new();
 
         /******************
          * DATAFLOW GRAPH *
@@ -73,6 +74,7 @@ fn main() {
 
             (graph_input, retweet_input, probe)
         });
+        let time_to_setup: i64 = stopwatch.elapsed_ms();
 
 
 
@@ -81,7 +83,7 @@ fn main() {
          ****************/
 
         // Load the social graph from a file into the computation (only on the first worker).
-        let mut stopwatch = Stopwatch::start_new();
+        stopwatch.restart();
         let mut number_of_friendships: u64 = 0;
         if index == 0 {
             let friendship_file = File::open(&friendship_dataset).expect("Could not open friendship dataset.");
@@ -116,7 +118,7 @@ fn main() {
         while probe.lt(graph_input.time()) {
             computation.step();
         }
-        let time_to_process_social_network = format!("{}", stopwatch);
+        let time_to_process_social_network: i64 = stopwatch.elapsed_ms();
 
 
 
@@ -155,7 +157,7 @@ fn main() {
                 computation.step();
             }
         }
-        let time_to_process_retweets = format!("{}", stopwatch);
+        let time_to_process_retweets: i64 = stopwatch.elapsed_ms();
 
 
 
@@ -170,8 +172,10 @@ fn main() {
             println!("  #Retweets: {}", number_of_retweets);
             println!("  Batch Size: {}", batch_size);
             println!();
-            println!("  Time to load and process social network: {}", time_to_process_social_network);
-            println!("  Time to load and process retweets: {}", time_to_process_retweets);
+            println!("  Time to set up the computation: {}ms", time_to_setup);
+            println!("  Time to load and process the social network: {}ms", time_to_process_social_network);
+            println!("  Time to load and process the retweets: {}ms", time_to_process_retweets);
+            println!("  Total time: {}ms", time_to_setup + time_to_process_social_network + time_to_process_retweets);
         }
     }).unwrap();
 }
