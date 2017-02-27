@@ -6,4 +6,3 @@ pub use self::edge::DirectedEdge;
 pub use self::edge::InfluenceEdge;
 
 pub mod edge;
-pub mod load;

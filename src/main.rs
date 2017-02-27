@@ -4,6 +4,9 @@ extern crate timely;
 
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
+use std::fs::File;
+use std::io::BufReader;
+use std::io::prelude::*;
 use std::rc::Rc;
 
 use stopwatch::Stopwatch;
@@ -26,17 +29,6 @@ fn main() {
     timely::execute_from_args(std::env::args().skip(4), move |computation| {
         let mut stopwatch = Stopwatch::start_new();
         let index = computation.index();
-
-        // Load the social graph, but only on the first worker.
-        let friendships: HashSet<DirectedEdge<u64>> = if index == 0 {
-            let friendships = social_graph::load::from_file(&friendship_dataset);
-            friendships
-        } else {
-            HashSet::new()
-        };
-        let time_to_load_friendships = format!("{}", stopwatch);
-        let number_of_friendships = friendships.len();
-        stopwatch.restart();
 
         // Load the retweets, but only on the first worker.
         let retweets: Vec<twitter::Tweet> = if index == 0 {
@@ -89,10 +81,32 @@ fn main() {
             (graph_input, retweet_input, probe)
         });
 
-        // Introduce the social graph into the computation.
+        // Load the social graph from a file into the computation.
         stopwatch.restart();
-        for friendship in friendships {
-            graph_input.send(friendship);
+        let mut number_of_friendships: u64 = 0;
+        if index == 0 {
+            let friendship_file = File::open(&friendship_dataset).expect("Could not open friendship dataset");
+            let friendship_file = BufReader::new(friendship_file);
+
+            // Each line contains all friendships of a single user.
+            for line in friendship_file.lines().filter_map(|l| l.ok()) {
+                let user: Vec<&str> = line.split(':').collect();
+                if user.len() == 0 {
+                    continue;
+                }
+
+                let user_id: u64 = user[0].parse().unwrap();
+
+                let has_friends = user.len() > 1 && !user[1].is_empty();
+                if !has_friends {
+                    continue;
+                }
+
+                for friend_id in user[1].split(',').map(|f| f.parse::<u64>().unwrap()) {
+                    number_of_friendships += 1;
+                    graph_input.send(DirectedEdge::new(user_id, friend_id));
+                }
+            }
         }
 
         // Process the entire social graph before continuing.
@@ -135,7 +149,7 @@ fn main() {
             println!("  #Retweets: {}", number_of_retweets);
             println!("  Batch Size: {}", batch_size);
             println!();
-            println!("  Time to load social network: {}", time_to_load_friendships);
+            //println!("  Time to load social network: {}", time_to_load_friendships);
             println!("  Time to load retweets: {}", time_to_load_retweets);
             println!("  Time to process social network: {}", time_to_process_social_network);
             println!("  Time to process retweets: {}", time_to_process_retweets);
