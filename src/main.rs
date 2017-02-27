@@ -19,6 +19,7 @@ use ccgp::timely_operators::*;
 use ccgp::twitter::*;
 
 fn main() {
+    let name = &std::env::args().nth(0).unwrap();
     println!("Usage: {} <Friend Data Set: Path> <Retweet Data Set: Path> <Batch Size: Int> <Print Result: Bool> [Timely Options]", name);
     println!();
 
@@ -91,8 +92,8 @@ fn main() {
             let friendship_file = BufReader::new(friendship_file);
 
             // Each line contains all friendships of a single user.
-            for line in friendship_file.lines().filter_map(|l| l.ok()) {
-                let user: Vec<&str> = line.split(':').collect();
+            for user in friendship_file.lines().filter_map(|u| u.ok()) {
+                let user: Vec<&str> = user.split(':').collect();
                 if user.len() == 0 {
                     continue;
                 }
@@ -134,8 +135,8 @@ fn main() {
             let retweet_file = File::open(&retweet_dataset).expect("Could not open retweet file.");
             let retweet_file = BufReader::new(retweet_file);
 
-            for line in retweet_file.lines().map(|l| serde_json::from_str::<Tweet>(&l.expect("{}")).unwrap()) {
-                retweet_input.send(line);
+            for retweet in retweet_file.lines().map(|r| serde_json::from_str::<Tweet>(&r.expect("{}")).unwrap()) {
+                retweet_input.send(retweet);
 
                 let is_batch_complete: bool = number_of_retweets % batch_size == (batch_size - 1);
                 if is_batch_complete {
