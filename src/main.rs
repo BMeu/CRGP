@@ -2,6 +2,7 @@ extern crate ccgp;
 extern crate serde_json;
 extern crate stopwatch;
 extern crate timely;
+extern crate timely_communication;
 
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -11,8 +12,15 @@ use std::io::prelude::*;
 use std::rc::Rc;
 
 use stopwatch::Stopwatch;
+use timely::Data;
 use timely::dataflow::*;
 use timely::dataflow::operators::*;
+use timely::dataflow::operators::input::Handle as InputHandle;
+use timely::dataflow::operators::probe::Handle as ProbeHandle;
+use timely::progress::nested::product::Product;
+use timely::progress::timestamp::RootTimestamp;
+use timely::dataflow::scopes::root::Root;
+use timely_communication::allocator::Allocate;
 
 use ccgp::social_graph::edge::*;
 use ccgp::timely_operators::*;
@@ -113,13 +121,7 @@ fn main() {
         }
 
         // Process the entire social graph before continuing.
-        let next_graph = graph_input.epoch() + 1;
-        let next_retweets = retweet_input.epoch() + 1;
-        graph_input.advance_to(next_graph);
-        retweet_input.advance_to(next_retweets);
-        while probe.lt(graph_input.time()) {
-            computation.step();
-        }
+        computation.sync(&probe, &mut graph_input, &mut retweet_input);
         let time_to_process_social_network: i64 = stopwatch.elapsed_ms();
 
 
@@ -140,24 +142,12 @@ fn main() {
 
                 let is_batch_complete: bool = number_of_retweets % batch_size == (batch_size - 1);
                 if is_batch_complete {
-                    let next_graph = graph_input.epoch() + 1;
-                    let next_retweets = retweet_input.epoch() + 1;
-                    graph_input.advance_to(next_graph);
-                    retweet_input.advance_to(next_retweets);
-                    while probe.lt(retweet_input.time()) {
-                        computation.step();
-                    }
+                    computation.sync(&probe, &mut retweet_input, &mut graph_input);
                 }
 
                 number_of_retweets += 1;
             }
-            let next_graph = graph_input.epoch() + 1;
-            let next_retweets = retweet_input.epoch() + 1;
-            graph_input.advance_to(next_graph);
-            retweet_input.advance_to(next_retweets);
-            while probe.lt(retweet_input.time()) {
-                computation.step();
-            }
+            computation.sync(&probe, &mut retweet_input, &mut graph_input);
         }
         let time_to_process_retweets: i64 = stopwatch.elapsed_ms();
 
@@ -180,4 +170,22 @@ fn main() {
             println!("  Total time: {}ms", time_to_setup + time_to_process_social_network + time_to_process_retweets);
         }
     }).unwrap();
+}
+
+trait Sync<D1: Data, D2: Data> {
+    fn sync(&mut self, &ProbeHandle<Product<RootTimestamp, u64>>, &mut InputHandle<u64, D1>, &mut InputHandle<u64, D2>);
+}
+
+impl<A: Allocate, D1: Data, D2: Data> Sync<D1, D2> for Root<A> {
+    fn sync(&mut self, probe: &ProbeHandle<Product<RootTimestamp, u64>>, input1: &mut InputHandle<u64, D1>, input2: &mut InputHandle<u64, D2>) {
+        let input1_next = input1.epoch() + 1;
+        let input2_next = input2.epoch() + 1;
+
+        input1.advance_to(input1_next);
+        input2.advance_to(input2_next);
+
+        while probe.lt(input1.time()) {
+            self.step();
+        }
+    }
 }

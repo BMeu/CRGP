@@ -8,6 +8,7 @@ dependencies = [
  "serde_json 0.9.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "stopwatch 0.0.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "timely 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)",
+ "timely_communication 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
