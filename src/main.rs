@@ -164,6 +164,8 @@ fn main() {
             println!("  Time to load and process the social network: {}ms", time_to_process_social_network);
             println!("  Time to load and process the retweets: {}ms", time_to_process_retweets);
             println!("  Total time: {}ms", time_to_setup + time_to_process_social_network + time_to_process_retweets);
+            println!();
+            println!("  Retweet Processing Rate: {:.3} RT/s", number_of_retweets as f64 / (time_to_process_retweets as f64 / 1_000.0f64))
         }
     }).unwrap();
 }
