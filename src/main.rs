@@ -63,10 +63,13 @@ fn main() {
                 .find_possible_influences(retweet_stream, activations_possible_influences)
                 .exchange(|influence: &InfluenceEdge<u64>| influence.influencer)
                 .filter(move |influence: &InfluenceEdge<u64>| {
-                    match activations_influences.borrow().get(&influence.cascade_id) {
+                    let is_influencer_activated: bool = match activations_influences.borrow().get(&influence.cascade_id) {
                         Some(users) => users.contains(&influence.influencer),
                         None => false
-                    }
+                    };
+                    let is_influencer_original_user: bool = influence.influencer == influence.original_user;
+
+                    is_influencer_activated || is_influencer_original_user
                 })
                 .inspect(move |x| {
                     if print_result {

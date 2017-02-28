@@ -58,11 +58,7 @@ where G::Timestamp: Hash {
                         // Mark this user and the original user as active for this cascade.
                         activated_users.borrow_mut()
                             .entry(original_tweet.id)
-                            .or_insert_with(|| {
-                                let mut users = HashSet::new();
-                                users.insert(original_tweet.user.id);
-                                users
-                            })
+                            .or_insert(HashSet::new())
                             .insert(retweet.user.id);
 
                         // Get the user's friends.
@@ -73,7 +69,7 @@ where G::Timestamp: Hash {
 
                         // Pass on the possible influence edges.
                         for &friend in friends {
-                            let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at, original_tweet.id);
+                            let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at, original_tweet.id, original_tweet.user.id);
                             output.session(&time).give(influence);
                         }
                     }
