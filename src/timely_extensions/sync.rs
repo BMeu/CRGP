@@ -20,6 +20,7 @@ pub trait Sync<D1: Data, D2: Data> {
 }
 
 impl<A: Allocate, D1: Data, D2: Data> Sync<D1, D2> for Root<A> {
+    #[inline]
     fn sync(&mut self, probe: &ProbeHandle<Product<RootTimestamp, u64>>, input1: &mut InputHandle<u64, D1>, input2: &mut InputHandle<u64, D2>) {
         let input1_next = input1.epoch() + 1;
         let input2_next = input2.epoch() + 1;
