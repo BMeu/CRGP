@@ -1,6 +1,9 @@
+#![feature(test)]
+
 extern crate crgp;
 extern crate serde_json;
 extern crate stopwatch;
+extern crate test;
 extern crate timely;
 
 use std::cell::RefCell;
@@ -160,7 +163,7 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
          * RESULTS *
          ***********/
 
-        if index == 0 {
+        if index == 0 && print_result {
             println!();
             println!("Results:");
             println!("  #Friendships: {}", number_of_friendships);
@@ -175,4 +178,23 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
             println!("  Retweet Processing Rate: {:.3} RT/s", number_of_retweets as f64 / (time_to_process_retweets as f64 / 1_000.0f64))
         }
     }).unwrap();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test::Bencher;
+
+    #[bench]
+    fn bench_execute(b: &mut Bencher) {
+        let batch_size: usize = 1;
+        let print_result: bool = false;
+
+        b.iter(|| {
+            let friendship_dataset: String = "data/friends_test.txt".to_string();
+            let retweet_dataset: String = "data/cascade_test.json".to_string();
+            let timely_args = std::iter::empty::<String>();
+            execute(friendship_dataset, retweet_dataset, batch_size, print_result, timely_args)
+        });
+    }
 }
