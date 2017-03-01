@@ -29,8 +29,15 @@ fn main() {
     let retweet_dataset = std::env::args().nth(2).unwrap();
     let batch_size: usize = std::env::args().nth(3).unwrap().parse().unwrap();
     let print_result: bool = std::env::args().nth(4).unwrap().parse().unwrap();
+    let timely_args = std::env::args().skip(4);
 
-    timely::execute_from_args(std::env::args().skip(4), move |computation| {
+    execute(friendship_dataset, retweet_dataset, batch_size, print_result, timely_args);
+}
+
+/// Execute the reconstruction.
+fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: usize, print_result: bool, timely_args: I)
+    where I: Iterator<Item=String> {
+    timely::execute_from_args(timely_args, move |computation| {
         let index = computation.index();
         let mut stopwatch = Stopwatch::start_new();
 
