@@ -163,7 +163,7 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
          * RESULTS *
          ***********/
 
-        if index == 0 && print_result {
+        if index == 0 {
             println!();
             println!("Results:");
             println!("  #Friendships: {}", number_of_friendships);
