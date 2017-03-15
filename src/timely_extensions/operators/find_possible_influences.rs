@@ -19,14 +19,14 @@ pub trait FindPossibleInfluences<G: Scope> {
     /// For a social graph, determine all possible influences for a retweet within that specific
     /// retweet cascade. The ``Stream`` of retweets may contain multiple retweet cascades.
     fn find_possible_influences(&self, retweets: Stream<G, Tweet>,
-                                activated_users: Rc<RefCell<HashMap<u64, HashSet<u64>>>>)
+                                activated_users: Rc<RefCell<HashMap<u64, HashMap<u64, u64>>>>)
         -> Stream<G, InfluenceEdge<u64>>;
 }
 
 impl<G: Scope> FindPossibleInfluences<G> for Stream<G, DirectedEdge<u64>>
 where G::Timestamp: Hash {
     fn find_possible_influences(&self, retweets: Stream<G, Tweet>,
-                                activated_users: Rc<RefCell<HashMap<u64, HashSet<u64>>>>)
+                                activated_users: Rc<RefCell<HashMap<u64, HashMap<u64, u64>>>>)
         -> Stream<G, InfluenceEdge<u64>> {
         // For each user, given by their ID, the set of their friends, given by their ID.
         let mut edges: HashMap<u64, HashSet<u64>> = HashMap::new();
@@ -58,8 +58,9 @@ where G::Timestamp: Hash {
                         // Mark this user and the original user as active for this cascade.
                         activated_users.borrow_mut()
                             .entry(original_tweet.id)
-                            .or_insert(HashSet::new())
-                            .insert(retweet.user.id);
+                            .or_insert(HashMap::new())
+                            .entry(retweet.user.id)
+                            .or_insert(retweet.created_at);
 
                         // Get the user's friends.
                         let friends = match edges.get(&retweet.user.id) {

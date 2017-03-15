@@ -63,7 +63,7 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
             // For each cascade, given by its ID, a set of activated users, given by their ID, i.e.
             // those users who have retweeted within this cascade before, per worker. Since this map
             // is required within two closures, dynamic borrow checks are required.
-            let activations_influences: Rc<RefCell<HashMap<u64, HashSet<u64>>>> = Rc::new(RefCell::new(HashMap::new()));
+            let activations_influences: Rc<RefCell<HashMap<u64, HashMap<u64, u64>>>> = Rc::new(RefCell::new(HashMap::new()));
             let activations_possible_influences = activations_influences.clone();
 
             let probe = graph_stream
@@ -71,7 +71,10 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
                 .exchange(|influence: &InfluenceEdge<u64>| influence.influencer)
                 .filter(move |influence: &InfluenceEdge<u64>| {
                     let is_influencer_activated: bool = match activations_influences.borrow().get(&influence.cascade_id) {
-                        Some(users) => users.contains(&influence.influencer),
+                        Some(users) => match users.get(&influence.influencer) {
+                            Some(activation_timestamp) => &influence.timestamp >= activation_timestamp,
+                            None => false
+                        },
                         None => false
                     };
                     let is_influencer_original_user: bool = influence.influencer == influence.original_user;
