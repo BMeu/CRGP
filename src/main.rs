@@ -1,6 +1,6 @@
 extern crate crgp;
+extern crate fine_grained;
 extern crate serde_json;
-extern crate stopwatch;
 extern crate timely;
 
 use std::cell::RefCell;
@@ -10,7 +10,7 @@ use std::io::BufReader;
 use std::io::prelude::*;
 use std::rc::Rc;
 
-use stopwatch::Stopwatch;
+use fine_grained::Stopwatch;
 use timely::dataflow::*;
 use timely::dataflow::operators::*;
 
@@ -90,7 +90,7 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
 
             (graph_input, retweet_input, probe)
         });
-        let time_to_setup: i64 = stopwatch.elapsed_ms();
+        let time_to_setup: u64 = stopwatch.lap();
 
 
 
@@ -99,7 +99,6 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
          ****************/
 
         // Load the social graph from a file into the computation (only on the first worker).
-        stopwatch.restart();
         let mut number_of_friendships: u64 = 0;
         if index == 0 {
             let friendship_file = File::open(&friendship_dataset).expect("Could not open friendship dataset.");
@@ -128,7 +127,7 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
 
         // Process the entire social graph before continuing.
         computation.sync(&probe, &mut graph_input, &mut retweet_input);
-        let time_to_process_social_network: i64 = stopwatch.elapsed_ms();
+        let time_to_process_social_network: u64 = stopwatch.lap();
 
 
 
@@ -137,7 +136,6 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
          ************/
 
         // Load and process the retweets.
-        stopwatch.restart();
         let mut number_of_retweets: usize = 0;
         if index == 0 {
             let retweet_file = File::open(&retweet_dataset).expect("Could not open retweet file.");
@@ -155,7 +153,7 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
             }
             computation.sync(&probe, &mut retweet_input, &mut graph_input);
         }
-        let time_to_process_retweets: i64 = stopwatch.elapsed_ms();
+        let time_to_process_retweets: u64 = stopwatch.lap();
 
 
 
@@ -163,6 +161,7 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
          * RESULTS *
          ***********/
 
+        stopwatch.stop();
         if index == 0 {
             println!();
             println!("Results:");
@@ -170,12 +169,12 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
             println!("  #Retweets: {}", number_of_retweets);
             println!("  Batch Size: {}", batch_size);
             println!();
-            println!("  Time to set up the computation: {}ms", time_to_setup);
-            println!("  Time to load and process the social network: {}ms", time_to_process_social_network);
-            println!("  Time to load and process the retweets: {}ms", time_to_process_retweets);
-            println!("  Total time: {}ms", time_to_setup + time_to_process_social_network + time_to_process_retweets);
+            println!("  Time to set up the computation: {:.3}ms", time_to_setup as f64 / 1_000_000.0f64);
+            println!("  Time to load and process the social network: {:.3}ms", time_to_process_social_network as f64 / 1_000_000.0f64);
+            println!("  Time to load and process the retweets: {:.3}ms", time_to_process_retweets as f64 / 1_000_000.0f64);
+            println!("  Total time: {:.3}ms", stopwatch.total_time() as f64 / 1_000_000.0f64);
             println!();
-            println!("  Retweet Processing Rate: {:.3} RT/s", number_of_retweets as f64 / (time_to_process_retweets as f64 / 1_000.0f64))
+            println!("  Retweet Processing Rate: {:.3} RT/s", number_of_retweets as f64 / (time_to_process_retweets as f64 / 1_000_000_000.0f64))
         }
     }).unwrap();
 }
