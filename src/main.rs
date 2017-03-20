@@ -3,20 +3,19 @@ extern crate fine_grained;
 extern crate serde_json;
 extern crate timely;
 
-use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
-use std::rc::Rc;
 
 use fine_grained::Stopwatch;
 use timely::dataflow::*;
+use timely::dataflow::channels::pact::{Exchange, Pipeline};
 use timely::dataflow::operators::*;
+use timely::dataflow::operators::binary::Binary;
 
 use crgp::social_graph::edge::*;
 use crgp::timely_extensions::Sync;
-use crgp::timely_extensions::operators::*;
 use crgp::twitter::*;
 
 fn main() {
@@ -60,27 +59,75 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
             let (graph_input, graph_stream) = scope.new_input();
             let (retweet_input, retweet_stream) = scope.new_input();
 
+            // Friendship edges.
+            let mut edges: HashMap<u64, HashSet<u64>> = HashMap::new();
+
             // For each cascade, given by its ID, a set of activated users, given by their ID, i.e.
-            // those users who have retweeted within this cascade before, per worker. Since this map
-            // is required within two closures, dynamic borrow checks are required.
-            let activations_influences: Rc<RefCell<HashMap<u64, HashMap<u64, u64>>>> = Rc::new(RefCell::new(HashMap::new()));
-            let activations_possible_influences = activations_influences.clone();
+            // those users who have retweeted within this cascade before, per worker.
+            let mut activations: HashMap<u64, HashMap<u64, u64>> = HashMap::new();
 
-            let probe = graph_stream
-                .find_possible_influences(retweet_stream, activations_possible_influences)
-                .exchange(|influence: &InfluenceEdge<u64>| influence.influencer)
-                .filter(move |influence: &InfluenceEdge<u64>| {
-                    let is_influencer_activated: bool = match activations_influences.borrow().get(&influence.cascade_id) {
-                        Some(users) => match users.get(&influence.influencer) {
-                            Some(activation_timestamp) => &influence.timestamp >= activation_timestamp,
-                            None => false
-                        },
-                        None => false
-                    };
-                    let is_influencer_original_user: bool = influence.influencer == influence.original_user;
+            let probe = retweet_stream
+                .broadcast()
+                .binary_stream(
+                    &graph_stream,
+                    Pipeline,
+                    Exchange::new(|edge: &DirectedEdge<u64>| edge.source),
+                    "FindInfluences",
+                    move |retweets, friendships, output| {
+                        // Input 1: Process the retweets.
+                        retweets.for_each(|time, retweet_data| {
+                           for ref retweet in retweet_data.iter() {
+                               let retweet: &Tweet = retweet;
 
-                    is_influencer_activated || is_influencer_original_user
-                })
+                               // Skip all tweets that are not retweets.
+                               let original_tweet: &Tweet = match retweet.retweeted_status {
+                                   Some(ref t) => t,
+                                   None => continue
+                               };
+
+                               // Mark this user as active for this cascade.
+                               activations.entry(original_tweet.id)
+                                   .or_insert(HashMap::new())
+                                   .entry(retweet.user.id)
+                                   .or_insert(retweet.created_at);
+
+                               // If this is the worker storing the retweeting user's friends, find
+                               // all influences.
+                               let friends = match edges.get(&retweet.user.id) {
+                                   Some(friends) => friends,
+                                   None => continue
+                               };
+
+                               for &friend in friends {
+                                   let is_influencer_activated: bool = match activations.get(&original_tweet.id) {
+                                       Some(users) => match users.get(&friend) {
+                                           Some(activation_timestamp) => &retweet.created_at >= activation_timestamp,
+                                           None => false
+                                       },
+                                       None => false
+                                   };
+                                   let is_influencer_original_user: bool = friend == original_tweet.user.id;
+
+                                   if !(is_influencer_original_user || is_influencer_activated) {
+                                       continue;
+                                   }
+
+                                   let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at, original_tweet.id, original_tweet.user.id);
+                                   output.session(&time).give(influence);
+                               }
+                           }
+                        });
+
+                        // Input 2: Capture all friends for each user.
+                        friendships.for_each(|_time, friendship_data| {
+                            for ref friends in friendship_data.iter() {
+                                edges.entry(friends.source)
+                                    .or_insert(HashSet::new())
+                                    .insert(friends.destination);
+                            }
+                        });
+                    }
+                )
                 .inspect(move |x| {
                     if print_result {
                         println!("Worker {}: {:?}", index, x);
