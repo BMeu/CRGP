@@ -4,8 +4,6 @@
 //! new ``Stream`` objects as output. These custom operators are specialized for the use in
 //! ``CRGP``.
 
-pub use self::find_possible_influences::FindPossibleInfluences;
 pub use self::reconstruct::Reconstruct;
 
-pub mod find_possible_influences;
 pub mod reconstruct;
