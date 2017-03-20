@@ -72,7 +72,7 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
                     &graph_stream,
                     Pipeline,
                     Exchange::new(|edge: &DirectedEdge<u64>| edge.source),
-                    "FindInfluences",
+                    "Reconstruct",
                     move |retweets, friendships, output| {
                         // Input 1: Process the retweets.
                         retweets.for_each(|time, retweet_data| {
