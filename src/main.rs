@@ -99,6 +99,7 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
                                };
 
                                for &friend in friends {
+                                   // Only send the influence if the user has been activated before.
                                    let is_influencer_activated: bool = match activations.get(&original_tweet.id) {
                                        Some(users) => match users.get(&friend) {
                                            Some(activation_timestamp) => &retweet.created_at >= activation_timestamp,
@@ -107,7 +108,6 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
                                        None => false
                                    };
                                    let is_influencer_original_user: bool = friend == original_tweet.user.id;
-
                                    if !(is_influencer_original_user || is_influencer_activated) {
                                        continue;
                                    }
