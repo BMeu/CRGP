@@ -5,5 +5,7 @@
 //! ``CRGP``.
 
 pub use self::find_possible_influences::FindPossibleInfluences;
+pub use self::reconstruct::Reconstruct;
 
 pub mod find_possible_influences;
+pub mod reconstruct;
