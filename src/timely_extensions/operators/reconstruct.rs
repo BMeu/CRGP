@@ -1,6 +1,6 @@
 //! Reconstruct retweet cascades.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::hash::*;
 
 use timely::dataflow::{Stream, Scope};
@@ -25,7 +25,7 @@ impl<G: Scope> Reconstruct<G> for Stream<G, Tweet>
 where G::Timestamp: Hash {
     fn reconstruct(&self, graph: Stream<G, DirectedEdge<u64>>) -> Stream<G, InfluenceEdge<u64>> {
         // For each user, given by their ID, the set of their friends, given by their ID.
-        let mut edges: HashMap<u64, HashSet<u64>> = HashMap:: new();
+        let mut edges: HashMap<u64, Vec<u64>> = HashMap:: new();
 
         // For each cascade, given by its ID, a set of activated users, given by their ID, i.e.
         // those users who have retweeted within this cascade before, per worker.
@@ -83,10 +83,10 @@ where G::Timestamp: Hash {
 
                 // Input 2: Capture all friends for each user.
                 friendships.for_each(|_time, friendship_data| {
-                    for ref friends in friendship_data.iter() {
-                        edges.entry(friends.source)
-                            .or_insert(HashSet::new())
-                            .insert(friends.destination);
+                    for ref friendship in friendship_data.iter() {
+                        edges.entry(friendship.source)
+                            .or_insert(Vec::new())
+                            .push(friendship.destination);
                     };
                 });
             }
