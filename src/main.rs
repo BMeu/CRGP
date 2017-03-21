@@ -45,12 +45,15 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
         // Reconstruct the cascade.
         // Algorithm:
         // 1. Send all friendship edges (u1 -> u2, u1 follows u2) to respective workers (based on u1).
-        // 2. Send a retweet made by u* to the worker where u*'s friendship edges are.
-        // 3. On this worker: mark u* and the original user u as active for this cascade.
-        // 4. On this worker: for all friends of u*, create (possible) influence edges (PIE) for this
-        //    cascade, from the friend u' to u*, with timestamp of u*'s retweet.
-        // 5. Send each PIE to the worker which stores u'.
-        // 6. On this worker: filter all PIEs, output only those where u' has been activated before.
+        // 2. Broadcast the current retweet r* to all workers.
+        // 3. Each worker marks the user u* of r* as activated for the retweet's cascade.
+        // 4. The worker storing u*'s friends produces the influence edges:
+        //    a. If u* has more friends than there are activated users for this cascade, iterate
+        //       over the cascade's activations. Otherwise, iterate over u*'s friends.
+        //    b. For the current user u in the iteration, produce an influence edge if:
+        //       i.   For activation iteration: u is a friend of u*, and
+        //       ii.  (The retweet occurred after the activation of u, or
+        //       iii. u is the poster of the original tweet).
         let (mut graph_input, mut retweet_input, probe) = computation.scoped::<u64, _, _>(move |scope| {
 
             // Create the inputs.
