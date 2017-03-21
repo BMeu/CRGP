@@ -114,24 +114,32 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
          * RETWEETS *
          ************/
 
-        // Load and process the retweets.
-        let mut number_of_retweets: usize = 0;
-        if index == 0 {
+        // Load the retweets (on the first worker).
+        let retweets: Vec<Tweet> = if index == 0 {
             let retweet_file = File::open(&retweet_dataset).expect("Could not open retweet file.");
             let retweet_file = BufReader::new(retweet_file);
+            retweet_file.lines()
+                .map(|r| serde_json::from_str::<Tweet>(&r.expect("{}")).unwrap())
+                .collect()
+        } else {
+            Vec::new()
+        };
+        let number_of_retweets: usize = retweets.len();
+        let time_to_load_retweets: u64 = stopwatch.lap();
 
-            for retweet in retweet_file.lines().map(|r| serde_json::from_str::<Tweet>(&r.expect("{}")).unwrap()) {
-                retweet_input.send(retweet);
+        // Process the retweets.
+        let mut round = 0;
+        for retweet in retweets {
+            retweet_input.send(retweet);
 
-                let is_batch_complete: bool = number_of_retweets % batch_size == (batch_size - 1);
-                if is_batch_complete {
-                    computation.sync(&probe, &mut retweet_input, &mut graph_input);
-                }
-
-                number_of_retweets += 1;
+            let is_batch_complete: bool = round % batch_size == (batch_size - 1);
+            if is_batch_complete {
+                computation.sync(&probe, &mut retweet_input, &mut graph_input);
             }
-            computation.sync(&probe, &mut retweet_input, &mut graph_input);
+
+            round += 1;
         }
+        computation.sync(&probe, &mut retweet_input, &mut graph_input);
         let time_to_process_retweets: u64 = stopwatch.lap();
 
 
@@ -150,7 +158,8 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
             println!();
             println!("  Time to set up the computation: {:.3}ms", time_to_setup as f64 / 1_000_000.0f64);
             println!("  Time to load and process the social network: {:.3}ms", time_to_process_social_network as f64 / 1_000_000.0f64);
-            println!("  Time to load and process the retweets: {:.3}ms", time_to_process_retweets as f64 / 1_000_000.0f64);
+            println!("  Time to load the retweets: {:.3}ms", time_to_load_retweets as f64 / 1_000_000.0f64);
+            println!("  Time to process the retweets: {:.3}ms", time_to_process_retweets as f64 / 1_000_000.0f64);
             println!("  Total time: {:.3}ms", stopwatch.total_time() as f64 / 1_000_000.0f64);
             println!();
             println!("  Retweet Processing Rate: {:.3} RT/s", number_of_retweets as f64 / (time_to_process_retweets as f64 / 1_000_000_000.0f64))
