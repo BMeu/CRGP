@@ -63,9 +63,12 @@ fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: u
             let probe = retweet_stream
                 .broadcast()
                 .reconstruct(graph_stream)
-                .inspect(move |x| {
+                .inspect(move |influence: &InfluenceEdge<u64>| {
                     if print_result {
-                        println!("Worker {}: {:?}", index, x);
+                        println!("Worker {worker}: {influencer} -> {influencee} at time {time} (cascade {cascade})",
+                                 worker = index, influencer = influence.influencer,
+                                 influencee = influence.influencee, time = influence.timestamp,
+                                 cascade = influence.cascade_id);
                     };
                 })
                 .probe().0;
