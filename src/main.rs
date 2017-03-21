@@ -1,3 +1,5 @@
+//! Execute the graph-parallel cascade reconstruction from the command line.
+
 extern crate crgp;
 extern crate fine_grained;
 extern crate getopts;
