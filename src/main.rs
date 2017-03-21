@@ -30,10 +30,9 @@ fn main() {
     // Define the program options.
     let mut options = Options::new();
     options.optopt("b", "batch-size",
-                   &format!("Size of retweet batches. [Default: {default}]",
-                            default = default_batch_size),
-                   "SIZE");
-    options.optopt("f", "hostfile", "A text file specifying \"hostname:port\" per line in order of process identity.", "FILE");
+                   &format!("Size of retweet batches. [Default: {default}]", default = default_batch_size), "SIZE");
+    options.optopt("f", "hostfile", "A text file specifying \"hostname:port\" per line in order of process identity.",
+                   "FILE");
     options.optflag("h", "help", "Show this usage message and exit.");
     options.optopt("n", "processes", "Number of processes involved in the computation.", "PROCESSES");
     options.optopt("p", "process", "Identity of this process; from 0 to n-1.", "ID");

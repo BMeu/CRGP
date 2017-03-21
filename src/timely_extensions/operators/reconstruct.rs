@@ -12,12 +12,12 @@ use twitter::Tweet;
 
 /// Reconstruct retweet cascades.
 pub trait Reconstruct<G: Scope> {
-    /// Reconstruct retweet cascades, that is, find all influences edges within a social graph,
-    /// distinguishing between cascades.
+    /// Reconstruct retweet cascades, that is, find all influences edges within a social graph, distinguishing between
+    /// cascades.
     ///
-    /// For a social graph, determine all influences for a retweet within that specific retweet
-    /// cascade. The ``Stream`` of retweets may contain multiple retweet cascades. Each retweet in
-    /// the retweet stream is expected to be broadcast to all workers before calling this operator.
+    /// For a social graph, determine all influences for a retweet within that specific retweet cascade. The ``Stream``
+    /// of retweets may contain multiple retweet cascades. Each retweet in the retweet stream is expected to be
+    /// broadcast to all workers before calling this operator.
     fn reconstruct(&self, graph: Stream<G, DirectedEdge<u64>>) -> Stream<G, InfluenceEdge<u64>>;
 }
 
@@ -27,9 +27,9 @@ where G::Timestamp: Hash {
         // For each user, given by their ID, the set of their friends, given by their ID.
         let mut edges: HashMap<u64, Vec<u64>> = HashMap:: new();
 
-        // For each cascade, given by its ID, a set of activated users, given by their ID, i.e.
-        // those users who have retweeted within this cascade before, per worker. Users are
-        // associated with the time at which they first retweeted within a cascade.
+        // For each cascade, given by its ID, a set of activated users, given by their ID, i.e. those users who have
+        // retweeted within this cascade before, per worker. Users are associated with the time at which they first
+        // retweeted within a cascade.
         let mut activations: HashMap<u64, HashMap<u64, u64>> = HashMap::new();
 
         self.binary_stream(
@@ -75,7 +75,8 @@ where G::Timestamp: Hash {
                                 };
                                 let is_influencer_original_user: bool = friend == original_tweet.user.id;
                                 if is_influencer_activated || is_influencer_original_user {
-                                    let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at, original_tweet.id);
+                                    let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at,
+                                                                       original_tweet.id);
                                     output.session(&time).give(influence);
                                 }
                             }
@@ -92,7 +93,8 @@ where G::Timestamp: Hash {
                                 let is_influencer_activated: bool = &retweet.created_at >= activation_timestamp;
                                 let is_influencer_original_user: bool = friend == original_tweet.user.id;
                                 if is_influencer_activated || is_influencer_original_user {
-                                    let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at, original_tweet.id);
+                                    let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at,
+                                                                       original_tweet.id);
                                     output.session(&time).give(influence);
                                 }
                             }

@@ -25,8 +25,8 @@ unsafe_abomonate!(DirectedEdge<u64> : source, destination);
 
 /// A directed edge between nodes of type ``T`` representing influence in a Retweet cascade.
 ///
-/// The influence flows from the ``influencer`` to the ``influencee`` and is valid only for the
-/// cascade given by ``cascade_id``. The influence occurs at time ``timestamp``.
+/// The influence flows from the ``influencer`` to the ``influencee`` and is valid only for the cascade given by
+/// ``cascade_id``. The influence occurs at time ``timestamp``.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct InfluenceEdge<T>
 where T: Abomonation {
@@ -49,8 +49,8 @@ where T: Abomonation {
 
 impl<T> InfluenceEdge<T>
 where T: Abomonation {
-    /// Construct a new influence edge from ``influencer`` to ``influencee`` for the cascade
-    /// ``cascade_id``, where the ``influencee`` was influenced at time ``timestamp``.
+    /// Construct a new influence edge from ``influencer`` to ``influencee`` for the cascade ``cascade_id``, where the
+    /// ``influencee`` was influenced at time ``timestamp``.
     pub fn new(influencer: T, influencee: T, timestamp: u64, cascade_id: u64) -> InfluenceEdge<T> {
         InfluenceEdge { influencer: influencer, influencee: influencee, timestamp: timestamp,
                         cascade_id: cascade_id }

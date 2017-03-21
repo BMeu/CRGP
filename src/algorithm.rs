@@ -16,7 +16,8 @@ use timely_extensions::operators::Reconstruct;
 use twitter::*;
 
 /// Execute the algorithm.
-pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: usize, print_result: bool, timely_args: I)
+pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: usize, print_result: bool,
+                  timely_args: I)
     where I: Iterator<Item=String> {
     timely::execute_from_args(timely_args, move |computation| {
         let index = computation.index();
@@ -32,8 +33,8 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
         // 2. Broadcast the current retweet r* to all workers.
         // 3. Each worker marks the user u* of r* as activated for the retweet's cascade.
         // 4. The worker storing u*'s friends produces the influence edges:
-        //    a. If u* has more friends than there are activated users for this cascade, iterate
-        //       over the cascade's activations. Otherwise, iterate over u*'s friends.
+        //    a. If u* has more friends than there are activated users for this cascade, iterate over the cascade's
+        //       activations. Otherwise, iterate over u*'s friends.
         //    b. For the current user u in the iteration, produce an influence edge if:
         //       i.   For activation iteration: u is a friend of u*, and
         //       ii.  (The retweet occurred after the activation of u, or
@@ -50,9 +51,8 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
                 .inspect(move |influence: &InfluenceEdge<u64>| {
                     if print_result {
                         println!("Worker {worker}: {influencer} -> {influencee} at time {time} (cascade {cascade})",
-                                 worker = index, influencer = influence.influencer,
-                                 influencee = influence.influencee, time = influence.timestamp,
-                                 cascade = influence.cascade_id);
+                                 worker = index, influencer = influence.influencer, influencee = influence.influencee,
+                                 time = influence.timestamp, cascade = influence.cascade_id);
                     };
                 })
                 .probe().0;
@@ -146,16 +146,12 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
             println!("  #Retweets: {}", number_of_retweets);
             println!("  Batch Size: {}", batch_size);
             println!();
-            println!("  Time to set up the computation: {:.3}ms",
-                     time_to_setup as f64 / 1_000_000.0f64);
+            println!("  Time to set up the computation: {:.3}ms", time_to_setup as f64 / 1_000_000.0f64);
             println!("  Time to load and process the social network: {:.3}ms",
                      time_to_process_social_network as f64 / 1_000_000.0f64);
-            println!("  Time to load the retweets: {:.3}ms",
-                     time_to_load_retweets as f64 / 1_000_000.0f64);
-            println!("  Time to process the retweets: {:.3}ms",
-                     time_to_process_retweets as f64 / 1_000_000.0f64);
-            println!("  Total time: {:.3}ms",
-                     stopwatch.total_time() as f64 / 1_000_000.0f64);
+            println!("  Time to load the retweets: {:.3}ms", time_to_load_retweets as f64 / 1_000_000.0f64);
+            println!("  Time to process the retweets: {:.3}ms", time_to_process_retweets as f64 / 1_000_000.0f64);
+            println!("  Total time: {:.3}ms", stopwatch.total_time() as f64 / 1_000_000.0f64);
             println!();
             println!("  Retweet Processing Rate: {:.3} RT/s",
                      number_of_retweets as f64 / (time_to_process_retweets as f64 / 1_000_000_000.0f64))
