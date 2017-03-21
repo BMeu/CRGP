@@ -4,6 +4,7 @@ version = "0.1.0"
 dependencies = [
  "abomonation 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "fine_grained 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "getopts 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 0.9.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 0.9.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 0.9.3 (registry+https://github.com/rust-lang/crates.io-index)",
