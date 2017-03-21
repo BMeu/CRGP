@@ -44,20 +44,17 @@ where T: Abomonation {
     pub timestamp: u64,
 
     /// The ID of the Retweet cascade for which this influence is valid.
-    pub cascade_id: u64,
-
-    /// The user who posted the original tweet.
-    pub original_user: T
+    pub cascade_id: u64
 }
 
 impl<T> InfluenceEdge<T>
 where T: Abomonation {
     /// Construct a new influence edge from ``influencer`` to ``influencee`` for the cascade
     /// ``cascade_id``, where the ``influencee`` was influenced at time ``timestamp``.
-    pub fn new(influencer: T, influencee: T, timestamp: u64, cascade_id: u64, original_user: T) -> InfluenceEdge<T> {
+    pub fn new(influencer: T, influencee: T, timestamp: u64, cascade_id: u64) -> InfluenceEdge<T> {
         InfluenceEdge { influencer: influencer, influencee: influencee, timestamp: timestamp,
-                        cascade_id: cascade_id , original_user: original_user}
+                        cascade_id: cascade_id }
     }
 }
 
-unsafe_abomonate!(InfluenceEdge<u64> : influencer, influencee, timestamp, cascade_id, original_user);
+unsafe_abomonate!(InfluenceEdge<u64> : influencer, influencee, timestamp, cascade_id);
