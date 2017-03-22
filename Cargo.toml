@@ -4,8 +4,8 @@ version = "0.1.0"
 authors = ["Bastian Meyer <bastian@bastianmeyer.eu>"]
 description = "A graph-parallel approach to reconstructing the influences within Retweet cascades."
 
-[[bin]]
-name = "crgp_bin"
+[lib]
+name = "crgplib"
 
 [dependencies]
 abomonation = "0.4"

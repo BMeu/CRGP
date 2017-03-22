@@ -2,13 +2,13 @@
 
 #[macro_use]
 extern crate clap;
-extern crate crgp;
+extern crate crgplib;
 
 use std::process;
 
 use clap::{Arg, ArgMatches};
 
-use crgp::algorithm;
+use crgplib::algorithm;
 
 /// The exit codes returned by the program.
 pub enum ExitCode {
