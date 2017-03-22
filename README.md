@@ -26,10 +26,17 @@ $ cargo run --release -- -h
 The friends file is currently a text file, on each line specifying a user followed by a list of all their friends. Each
 user and friend is given by their user ID. For an example, see [`data/friends_test.txt`](data/friends_test.txt).
 
+The user is separated from their friends by a colon (`:`). The list of friends is comma-separated (`,`). For example, if
+user `1` is friends with users `2` and `4`, the line would look like this:
+
+```text
+1:2,4
+```
+
 ### Retweets
 
 The retweet file is a list of JSON-encoded Retweets, each Retweet on a new line. It may contain Retweets from multiple
-cascades. For an example, see ['data/cascade_test.json'](data/cascade_test.json).
+cascades. For an example, see [`data/cascade_test.json`](data/cascade_test.json).
 
 Each JSON object must contain the following fields (line breaks added for readibility):
 
