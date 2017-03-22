@@ -17,6 +17,34 @@ This will compile `CRGP` with all its dependencies and run the binary. A full li
 $ cargo run --release -- -h
 ```
 
+## Example
+
+This repository includes a few data sets you can use to test `CRGP`.
+
+### Test Data
+
+Two tiny Retweet cascades (each has three Retweets) on a tiny social graph.
+ 
+```bash
+$ cargo run --release -- -r data/friends_test.txt data/cascade_test.json
+```
+
+### Real-Life Data
+
+Two small Retweet cascades from Twitter. The social graph is an extract from the actual Twitter graph.
+
+A single cascade with 3,500 Retweets:
+
+```bash
+$ cargo run --release -- data/friends.txt data/cascade3500.json
+```
+
+A single cascade with 7,226 Retweets:
+
+```bash
+$ cargo run --release -- data/friends.txt data/cascade7226.json
+```
+
 ## File Formats
 
 `CRGP` requires two input files: a list of friends for each user and the retweets.
