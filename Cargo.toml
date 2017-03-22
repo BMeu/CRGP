@@ -1,15 +1,16 @@
 [package]
 name = "crgp"
 version = "0.1.0"
-authors = ["BMeu <bastian@bastianmeyer.eu>"]
+authors = ["Bastian Meyer <bastian@bastianmeyer.eu>"]
+description = "A graph-parallel approach to reconstructing the influences within Retweet cascades."
 
 [[bin]]
 name = "crgp_bin"
 
 [dependencies]
 abomonation = "0.4"
+clap = "~2.21.0"
 fine_grained = "0.1"
-getopts = "0.2"
 serde = "0.9"
 serde_derive = "0.9"
 serde_json = "0.9"
