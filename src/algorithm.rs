@@ -1,5 +1,6 @@
 //! The actual algorithm for reconstructing retweet cascades.
 
+use std::result::Result as StdResult;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
@@ -9,7 +10,11 @@ use serde_json;
 use timely;
 use timely::dataflow::*;
 use timely::dataflow::operators::*;
+use timely_communication::initialize::WorkerGuards;
 
+use Error;
+use Result;
+use Statistics;
 use social_graph::edge::*;
 use timely_extensions::Sync;
 use timely_extensions::operators::Reconstruct;
@@ -17,9 +22,10 @@ use twitter::*;
 
 /// Execute the algorithm.
 pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: usize, print_result: bool,
-                  timely_args: I)
+                  timely_args: I) -> Result<Statistics>
     where I: Iterator<Item=String> {
-    timely::execute_from_args(timely_args, move |computation| {
+    let result: WorkerGuards<Result<Statistics>> = timely::execute_from_args(timely_args,
+                                                                             move |computation| -> Result<Statistics> {
         let index = computation.index();
         let mut stopwatch = Stopwatch::start_new();
 
@@ -70,7 +76,7 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
         // Load the social graph from a file into the computation (only on the first worker).
         let mut number_of_friendships: u64 = 0;
         if index == 0 {
-            let friendship_file = File::open(&friendship_dataset).expect("Could not open friendship dataset.");
+            let friendship_file = File::open(&friendship_dataset)?;
             let friendship_file = BufReader::new(friendship_file);
 
             // Each line contains all friendships of a single user.
@@ -106,15 +112,16 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
 
         // Load the retweets (on the first worker).
         let retweets: Vec<Tweet> = if index == 0 {
-            let retweet_file = File::open(&retweet_dataset).expect("Could not open retweet file.");
+            let retweet_file = File::open(&retweet_dataset)?;
             let retweet_file = BufReader::new(retweet_file);
+            // Parse the lines while discarding those that are invalid.
             retweet_file.lines()
-                .map(|r| serde_json::from_str::<Tweet>(&r.expect("{}")).unwrap())
+                .filter_map(|r| serde_json::from_str::<Tweet>(&r.expect("")).ok())
                 .collect()
         } else {
             Vec::new()
         };
-        let number_of_retweets: usize = retweets.len();
+        let number_of_retweets: u64 = retweets.len() as u64;
         let time_to_load_retweets: u64 = stopwatch.lap();
 
         // Process the retweets.
@@ -134,27 +141,50 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
 
 
 
-        /***********
-         * RESULTS *
-         ***********/
+        /**********
+         * FINISH *
+         **********/
 
         stopwatch.stop();
+        Ok(Statistics::new(number_of_friendships, number_of_retweets, batch_size, time_to_setup,
+                           time_to_process_social_network, time_to_load_retweets, time_to_process_retweets,
+                           stopwatch.total_time()))
+    })?;
+
+    // The result returned from the computation is several layers of nested Result types. Flatten them to the expected
+    // return type. Return the statistics from the first worker, but only if no worker returned an error.
+    let worker_results: Vec<(usize, Result<Statistics>)> = result.join()
+        .into_iter()
+        .map(|worker_result: StdResult<Result<Statistics>, String>| {  // Flatten the nested result types.
+            match worker_result {
+                Ok(result) => {
+                    match result {
+                        Ok(statistics) => Ok(statistics),
+                        Err(error) => Err(error)
+                    }
+                },
+                Err(message) => Err(Error::from(message))
+            }
+        })
+        .enumerate()
+        .rev()
+        .collect();
+
+    // The worker results have been enumerated with their worker's index, and this list has been reversed, i.e. the
+    // first worker is now at the end. For all workers but the first one, immediately return their failure as this
+    // function's return value if they failed. If none of these workers failed return the result of the first worker.
+    for (index, worker_result) in worker_results {
         if index == 0 {
-            println!();
-            println!("Results:");
-            println!("  #Friendships: {}", number_of_friendships);
-            println!("  #Retweets: {}", number_of_retweets);
-            println!("  Batch Size: {}", batch_size);
-            println!();
-            println!("  Time to set up the computation: {:.3}ms", time_to_setup as f64 / 1_000_000.0f64);
-            println!("  Time to load and process the social network: {:.3}ms",
-                     time_to_process_social_network as f64 / 1_000_000.0f64);
-            println!("  Time to load the retweets: {:.3}ms", time_to_load_retweets as f64 / 1_000_000.0f64);
-            println!("  Time to process the retweets: {:.3}ms", time_to_process_retweets as f64 / 1_000_000.0f64);
-            println!("  Total time: {:.3}ms", stopwatch.total_time() as f64 / 1_000_000.0f64);
-            println!();
-            println!("  Retweet Processing Rate: {:.3} RT/s",
-                     number_of_retweets as f64 / (time_to_process_retweets as f64 / 1_000_000_000.0f64))
+            return worker_result
         }
-    }).unwrap();
+        else {
+            match worker_result {
+                Ok(_) => continue,
+                Err(_) => return worker_result
+            }
+        }
+    }
+
+    // This could only happen if there were no workers at all.
+    Err(Error::from("No workers".to_string()))
 }
