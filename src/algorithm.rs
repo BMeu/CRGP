@@ -86,14 +86,17 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
                     continue;
                 }
 
-                let user_id: u64 = user[0].parse().unwrap();
+                let user_id: u64 = match user[0].parse() {
+                    Ok(id) => id,
+                    Err(_) => continue
+                };
 
                 let has_friends = user.len() > 1 && !user[1].is_empty();
                 if !has_friends {
                     continue;
                 }
 
-                for friend_id in user[1].split(',').map(|f| f.parse::<u64>().unwrap()) {
+                for friend_id in user[1].split(',').filter_map(|f| { f.parse::<u64>().ok() }) {
                     number_of_friendships += 1;
                     graph_input.send(DirectedEdge::new(user_id, friend_id));
                 }
