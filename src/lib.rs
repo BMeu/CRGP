@@ -1,6 +1,9 @@
 //! The library for reconstructing Retweet cascades using a graph-parallel approach.
 
-#![warn(missing_docs)]
+#![warn(missing_docs,
+        missing_debug_implementations, missing_copy_implementations,
+        trivial_casts, trivial_numeric_casts,
+        unused_extern_crates, unused_import_braces, unused_qualifications, unused_results)]
 
 #[macro_use]
 extern crate abomonation;

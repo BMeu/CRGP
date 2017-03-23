@@ -53,7 +53,7 @@ where G::Timestamp: Hash {
                         // Mark this user as active for this cascade.
                         let ref mut cascade_activations: HashMap<u64, u64> = *activations.entry(original_tweet.id)
                             .or_insert(HashMap::new());
-                        cascade_activations.entry(retweet.user.id)
+                        let _ = cascade_activations.entry(retweet.user.id)
                             .or_insert(retweet.created_at);
 
                         // If this is the worker storing the retweeting user's friends, find

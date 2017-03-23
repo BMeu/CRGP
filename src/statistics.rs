@@ -3,6 +3,7 @@
 /// Collection of statistics about the execution of the algorithm.
 ///
 /// Times are given in nanoseconds.
+#[derive(Clone, Copy, Debug)]
 pub struct Statistics {
     /// Number of friendships in the social graph.
     number_of_friendships: u64,
