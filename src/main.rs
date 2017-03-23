@@ -9,6 +9,11 @@
 //!
 //! for a full list of usage information.
 
+#![warn(missing_docs,
+        missing_debug_implementations, missing_copy_implementations,
+        trivial_casts, trivial_numeric_casts,
+        unused_extern_crates, unused_import_braces, unused_qualifications, unused_results)]
+
 #[macro_use]
 extern crate clap;
 extern crate crgplib;
@@ -21,6 +26,7 @@ use crgplib::Error;
 use crgplib::algorithm;
 
 /// The exit codes returned by the program.
+#[derive(Clone, Copy, Debug)]
 pub enum ExitCode {
     /// Successful (i.e. expected) execution (Code: `0`).
     Success = 0,
