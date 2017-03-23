@@ -37,3 +37,17 @@ impl<T> InfluenceEdge<T>
 }
 
 unsafe_abomonate!(InfluenceEdge<u64> : influencer, influencee, timestamp, cascade_id);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new() {
+        let edge: InfluenceEdge<f64> = InfluenceEdge::new(42.0, 13.37, 12345, 67890);
+        assert_eq!(edge.influencer, 42.0);
+        assert_eq!(edge.influencee, 13.37);
+        assert_eq!(edge.timestamp, 12345);
+        assert_eq!(edge.cascade_id, 67890);
+    }
+}

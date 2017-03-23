@@ -85,3 +85,76 @@ impl Statistics {
         (self.number_of_retweets as f64 / (self.time_to_process_retweets as f64 / 1_000_000_000.0f64)) as u64
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new() {
+        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
+        assert_eq!(statistics.number_of_friendships, 1);
+        assert_eq!(statistics.number_of_retweets, 2);
+        assert_eq!(statistics.batch_size, 3);
+        assert_eq!(statistics.time_to_setup, 4);
+        assert_eq!(statistics.time_to_process_social_graph, 5);
+        assert_eq!(statistics.time_to_load_retweets, 6);
+        assert_eq!(statistics.time_to_process_retweets, 7);
+        assert_eq!(statistics.total_time, 8);
+    }
+
+    #[test]
+    fn number_of_friendships() {
+        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
+        assert_eq!(statistics.number_of_friendships(), 1);
+    }
+
+    #[test]
+    fn number_of_retweets() {
+        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
+        assert_eq!(statistics.number_of_retweets(), 2);
+    }
+
+    #[test]
+    fn batch_size() {
+        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
+        assert_eq!(statistics.batch_size(), 3);
+    }
+
+    #[test]
+    fn time_to_setup() {
+        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
+        assert_eq!(statistics.time_to_setup(), 4);
+    }
+
+    #[test]
+    fn time_to_process_social_graph() {
+        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
+        assert_eq!(statistics.time_to_process_social_graph(), 5);
+    }
+
+    #[test]
+    fn time_to_load_retweets() {
+        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
+        assert_eq!(statistics.time_to_load_retweets(), 6);
+    }
+
+    #[test]
+    fn time_to_process_retweets() {
+        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
+        assert_eq!(statistics.time_to_process_retweets(), 7);
+    }
+
+    #[test]
+    fn total_time() {
+        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
+        assert_eq!(statistics.total_time(), 8);
+    }
+
+    #[test]
+    fn retweet_processing_rate() {
+        let statistics = Statistics::new(0, 3, 0, 0, 0, 0, 2_000_000_000, 0);
+        // 1.5 RT/s => 1 RT/s.
+        assert_eq!(statistics.retweet_processing_rate(), 1);
+    }
+}

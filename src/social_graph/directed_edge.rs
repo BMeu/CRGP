@@ -22,3 +22,15 @@ where T: Abomonation {
 }
 
 unsafe_abomonate!(DirectedEdge<u64> : source, destination);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new() {
+        let edge: DirectedEdge<f64> = DirectedEdge::new(42.0, 13.37);
+        assert_eq!(edge.source, 42.0);
+        assert_eq!(edge.destination, 13.37);
+    }
+}

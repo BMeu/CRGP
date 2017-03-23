@@ -54,3 +54,60 @@ impl From<String> for Error {
         Error::Timely(error)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::error::Error as StdError;
+    use std::fmt;
+    use std::io;
+    use super::*;
+
+    #[test]
+    fn fmt() {
+        let io_error: io::Error = io::Error::from_raw_os_error(42);
+        let fmt: String = String::from(format!("{}", io_error));
+        let error: Error = Error::IO(io_error);
+        assert_eq!(format!("{}", error), fmt);
+
+        let error: Error = Error::Timely(String::from("42"));
+        assert_eq!(format!("{}", error), "42");
+    }
+
+    #[test]
+    fn description() {
+        let io_error: io::Error = io::Error::from_raw_os_error(42);
+        let description: String = String::from(io_error.description());
+        let error: Error = Error::IO(io_error);
+        assert_eq!(error.description(), description);
+
+        let error: Error = Error::Timely(String::from("42"));
+        assert_eq!(error.description(), String::from("42"));
+    }
+
+    #[test]
+    fn cause() {
+        let error: Error = Error::IO(io::Error::from_raw_os_error(42));
+        assert!(error.cause().is_some());
+
+        let error: Error = Error::Timely(String::from("42"));
+        assert!(error.cause().is_none());
+    }
+
+    #[test]
+    fn from_io() {
+        let io_error = io::Error::from_raw_os_error(42);
+        assert!(match Error::from(io_error) {
+            Error::IO(_) => true,
+            _ => false
+        });
+    }
+
+    #[test]
+    fn from_string() {
+        let string_error = String::from("42");
+        assert!(match Error::from(string_error) {
+            Error::Timely(_) => true,
+            _ => false
+        });
+    }
+}
