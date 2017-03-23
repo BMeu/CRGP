@@ -1,4 +1,13 @@
 //! Execute the graph-parallel cascade reconstruction from the command line.
+//!
+//! This binary executes the graph-parallel Retweet cascade reconstruction algorithm. See `README.md` for more details
+//! on how to run `CRGP` or call
+//!
+//! ```bash
+//! $ cargo run --release -- -h
+//! ```
+//!
+//! for a full list of usage information.
 
 #[macro_use]
 extern crate clap;
