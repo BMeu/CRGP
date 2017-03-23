@@ -1,5 +1,7 @@
 # CRGP
 
+[ ![Codeship Status for BMeu/crgp](https://app.codeship.com/projects/7d2924a0-f1e4-0134-404a-569aa21b12f1/status?branch=master)](https://app.codeship.com/projects/209508)
+
 A graph-parallel approach to reconstructing the influences within Retweet cascades.
 
 ## Usage
