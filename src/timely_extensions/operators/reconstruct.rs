@@ -7,7 +7,7 @@ use timely::dataflow::{Stream, Scope};
 use timely::dataflow::channels::pact::{Exchange, Pipeline};
 use timely::dataflow::operators::binary::Binary;
 
-use social_graph::edge::*;
+use social_graph::*;
 use twitter::Tweet;
 
 /// Reconstruct retweet cascades.

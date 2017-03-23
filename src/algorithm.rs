@@ -15,7 +15,7 @@ use timely_communication::initialize::WorkerGuards;
 use Error;
 use Result;
 use Statistics;
-use social_graph::edge::*;
+use social_graph::*;
 use timely_extensions::Sync;
 use timely_extensions::operators::Reconstruct;
 use twitter::*;
