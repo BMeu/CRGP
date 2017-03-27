@@ -23,6 +23,7 @@ use timely_extensions::operators::Reconstruct;
 use twitter::*;
 
 /// Execute the algorithm.
+#[allow(unused_qualifications)]
 pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String, batch_size: usize, print_result: bool,
                      timely_args: I) -> Result<Statistics>
     where F: Iterator<Item=DirectedEdge<u64>> + marker::Send + marker::Sync + 'static,
