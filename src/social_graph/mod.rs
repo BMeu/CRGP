@@ -7,3 +7,4 @@ pub use self::influence_edge::InfluenceEdge;
 
 pub mod directed_edge;
 pub mod influence_edge;
+pub mod load;

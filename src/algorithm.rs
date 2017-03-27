@@ -1,9 +1,11 @@
 //! The actual algorithm for reconstructing retweet cascades.
 
-use std::result::Result as StdResult;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
+use std::marker;
+use std::result::Result as StdResult;
+use std::sync::{Arc, Mutex};
 
 use fine_grained::Stopwatch;
 use serde_json;
@@ -21,9 +23,11 @@ use timely_extensions::operators::Reconstruct;
 use twitter::*;
 
 /// Execute the algorithm.
-pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: usize, print_result: bool,
-                  timely_args: I) -> Result<Statistics>
-    where I: Iterator<Item=String> {
+pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String, batch_size: usize, print_result: bool,
+                     timely_args: I) -> Result<Statistics>
+    where F: Iterator<Item=DirectedEdge<u64>> + marker::Send + marker::Sync + 'static,
+          I: Iterator<Item=String> {
+
     let result: WorkerGuards<Result<Statistics>> = timely::execute_from_args(timely_args,
                                                                              move |computation| -> Result<Statistics> {
         let index = computation.index();
@@ -76,30 +80,9 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
         // Load the social graph from a file into the computation (only on the first worker).
         let mut number_of_friendships: u64 = 0;
         if index == 0 {
-            let friendship_file = File::open(&friendship_dataset)?;
-            let friendship_file = BufReader::new(friendship_file);
-
-            // Each line contains all friendships of a single user.
-            for user in friendship_file.lines().filter_map(|u| u.ok()) {
-                let user: Vec<&str> = user.split(':').collect();
-                if user.len() == 0 {
-                    continue;
-                }
-
-                let user_id: u64 = match user[0].parse() {
-                    Ok(id) => id,
-                    Err(_) => continue
-                };
-
-                let has_friends = user.len() > 1 && !user[1].is_empty();
-                if !has_friends {
-                    continue;
-                }
-
-                for friend_id in user[1].split(',').filter_map(|f| { f.parse::<u64>().ok() }) {
-                    number_of_friendships += 1;
-                    graph_input.send(DirectedEdge::new(user_id, friend_id));
-                }
+            for friendship in friendships.lock().unwrap().take().unwrap() {
+                number_of_friendships += 1;
+                graph_input.send(friendship);
             }
         }
 

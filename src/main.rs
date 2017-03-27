@@ -19,11 +19,13 @@ extern crate clap;
 extern crate crgplib;
 
 use std::process;
+use std::sync::{Arc, Mutex};
 
 use clap::{Arg, ArgMatches};
 
 use crgplib::Error;
 use crgplib::algorithm;
+use crgplib::social_graph::load::SocialGraphFile;
 
 /// The exit codes returned by the program.
 #[derive(Clone, Copy, Debug)]
@@ -133,8 +135,18 @@ fn main() {
     }
     let timely_arguments: std::vec::IntoIter<String> = timely_arguments.into_iter();
 
+    // Initialize and pack the friendships.
+    let friendships = match SocialGraphFile::new(friendship_dataset) {
+        Ok(friendships) => friendships,
+        Err(error) => {
+            println!("Error: {message}", message = error);
+            process::exit(ExitCode::IOFailure as i32);
+        }
+    };
+    let friendships: Arc<Mutex<Option<SocialGraphFile>>> = Arc::new(Mutex::new(Some(friendships)));
+
     // Execute the reconstruction.
-    let results = algorithm::execute(friendship_dataset, retweet_dataset, batch_size, print_result, timely_arguments);
+    let results = algorithm::execute(friendships, retweet_dataset, batch_size, print_result, timely_arguments);
 
     // Print the statistics.
     match results {
