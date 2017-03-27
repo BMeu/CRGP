@@ -28,7 +28,7 @@ This repository includes a few data sets you can use to test `CRGP`.
 Two tiny Retweet cascades (each has three Retweets) on a tiny social graph.
  
 ```bash
-$ cargo run --release -- -r data/friends_test.txt data/cascade_test.json
+$ cargo run --release -- -r data/tests/friends.txt data/tests/cascade.json
 ```
 
 ### Real-Life Data
@@ -54,7 +54,7 @@ $ cargo run --release -- data/friends.txt data/cascade7226.json
 ### Friends
 
 The friends file is currently a text file, on each line specifying a user followed by a list of all their friends. Each
-user and friend is given by their user ID. For an example, see [`data/friends_test.txt`](data/friends_test.txt).
+user and friend is given by their user ID. For an example, see [`data/tests/friends.txt`](data/tests/friends.txt).
 
 The user is separated from their friends by a colon (`:`). The list of friends is comma-separated (`,`). For example, if
 user `1` is friends with users `2` and `4`, the line would look like this:
@@ -66,7 +66,7 @@ user `1` is friends with users `2` and `4`, the line would look like this:
 ### Retweets
 
 The retweet file is a list of JSON-encoded Retweets, each Retweet on a new line. It may contain Retweets from multiple
-cascades. For an example, see [`data/cascade_test.json`](data/cascade_test.json).
+cascades. For an example, see [`data/tests/cascade.json`](data/tests/cascade.json).
 
 Each JSON object must contain the following fields (line breaks added for readibility):
 

@@ -166,14 +166,14 @@ mod tests {
 
     #[test]
     fn new() {
-        let file = SocialGraphFile::new("data/friends_test.txt").unwrap();
+        let file = SocialGraphFile::new("data/tests/friends.txt").unwrap();
         assert!(file.current_user_and_friends.is_some());
         assert_eq!(file.current_user_and_friends, Some((0, vec![1, 2])));
     }
 
     #[test]
     fn set_current_user_and_friends() {
-        let mut file = SocialGraphFile::new("data/friends_test.txt").unwrap();
+        let mut file = SocialGraphFile::new("data/tests/friends.txt").unwrap();
         assert!(file.current_user_and_friends.is_some());
         assert_eq!(file.current_user_and_friends, Some((0, vec![1, 2])));
 
@@ -199,7 +199,7 @@ mod tests {
 
     #[test]
     fn parse_line() {
-        let file = SocialGraphFile::new("data/friends_test.txt").unwrap();
+        let file = SocialGraphFile::new("data/tests/friends.txt").unwrap();
 
         assert_eq!(file.parse_line(String::from("0:1,2")), Some((0, vec![1, 2])));
         assert_eq!(file.parse_line(String::from("1:0,2,3")), Some((1, vec![0, 2, 3])));
@@ -213,7 +213,7 @@ mod tests {
 
     #[test]
     fn next() {
-        let mut file = SocialGraphFile::new("data/friends_test.txt").unwrap();
+        let mut file = SocialGraphFile::new("data/tests/friends.txt").unwrap();
         assert_eq!(file.next(), Some(DirectedEdge::new(0, 2)));
         assert_eq!(file.next(), Some(DirectedEdge::new(0, 1)));
         assert_eq!(file.next(), Some(DirectedEdge::new(1, 3)));
