@@ -88,7 +88,7 @@ impl SocialGraphTextFile {
         }
 
         // Parse the friends.
-        let friends: Vec<u64> = user_and_friends[1].split(',')
+        let mut friends: Vec<u64> = user_and_friends[1].split(',')
             .filter_map(|friend| {
                 friend.parse::<u64>().ok()
             })
@@ -98,6 +98,9 @@ impl SocialGraphTextFile {
         if friends.is_empty() {
             return None;
         }
+
+        // Reverse the friends list so popping from it returns the elements in the correct order.
+        friends.reverse();
 
         // Everything went fine!
         Some((user, friends))
@@ -170,13 +173,13 @@ mod tests {
     fn new() {
         let file = SocialGraphTextFile::new("data/tests/friends.txt").unwrap();
         assert!(file.current_user_and_friends.is_some());
-        assert_eq!(file.current_user_and_friends, Some((0, vec![1, 2])));
+        assert_eq!(file.current_user_and_friends, Some((0, vec![2, 1])));
     }
 
     #[test]
     fn parse_line() {
-        assert_eq!(SocialGraphTextFile::parse_line(String::from("0:1,2")), Some((0, vec![1, 2])));
-        assert_eq!(SocialGraphTextFile::parse_line(String::from("1:0,2,3")), Some((1, vec![0, 2, 3])));
+        assert_eq!(SocialGraphTextFile::parse_line(String::from("0:1,2")), Some((0, vec![2, 1])));
+        assert_eq!(SocialGraphTextFile::parse_line(String::from("1:0,2,3")), Some((1, vec![3, 2, 0])));
         assert_eq!(SocialGraphTextFile::parse_line(String::from("2:0")), Some((2, vec![0])));
         assert_eq!(SocialGraphTextFile::parse_line(String::from("3:2")), Some((3, vec![2])));
         assert_eq!(SocialGraphTextFile::parse_line(String::from("a:1,2")), None);
@@ -189,11 +192,11 @@ mod tests {
     fn set_current_user_and_friends() {
         let mut file = SocialGraphTextFile::new("data/tests/friends.txt").unwrap();
         assert!(file.current_user_and_friends.is_some());
-        assert_eq!(file.current_user_and_friends, Some((0, vec![1, 2])));
+        assert_eq!(file.current_user_and_friends, Some((0, vec![2, 1])));
 
         file.set_current_user_and_friends();
         assert!(file.current_user_and_friends.is_some());
-        assert_eq!(file.current_user_and_friends, Some((1, vec![0, 2, 3])));
+        assert_eq!(file.current_user_and_friends, Some((1, vec![3, 2, 0])));
 
         file.set_current_user_and_friends();
         assert!(file.current_user_and_friends.is_some());
@@ -214,11 +217,11 @@ mod tests {
     #[test]
     fn next() {
         let mut file = SocialGraphTextFile::new("data/tests/friends.txt").unwrap();
-        assert_eq!(file.next(), Some(DirectedEdge::new(0, 2)));
         assert_eq!(file.next(), Some(DirectedEdge::new(0, 1)));
-        assert_eq!(file.next(), Some(DirectedEdge::new(1, 3)));
-        assert_eq!(file.next(), Some(DirectedEdge::new(1, 2)));
+        assert_eq!(file.next(), Some(DirectedEdge::new(0, 2)));
         assert_eq!(file.next(), Some(DirectedEdge::new(1, 0)));
+        assert_eq!(file.next(), Some(DirectedEdge::new(1, 2)));
+        assert_eq!(file.next(), Some(DirectedEdge::new(1, 3)));
         assert_eq!(file.next(), Some(DirectedEdge::new(2, 0)));
         assert_eq!(file.next(), Some(DirectedEdge::new(3, 2)));
         assert_eq!(file.next(), Some(DirectedEdge::new(4, 2)));
