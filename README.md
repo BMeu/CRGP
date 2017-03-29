@@ -91,7 +91,7 @@ For example:
 * The friends of user `1337` are stored in `000/000/001/friends1337.csv`.
 * The friends of user `420000000024` are stored in `420/000/000/friends420000000024.csv`.
 
-For a full example (with some invalid files for testing), see ['data/tests/friends'](data/tests/friends).
+For a full example (with some invalid files for testing), see [`data/tests/friends`](data/tests/friends).
 
 ### Retweets
 
