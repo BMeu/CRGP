@@ -18,6 +18,7 @@
 extern crate clap;
 extern crate crgplib;
 
+use std::path::Path;
 use std::process;
 use std::sync::{Arc, Mutex};
 
@@ -25,7 +26,7 @@ use clap::{Arg, ArgMatches};
 
 use crgplib::Error;
 use crgplib::algorithm;
-use crgplib::social_graph::source::SocialGraphTextFile;
+use crgplib::social_graph::source::*;
 
 /// The exit codes returned by the program.
 #[derive(Clone, Copy, Debug)]
@@ -135,18 +136,28 @@ fn main() {
     }
     let timely_arguments: std::vec::IntoIter<String> = timely_arguments.into_iter();
 
-    // Initialize and pack the friendships.
-    let friendships = match SocialGraphTextFile::new(friendship_dataset) {
-        Ok(friendships) => friendships,
-        Err(error) => {
-            println!("Error: {message}", message = error);
-            process::exit(ExitCode::IOFailure as i32);
+    // Initialize and pack the friendships. If the path is a directory, use the CSV files parser, otherwise the text
+    // file parser.
+    let friendship_path = Path::new(&friendship_dataset);
+    let results = if friendship_path.is_dir() {
+        // The path is a directory, thus use the CSV files parser.
+        let social_graph = SocialGraphCSVFiles::new(friendship_path);
+        let friendships: Arc<Mutex<Option<_>>> = Arc::new(Mutex::new(Some(social_graph)));
+        algorithm::execute(friendships, retweet_dataset, batch_size, print_result, timely_arguments)
+    }
+    else {
+        // The path is a file, thus use the text file parser.
+        match SocialGraphTextFile::new(friendship_path) {
+            Ok(social_graph) => {
+                let friendships: Arc<Mutex<Option<_>>> = Arc::new(Mutex::new(Some(social_graph)));
+                algorithm::execute(friendships, retweet_dataset, batch_size, print_result, timely_arguments)
+            },
+            Err(error) => {
+                println!("Error: {message}", message = error);
+                process::exit(ExitCode::IOFailure as i32);
+            }
         }
     };
-    let friendships: Arc<Mutex<Option<SocialGraphTextFile>>> = Arc::new(Mutex::new(Some(friendships)));
-
-    // Execute the reconstruction.
-    let results = algorithm::execute(friendships, retweet_dataset, batch_size, print_result, timely_arguments);
 
     // Print the statistics.
     match results {

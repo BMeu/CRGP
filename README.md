@@ -31,6 +31,12 @@ Two tiny Retweet cascades (each has three Retweets) on a tiny social graph.
 $ cargo run --release -- -r data/tests/friends.txt data/tests/cascade.json
 ```
 
+There is also a CSV files version of the social graph.
+
+```bash
+$ cargo run --release -- -r data/tests/friends data/tests/cascade.json
+```
+
 ### Real-Life Data
 
 Two small Retweet cascades from Twitter. The social graph is an extract from the actual Twitter graph.
@@ -53,8 +59,13 @@ $ cargo run --release -- data/friends.txt data/cascade7226.json
 
 ### Friends
 
-The friends file is currently a text file, on each line specifying a user followed by a list of all their friends. Each
-user and friend is given by their user ID. For an example, see [`data/tests/friends.txt`](data/tests/friends.txt).
+`CRGP` supports two formats for friends files: a simple text file and a CSV file structure. If the `<FRIENDS>` argument
+points to a file, the former format is assumed, if it points to a directory, the CSV files structure will be used.
+
+#### Text File
+
+A single text file, on each line specifying a user followed by a list of all their friends. Each user and friend is
+given by their user ID. For an example, see [`data/tests/friends.txt`](data/tests/friends.txt).
 
 The user is separated from their friends by a colon (`:`). The list of friends is comma-separated (`,`). For example, if
 user `1` is friends with users `2` and `4`, the line would look like this:
@@ -62,6 +73,25 @@ user `1` is friends with users `2` and `4`, the line would look like this:
 ```text
 1:2,4
 ```
+
+#### CSV Files
+
+Multiple CSV files in a defined directory structure, each specifying all friends for a user.
+
+Each CSV file contains all the friends (one per line) of a single user. The ID (`[ID]`, must be parsable to `u64`)
+of a user is encoded into the filename and the directory path:
+
+ * Filename: `friends[ID].csv`
+ * Directory path: `[ID]` is padded with leading zeroes to twelve digits, then broken into a path with chunks of
+   size three.
+
+For example:
+
+* The friends of user `42` are stored in `000/000/000/friends42.csv`.
+* The friends of user `1337` are stored in `000/000/001/friends1337.csv`.
+* The friends of user `420000000024` are stored in `420/000/000/friends420000000024.csv`.
+
+For a full example (with some invalid files for testing), see ['data/tests/friends'](data/tests/friends).
 
 ### Retweets
 
