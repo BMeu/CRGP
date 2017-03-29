@@ -37,6 +37,72 @@ impl SocialGraphTextFile {
         Ok(file)
     }
 
+    /// Parse a single line of the friends file. The user ID is separated from the user's friends by a colon `:`, the
+    /// friend IDs are comma-separated `,`. If the given line is invalid `None` will be returned.
+    ///
+    /// The following cases invalidate a line:
+    ///
+    ///  * A user ID that is not parsable to `u64`.
+    ///  * A user without friends.
+    ///
+    /// If a friend ID is not parsable to `u64`, it will be removed from the friends list but the line will still count
+    /// as valid (unless by removing invalid friend IDs all of the user's friend are removed).
+    ///
+    /// # Example
+    ///
+    /// Valid lines:
+    ///
+    /// ```text
+    /// Line        Return Value
+    /// 0:1,2       Some((0, [1, 2]))
+    /// 2:0         Some((2, [0])
+    /// 4:a,2       Some((4, [2])
+    /// ```
+    ///
+    /// Invalid lines:
+    ///
+    /// ```text
+    /// Line        Return Value
+    /// 5:          None
+    /// a:1,2       None
+    /// 6:a         None
+    /// ```
+    pub fn parse_line(line: String) -> Option<(u64, Vec<u64>)> {
+        let user_and_friends: Vec<&str> = line.split(':').collect();
+
+        // If the line is empty, it cannot be parsed.
+        if user_and_friends.is_empty() {
+            return None;
+        }
+
+        // Try to parse the user ID. If it fails, it does not make sense to parse the friends.
+        let user: u64 = match user_and_friends[0].parse() {
+            Ok(id) => id,
+            Err(_) => return None
+        };
+
+        // If the user has no friends, they can be skipped.
+        let has_friends = user_and_friends.len() > 1 && !user_and_friends[1].is_empty();
+        if !has_friends {
+            return None;
+        }
+
+        // Parse the friends.
+        let friends: Vec<u64> = user_and_friends[1].split(',')
+            .filter_map(|friend| {
+                friend.parse::<u64>().ok()
+            })
+            .collect();
+
+        // If there are no friends left, the user can be skipped.
+        if friends.is_empty() {
+            return None;
+        }
+
+        // Everything went fine!
+        Some((user, friends))
+    }
+
     /// Find the next valid line in the file (see `parse_line`) and set the current user and friends from it.
     fn set_current_user_and_friends(&mut self) {
         // Skip invalid lines.
@@ -53,7 +119,7 @@ impl SocialGraphTextFile {
             // If the line is ok, try to parse it. If that succeeds, exit. In all other cases continue.
             match current_line {
                 Ok(line) => {
-                    match parse_line(line) {
+                    match SocialGraphTextFile::parse_line(line) {
                         Some(user_and_friends) => {
                             self.current_user_and_friends = Some(user_and_friends);
                             return;
@@ -95,94 +161,28 @@ impl Iterator for SocialGraphTextFile {
     }
 }
 
-/// Parse a single line of the friends file. The user ID is separated from the user's friends by a colon `:`, the
-/// friend IDs are comma-separated `,`. If the given line is invalid `None` will be returned.
-///
-/// The following cases invalidate a line:
-///
-///  * A user ID that is not parsable to `u64`.
-///  * A user without friends.
-///
-/// If a friend ID is not parsable to `u64`, it will be removed from the friends list but the line will still count
-/// as valid (unless by removing invalid friend IDs all of the user's friend are removed).
-///
-/// # Example
-///
-/// Valid lines:
-///
-/// ```text
-/// Line        Return Value
-/// 0:1,2       Some((0, [1, 2]))
-/// 2:0         Some((2, [0])
-/// 4:a,2       Some((4, [2])
-/// ```
-///
-/// Invalid lines:
-///
-/// ```text
-/// Line        Return Value
-/// 5:          None
-/// a:1,2       None
-/// 6:a         None
-/// ```
-pub fn parse_line(line: String) -> Option<(u64, Vec<u64>)> {
-    let user_and_friends: Vec<&str> = line.split(':').collect();
-
-    // If the line is empty, it cannot be parsed.
-    if user_and_friends.is_empty() {
-        return None;
-    }
-
-    // Try to parse the user ID. If it fails, it does not make sense to parse the friends.
-    let user: u64 = match user_and_friends[0].parse() {
-        Ok(id) => id,
-        Err(_) => return None
-    };
-
-    // If the user has no friends, they can be skipped.
-    let has_friends = user_and_friends.len() > 1 && !user_and_friends[1].is_empty();
-    if !has_friends {
-        return None;
-    }
-
-    // Parse the friends.
-    let friends: Vec<u64> = user_and_friends[1].split(',')
-        .filter_map(|friend| {
-            friend.parse::<u64>().ok()
-        })
-        .collect();
-
-    // If there are no friends left, the user can be skipped.
-    if friends.is_empty() {
-        return None;
-    }
-
-    // Everything went fine!
-    Some((user, friends))
-}
-
 #[cfg(test)]
 mod tests {
     use social_graph::DirectedEdge;
     use super::*;
 
     #[test]
-    fn parse_line() {
-        assert_eq!(super::parse_line(String::from("0:1,2")), Some((0, vec![1, 2])));
-        assert_eq!(super::parse_line(String::from("1:0,2,3")), Some((1, vec![0, 2, 3])));
-        assert_eq!(super::parse_line(String::from("2:0")), Some((2, vec![0])));
-        assert_eq!(super::parse_line(String::from("3:2")), Some((3, vec![2])));
-        assert_eq!(super::parse_line(String::from("a:1,2")), None);
-        assert_eq!(super::parse_line(String::from("4:a,2")), Some((4, vec![2])));
-        assert_eq!(super::parse_line(String::from("5:")), None);
-        assert_eq!(super::parse_line(String::from("6:a")), None);
-    }
-
-    #[test]
     fn new() {
         let file = SocialGraphTextFile::new("data/tests/friends.txt").unwrap();
         assert!(file.current_user_and_friends.is_some());
         assert_eq!(file.current_user_and_friends, Some((0, vec![1, 2])));
+    }
+
+    #[test]
+    fn parse_line() {
+        assert_eq!(SocialGraphTextFile::parse_line(String::from("0:1,2")), Some((0, vec![1, 2])));
+        assert_eq!(SocialGraphTextFile::parse_line(String::from("1:0,2,3")), Some((1, vec![0, 2, 3])));
+        assert_eq!(SocialGraphTextFile::parse_line(String::from("2:0")), Some((2, vec![0])));
+        assert_eq!(SocialGraphTextFile::parse_line(String::from("3:2")), Some((3, vec![2])));
+        assert_eq!(SocialGraphTextFile::parse_line(String::from("a:1,2")), None);
+        assert_eq!(SocialGraphTextFile::parse_line(String::from("4:a,2")), Some((4, vec![2])));
+        assert_eq!(SocialGraphTextFile::parse_line(String::from("5:")), None);
+        assert_eq!(SocialGraphTextFile::parse_line(String::from("6:a")), None);
     }
 
     #[test]
