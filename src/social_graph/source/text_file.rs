@@ -38,7 +38,8 @@ impl SocialGraphTextFile {
     }
 
     /// Parse a single line of the friends file. The user ID is separated from the user's friends by a colon `:`, the
-    /// friend IDs are comma-separated `,`. If the given line is invalid `None` will be returned.
+    /// friend IDs are comma-separated `,`. The list of friends will be in reversed order. If the given line is invalid
+    /// `None` will be returned.
     ///
     /// The following cases invalidate a line:
     ///
@@ -50,22 +51,16 @@ impl SocialGraphTextFile {
     ///
     /// # Example
     ///
-    /// Valid lines:
+    /// ```rust
+    /// # use crgplib::social_graph::source::SocialGraphTextFile;
+    /// #
+    /// assert_eq!(SocialGraphTextFile::parse_line(String::from("0:1,2")), Some((0, vec![2, 1])));
+    /// assert_eq!(SocialGraphTextFile::parse_line(String::from("2:0")), Some((2, vec![0])));
+    /// assert_eq!(SocialGraphTextFile::parse_line(String::from("4:a,2")), Some((4, vec![2])));
     ///
-    /// ```text
-    /// Line        Return Value
-    /// 0:1,2       Some((0, [1, 2]))
-    /// 2:0         Some((2, [0])
-    /// 4:a,2       Some((4, [2])
-    /// ```
-    ///
-    /// Invalid lines:
-    ///
-    /// ```text
-    /// Line        Return Value
-    /// 5:          None
-    /// a:1,2       None
-    /// 6:a         None
+    /// assert_eq!(SocialGraphTextFile::parse_line(String::from("5:")), None);
+    /// assert_eq!(SocialGraphTextFile::parse_line(String::from("a:1,2")), None);
+    /// assert_eq!(SocialGraphTextFile::parse_line(String::from("6:a")), None);
     /// ```
     pub fn parse_line(line: String) -> Option<(u64, Vec<u64>)> {
         let user_and_friends: Vec<&str> = line.split(':').collect();
