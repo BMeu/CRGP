@@ -1,6 +1,9 @@
 extern crate crgplib;
 #[cfg(unix)]
 extern crate gag;
+#[cfg(unix)]
+#[macro_use]
+extern crate lazy_static;
 
 #[cfg(unix)]
 use std::io::Read;
@@ -13,6 +16,11 @@ use crgplib::{Result, Statistics};
 use crgplib::algorithm;
 use crgplib::social_graph::source::*;
 
+#[cfg(unix)]
+lazy_static! {
+    static ref STDOUT_MUTEX: Mutex<()> = Mutex::new(());
+}
+
 #[test]
 fn from_csv_files() {
     let batch_size: usize = 1;
@@ -24,6 +32,7 @@ fn from_csv_files() {
 
     // Capturing STDOUT currently only works on Unix systems.
     if cfg!(unix) {
+        let _lock = STDOUT_MUTEX.lock().unwrap();
         let mut buffer = BufferRedirect::stdout().unwrap();
         let result: Result<Statistics> = algorithm::execute(friendships, retweet_dataset, batch_size, print_result, timely_arguments);
         let mut output = String::new();
@@ -68,6 +77,7 @@ fn from_text_file() {
 
     // Capturing STDOUT currently only works on Unix systems.
     if cfg!(unix) {
+        let _lock = STDOUT_MUTEX.lock().unwrap();
         let mut buffer = BufferRedirect::stdout().unwrap();
         let result: Result<Statistics> = algorithm::execute(friendships, retweet_dataset, batch_size, print_result, timely_arguments);
         let mut output = String::new();
