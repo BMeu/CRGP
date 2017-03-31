@@ -61,9 +61,10 @@ pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String
                 .reconstruct(graph_stream)
                 .inspect(move |influence: &InfluenceEdge<u64>| {
                     if print_result {
-                        println!("Worker {worker}: {influencer} -> {influencee} at time {time} (cascade {cascade})",
-                                 worker = index, influencer = influence.influencer, influencee = influence.influencee,
-                                 time = influence.timestamp, cascade = influence.cascade_id);
+                        println!("{cascade};{retweet};{user};{influencer};{time};-1",
+                                 cascade = influence.cascade_id, retweet = influence.retweet_id,
+                                 user = influence.influencee, influencer = influence.influencer,
+                                 time = influence.timestamp);
                     };
                 })
                 .probe().0;

@@ -76,7 +76,7 @@ where G::Timestamp: Hash {
                                 let is_influencer_original_user: bool = friend == original_tweet.user.id;
                                 if is_influencer_activated || is_influencer_original_user {
                                     let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at,
-                                                                       original_tweet.id);
+                                                                       retweet.id, original_tweet.id);
                                     output.session(&time).give(influence);
                                 }
                             }
@@ -94,7 +94,7 @@ where G::Timestamp: Hash {
                                 let is_influencer_original_user: bool = friend == original_tweet.user.id;
                                 if is_influencer_activated || is_influencer_original_user {
                                     let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at,
-                                                                       original_tweet.id);
+                                                                       retweet.id, original_tweet.id);
                                     output.session(&time).give(influence);
                                 }
                             }

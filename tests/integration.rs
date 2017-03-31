@@ -45,22 +45,22 @@ fn from_csv_files() {
             .collect();
         assert_eq!(influences.len(), 7);
         let expected_lines: Vec<&str> = vec![
-            "Worker 0: 0 -> 2 at time 1 (cascade 1)",
-            "Worker 0: 2 -> 1 at time 2 (cascade 1)",
-            "Worker 0: 3 -> 1 at time 2 (cascade 1)",
-            "Worker 0: 1 -> 0 at time 3 (cascade 2)",
-            "Worker 0: 2 -> 3 at time 3 (cascade 1)",
-            "Worker 0: 0 -> 2 at time 4 (cascade 2)",
-            "Worker 0: 2 -> 3 at time 5 (cascade 2)"
+            "1;3;2;0;1;-1",
+            "1;4;1;3;2;-1",
+            "1;4;1;2;2;-1",
+            "2;5;0;1;3;-1",
+            "1;6;3;2;3;-1",
+            "2;7;2;0;4;-1",
+            "2;8;3;2;5;-1",
         ];
         for expected_line in expected_lines {
             assert!(influences.contains(&expected_line));
         }
     }
-        else {
-            let result: Result<Statistics> = algorithm::execute(friendships, retweet_dataset, batch_size, print_result, timely_arguments);
-            assert!(result.is_ok());
-        }
+    else {
+        let result: Result<Statistics> = algorithm::execute(friendships, retweet_dataset, batch_size, print_result, timely_arguments);
+        assert!(result.is_ok());
+    }
 }
 
 #[test]
@@ -90,13 +90,13 @@ fn from_text_file() {
             .collect();
         assert_eq!(influences.len(), 7);
         let expected_lines: Vec<&str> = vec![
-            "Worker 0: 0 -> 2 at time 1 (cascade 1)",
-            "Worker 0: 2 -> 1 at time 2 (cascade 1)",
-            "Worker 0: 3 -> 1 at time 2 (cascade 1)",
-            "Worker 0: 1 -> 0 at time 3 (cascade 2)",
-            "Worker 0: 2 -> 3 at time 3 (cascade 1)",
-            "Worker 0: 0 -> 2 at time 4 (cascade 2)",
-            "Worker 0: 2 -> 3 at time 5 (cascade 2)"
+            "1;3;2;0;1;-1",
+            "1;4;1;3;2;-1",
+            "1;4;1;2;2;-1",
+            "2;5;0;1;3;-1",
+            "1;6;3;2;3;-1",
+            "2;7;2;0;4;-1",
+            "2;8;3;2;5;-1",
         ];
         for expected_line in expected_lines {
             assert!(influences.contains(&expected_line));
