@@ -9,7 +9,7 @@ A graph-parallel approach for reconstructing the influences within Retweet casca
 Using [Rust's package manager `Cargo`](https://www.rustup.rs/), executing `CRGP` is really simple:
 
 ```bash
-$ cargo run --release -- <FRIENDS> <RETWEETS> 
+$ cargo run --release -- [FRIENDS] [RETWEETS] 
 ```
 
 This will compile `CRGP` with all its dependencies and run the binary. A full list of options is available using the
