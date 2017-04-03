@@ -123,6 +123,43 @@ Each JSON object must contain the following fields (line breaks added for readib
 }
 ```
 
+## Logging
+
+`CRGP` can log certain events. By default, this is disabled. To enable logging to `STDERR`, specify the verbosity level
+of the log message by passing the `-v` flag in the desired amount to `CRGP` . 
+
+The log can be written to a file by passing the `-l` option to `CRGP`. It expects a path to the directory where the log
+file will be saved.
+
+There are four log levels. In ascending order, they are `Trace`, `Info`, `Warn`, and `Error`, that is, the lower the
+level, the more information will be logged. Lower levels include all above them. The following events are logged at the
+specified levels.
+
+**Trace:** `-vvvv`
+
+ * Invalid directory and filenames within the directory of the social graph (when using the CSV format).
+
+**Info:** `-vvv`
+
+ * Failure to parse user IDs.
+ * Failure to parse Retweets.
+ * The following events during the algorithm execution:
+   * Starting and finishing to load the social graph.
+   * Starting and finishing to load the Retweet file into memory.
+   * Starting and finishing to process the Retweets (with in-progress information for each batch of Retweets).
+
+**Warn:** `-vv`
+
+ * Encountering users without any friends when loading the social graph.
+ * Encountering input (e.g. in files) that is not valid UTF-8.
+
+**Error:** `-v`
+
+ * Failure to read the contents of a directory.
+ * Failure to open files.
+ 
+
+
 ## Author
 
 `CRGP` is developed by [Bastian Meyer](http://www.bastianmeyer.eu/)

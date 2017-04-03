@@ -79,9 +79,10 @@ pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String
          * SOCIAL GRAPH *
          ****************/
 
-        // Load the social graph from a file into the computation (only on the first worker).
+        // Load the social graph into the computation (only on the first worker).
         let mut number_of_friendships: u64 = 0;
         if index == 0 {
+            info!("Loading social graph into the computation...");
             for friendship in friendships.lock().unwrap().take().unwrap() {
                 number_of_friendships += 1;
                 graph_input.send(friendship);
@@ -91,6 +92,8 @@ pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String
         // Process the entire social graph before continuing.
         computation.sync(&probe, &mut graph_input, &mut retweet_input);
         let time_to_process_social_network: u64 = stopwatch.lap();
+        info!("Finished loading the social graph ({amount} friendships) in {time:.2}ms", amount = number_of_friendships,
+              time = time_to_process_social_network as f64 / 1_000_000.0f64);
 
 
 
@@ -100,10 +103,19 @@ pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String
 
         // Load the retweets (on the first worker).
         let retweets: Vec<Tweet> = if index == 0 {
-            let retweet_file = File::open(&retweet_dataset)?;
+            info!("Loading the Retweets into memory...");
+            let retweet_file = match File::open(&retweet_dataset) {
+                Ok(file) => file,
+                Err(error) => {
+                    error!("Could not open Retweet dataset: {error}", error = error);
+                    return Err(Error::from(error));
+                }
+            };
             let retweet_file = BufReader::new(retweet_file);
             // Parse the lines while discarding those that are invalid.
             retweet_file.lines()
+                // TODO: Add `warn!()` with filename and line number about invalid UTF-8.
+                // TODO: Add `info!()` with failures to parse the Retweet.
                 .filter_map(|r| serde_json::from_str::<Tweet>(&r.expect("")).ok())
                 .collect()
         } else {
@@ -111,14 +123,18 @@ pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String
         };
         let number_of_retweets: u64 = retweets.len() as u64;
         let time_to_load_retweets: u64 = stopwatch.lap();
+        info!("Finished loading the Retweets into memory in {time:.2}ms",
+              time = time_to_load_retweets as f64 / 1_000_000.0f64);
 
         // Process the retweets.
+        info!("Processing the Retweets...");
         let mut round = 0;
         for retweet in retweets {
             retweet_input.send(retweet);
 
             let is_batch_complete: bool = round % batch_size == (batch_size - 1);
             if is_batch_complete {
+                info!("Processed {amount} of {total} Retweets...", amount = round + 1, total = number_of_retweets);
                 computation.sync(&probe, &mut retweet_input, &mut graph_input);
             }
 
@@ -126,6 +142,8 @@ pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String
         }
         computation.sync(&probe, &mut retweet_input, &mut graph_input);
         let time_to_process_retweets: u64 = stopwatch.lap();
+        info!("Finished processing {amount} Retweets in {time:.2}ms", amount = number_of_retweets,
+              time = time_to_process_retweets as f64 / 1_000_000.0f64);
 
 
 

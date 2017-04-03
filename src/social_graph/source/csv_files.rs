@@ -4,6 +4,7 @@ use std::fs::{DirEntry, File, read_dir};
 use std::io::{BufRead, BufReader, Error};
 use std::path::{Path, PathBuf};
 
+use log::LogLevel;
 use regex::Regex;
 
 use social_graph::DirectedEdge;
@@ -109,12 +110,17 @@ impl SocialGraphCSVFiles {
                             if DIRECTORY_NAME_TEMPLATE.is_match(directory) {
                                 return Some(path);
                             }
+                            trace!("Invalid directory name: {name}", name = directory)
                         }
                         None
                     })
                     .collect::<Vec<PathBuf>>()
             },
-            Err(_) => return Vec::<PathBuf>::new()
+            Err(message) => {
+                // TODO: Print path.
+                error!("Could not read directory: {error}", error = message);
+                return Vec::<PathBuf>::new();
+            }
         };
 
         // Sort the vector in reverse order because popping removes the last element.
@@ -157,12 +163,17 @@ impl SocialGraphCSVFiles {
                             if FILENAME_TEMPLATE.is_match(filename) {
                                 return Some(path);
                             }
+                            trace!("Invalid filename: {name}", name = filename)
                         }
                         None
                     })
                     .collect::<Vec<PathBuf>>()
             },
-            Err(_) => return Vec::<PathBuf>::new()
+            Err(message) => {
+                // TODO: Print path.
+                error!("Could not read directory: {error}", error = message);
+                return Vec::<PathBuf>::new();
+            }
         };
 
         // Sort the vector in reverse order because popping removes the last element.
@@ -270,7 +281,10 @@ impl SocialGraphCSVFiles {
                             // `stem` is now `friends[ID]`. Only parse `[ID]`, i.e. skip the first seven characters.
                             match stem[7..].parse::<u64>() {
                                 Ok(id) => id,
-                                Err(_) => continue
+                                Err(message) => {
+                                    info!("Could not parse user ID '{id}': {error}", id = &stem[7..], error = message);
+                                    continue;
+                                }
                             }
                         },
                         None => continue
@@ -282,24 +296,39 @@ impl SocialGraphCSVFiles {
             // Open the file and parse all lines.
             let file = match File::open(&path) {
                 Ok(file) => file,
-                Err(_) => continue
+                Err(message) => {
+                    // TODO: Print path.
+                    error!("Could not open friends file: {error}", error = message);
+                    continue;
+                }
             };
             let reader: BufReader<File> = BufReader::new(file);
             let mut friends: Vec<u64> = reader.lines()
                 .filter_map(|line: Result<String, Error>| -> Option<u64> {
                     let line: String = match line {
                         Ok(line) => line,
-                        Err(_) => return None
+                        Err(_) => {
+                            // TODO: Add `warn!()` with filename and line number about invalid UTF-8.
+                            return None;
+                        }
                     };
 
                     let id: u64 = match line.parse() {
                         Ok(id) => id,
-                        Err(_) => return None
+                        Err(message) => {
+                            info!("Could not parse friend ID '{friend}' of user {user}: {error}", friend = line,
+                                  user = user, error = message);
+                            return None;
+                        }
                     };
                     Some(id)
                 })
                 .collect();
             friends.reverse();
+
+            if friends.is_empty() && log_enabled!(LogLevel::Info) {
+                warn!("User {id} has no valid friends", id = user);
+            }
 
             self.current_user_and_friends = Some((user, friends));
             return;

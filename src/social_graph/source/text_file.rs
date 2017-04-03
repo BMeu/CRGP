@@ -29,7 +29,13 @@ impl SocialGraphTextFile {
     /// Open the given friends file. Returns a `std::io::Error` if there were problems opening the file.
     pub fn new<P>(filename: P) -> Result<SocialGraphTextFile, Error>
         where P: AsRef<Path> {
-        let friendship_file = File::open(&filename)?;
+        let friendship_file = match File::open(&filename) {
+            Ok(file) => file,
+            Err(error) => {
+                error!("Could not open friends file: {error}", error = error);
+                return Err(Error::from(error));
+            }
+        };
         let reader: BufReader<File> = BufReader::new(friendship_file);
         let lines: Lines<BufReader<File>> = reader.lines();
         let mut file = SocialGraphTextFile { lines: lines, current_user_and_friends: None };
@@ -73,24 +79,36 @@ impl SocialGraphTextFile {
         // Try to parse the user ID. If it fails, it does not make sense to parse the friends.
         let user: u64 = match user_and_friends[0].parse() {
             Ok(id) => id,
-            Err(_) => return None
+            Err(message) => {
+                info!("Could not parse user ID '{id}': {error}", id = user_and_friends[0], error = message);
+                return None
+            }
         };
 
         // If the user has no friends, they can be skipped.
         let has_friends = user_and_friends.len() > 1 && !user_and_friends[1].is_empty();
         if !has_friends {
+            warn!("User {id} has no valid friends", id = user);
             return None;
         }
 
         // Parse the friends.
         let mut friends: Vec<u64> = user_and_friends[1].split(',')
             .filter_map(|friend| {
-                friend.parse::<u64>().ok()
+                match friend.parse::<u64>() {
+                    Ok(id) => Some(id),
+                    Err(message) => {
+                        info!("Could not parse friend ID '{friend}' of user {user}: {error}", friend = friend,
+                              user = user, error = message);
+                        None
+                    }
+                }
             })
             .collect();
 
         // If there are no friends left, the user can be skipped.
         if friends.is_empty() {
+            warn!("User {id} has no valid friends", id = user);
             return None;
         }
 
@@ -125,7 +143,9 @@ impl SocialGraphTextFile {
                         None => {}
                     }
                 },
-                Err(_) => {}
+                Err(_) => {
+                    // TODO: Add `warn!()` with filename and line number about invalid UTF-8.
+                }
             }
         }
     }
