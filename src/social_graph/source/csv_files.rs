@@ -313,7 +313,19 @@ impl SocialGraphCSVFiles {
                         }
                     };
 
-                    let id: u64 = match line.parse() {
+                    // In some cases the line might look like `[SCREENNAME];[ID]`. Get the ID.
+                    let parts: Vec<&str> = line.split(';').collect();
+                    let id: &str = match parts.len() {
+                        0 => return None,
+                        1 => parts[0],
+                        2 => parts[1],
+                        3 | _ => {
+                            info!("Could not parse friend ID '{friend}' of user {user}", friend = line, user = user);
+                            return None;
+                        }
+                    };
+
+                    let id: u64 = match id.parse() {
                         Ok(id) => id,
                         Err(message) => {
                             info!("Could not parse friend ID '{friend}' of user {user}: {error}", friend = line,
