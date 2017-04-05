@@ -37,8 +37,6 @@ lazy_static! {
 /// * The friends of user `420000000024` are stored in `420/000/000/friends420000000024.csv`.
 #[derive(Debug)]
 pub struct SocialGraphCSVFiles {
-    /// A list of all friend files stored in the described directory structure.
-    ///
     /// `/XXX/___/___/friends_.csv`.
     top_level_directories: Vec<PathBuf>,
 

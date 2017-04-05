@@ -23,6 +23,7 @@ regex = "0.2"
 serde = "0.9"
 serde_derive = "0.9"
 serde_json = "0.9"
+tar = "0.4"
 timely = "0.1.0"
 timely_communication = "0.1.5"
 
