@@ -139,7 +139,7 @@ impl SocialGraphCSVFiles {
                 files
                     .filter_map(|entry: Result<DirEntry, Error>| -> Option<PathBuf> {
                         if let Ok(entry) = entry {
-                            // The entry must be a directory.
+                            // The entry must be a file.
                             let path: PathBuf = entry.path();
                             if !path.is_file() {
                                 return None;
