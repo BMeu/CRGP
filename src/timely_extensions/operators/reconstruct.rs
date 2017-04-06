@@ -52,7 +52,12 @@ where G::Timestamp: Hash {
 
                         // Mark this user as active for this cascade.
                         let ref mut cascade_activations: HashMap<u64, u64> = *activations.entry(original_tweet.id)
-                            .or_insert(HashMap::new());
+                            .or_insert_with(|| {
+                                // Create a new map for the activations of this cascade and insert the original tweeter.
+                                let mut cascade_activations = HashMap::new();
+                                let _ = cascade_activations.insert(original_tweet.user.id, original_tweet.created_at);
+                                cascade_activations
+                            });
                         let _ = cascade_activations.entry(retweet.user.id)
                             .or_insert(retweet.created_at);
 
@@ -73,8 +78,7 @@ where G::Timestamp: Hash {
                                     Some(activation_timestamp) => &retweet.created_at >= activation_timestamp,
                                     None => false
                                 };
-                                let is_influencer_original_user: bool = friend == original_tweet.user.id;
-                                if is_influencer_activated || is_influencer_original_user {
+                                if is_influencer_activated {
                                     let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at,
                                                                        retweet.id, original_tweet.id);
                                     output.session(&time).give(influence);
@@ -91,8 +95,7 @@ where G::Timestamp: Hash {
 
                                 // Ensure the influence is possible.
                                 let is_influencer_activated: bool = &retweet.created_at >= activation_timestamp;
-                                let is_influencer_original_user: bool = friend == original_tweet.user.id;
-                                if is_influencer_activated || is_influencer_original_user {
+                                if is_influencer_activated {
                                     let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at,
                                                                        retweet.id, original_tweet.id);
                                     output.session(&time).give(influence);
