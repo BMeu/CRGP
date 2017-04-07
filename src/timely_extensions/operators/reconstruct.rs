@@ -75,7 +75,7 @@ where G::Timestamp: Hash {
                             // Iterate over the friends.
                             for &friend in friends {
                                 let is_influencer_activated: bool = match cascade_activations.get(&friend) {
-                                    Some(activation_timestamp) => &retweet.created_at >= activation_timestamp,
+                                    Some(activation_timestamp) => &retweet.created_at > activation_timestamp,
                                     None => false
                                 };
                                 if is_influencer_activated {
@@ -94,7 +94,7 @@ where G::Timestamp: Hash {
                                 };
 
                                 // Ensure the influence is possible.
-                                let is_influencer_activated: bool = &retweet.created_at >= activation_timestamp;
+                                let is_influencer_activated: bool = &retweet.created_at > activation_timestamp;
                                 if is_influencer_activated {
                                     let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at,
                                                                        retweet.id, original_tweet.id);
