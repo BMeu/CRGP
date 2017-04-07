@@ -46,15 +46,18 @@ fn from_csv_files() {
         assert_eq!(influences.len(), 7);
         let expected_lines: Vec<&str> = vec![
             "1;3;2;0;1;-1",
-            "1;4;1;3;2;-1",
+            "1;4;1;0;2;-1",
             "1;4;1;2;2;-1",
-            "2;5;0;1;3;-1",
             "1;6;3;2;3;-1",
+            "2;5;0;1;3;-1",
             "2;7;2;0;4;-1",
             "2;8;3;2;5;-1",
         ];
-        for expected_line in expected_lines {
-            assert!(influences.contains(&expected_line));
+        for influence in &influences {
+            assert!(expected_lines.contains(influence), "Unexpected influence: {}", influence);
+        }
+        for expected_line in &expected_lines {
+            assert!(influences.contains(expected_line), "Missing influence: {}", expected_line);
         }
     }
     else {
@@ -91,15 +94,18 @@ fn from_text_file() {
         assert_eq!(influences.len(), 7);
         let expected_lines: Vec<&str> = vec![
             "1;3;2;0;1;-1",
-            "1;4;1;3;2;-1",
+            "1;4;1;0;2;-1",
             "1;4;1;2;2;-1",
-            "2;5;0;1;3;-1",
             "1;6;3;2;3;-1",
+            "2;5;0;1;3;-1",
             "2;7;2;0;4;-1",
             "2;8;3;2;5;-1",
         ];
-        for expected_line in expected_lines {
-            assert!(influences.contains(&expected_line));
+        for influence in &influences {
+            assert!(expected_lines.contains(influence), "Unexpected influence: {}", influence);
+        }
+        for expected_line in &expected_lines {
+            assert!(influences.contains(expected_line), "Missing influence: {}", expected_line);
         }
     }
     else {
