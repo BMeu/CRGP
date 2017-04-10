@@ -1,6 +1,6 @@
 //! Reconstruct retweet cascades.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::hash::*;
 
 use timely::dataflow::{Stream, Scope};
@@ -25,7 +25,7 @@ impl<G: Scope> Reconstruct<G> for Stream<G, Tweet>
 where G::Timestamp: Hash {
     fn reconstruct(&self, graph: Stream<G, DirectedEdge<u64>>) -> Stream<G, InfluenceEdge<u64>> {
         // For each user, given by their ID, the set of their friends, given by their ID.
-        let mut edges: HashMap<u64, Vec<u64>> = HashMap:: new();
+        let mut edges: HashMap<u64, HashSet<u64>> = HashMap:: new();
 
         // For each cascade, given by its ID, a set of activated users, given by their ID, i.e. those users who have
         // retweeted within this cascade before, per worker. Users are associated with the time at which they first
@@ -63,7 +63,7 @@ where G::Timestamp: Hash {
 
                         // If this is the worker storing the retweeting user's friends, find
                         // all influences. Otherwise, move on.
-                        let friends: &Vec<u64> = match edges.get(&retweet.user.id) {
+                        let friends: &HashSet<u64> = match edges.get(&retweet.user.id) {
                             Some(friends) => friends,
                             None => continue
                         };
@@ -88,7 +88,7 @@ where G::Timestamp: Hash {
                             // Iterate over the activations.
                             for (user_id, activation_timestamp) in cascade_activations {
                                 // If the current activation is not a friend, move on.
-                                let friend: u64 = match friends.get(*user_id as usize) {
+                                let friend: u64 = match friends.get(user_id) {
                                     Some(friend) => *friend,
                                     None => continue
                                 };
@@ -109,8 +109,8 @@ where G::Timestamp: Hash {
                 friendships.for_each(|_time, friendship_data| {
                     for ref friendship in friendship_data.iter() {
                         edges.entry(friendship.source)
-                            .or_insert(Vec::new())
-                            .push(friendship.destination);
+                            .or_insert(HashSet::new())
+                            .insert(friendship.destination);
                     };
                 });
             }
