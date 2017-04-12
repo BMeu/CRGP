@@ -6,7 +6,7 @@ use std::io::Result as IOResult;
 use std::io::prelude::*;
 use std::marker;
 use std::result::Result as StdResult;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 use fine_grained::Stopwatch;
 use serde_json;
@@ -85,7 +85,15 @@ pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String
         let mut number_of_friendships: u64 = 0;
         if index == 0 {
             info!("Loading social graph into the computation...");
-            for friendship in friendships.lock().unwrap().take().unwrap() {
+            let mut friendships: MutexGuard<Option<F>> = match friendships.lock() {
+                Ok(guard) => guard,
+                Err(poisened) => poisened.into_inner()
+            };
+            let friendships: F = match friendships.take() {
+                Some(friendships) => friendships,
+                None => return Err(Error::from(String::from("No friendships")))
+            };
+            for friendship in friendships {
                 number_of_friendships += 1;
                 graph_input.send(friendship);
             }
