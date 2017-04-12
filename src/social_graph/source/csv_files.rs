@@ -9,14 +9,17 @@ use regex::Regex;
 
 use social_graph::DirectedEdge;
 
-// TODO: Get rid of the `unwrap()`s.
 lazy_static! {
     /// A regular expression to validate directory names. The name must consist of exactly three digits.
+    // The initialization of the Regex will fail if the expression is invalid. Since the expression is known to be
+    // correct, it is safe to simply unwrap the result.
     #[derive(Debug)]
     pub static ref DIRECTORY_NAME_TEMPLATE: Regex = Regex::new(r"^\d{3}$").unwrap();
 
     /// A regular expression to validate file names. The name must be of the form `friends[ID].csv` where `[ID]`
     /// consists of one or more digits.
+    // The initialization of the Regex will fail if the expression is invalid. Since the expression is known to be
+    // correct, it is safe to simply unwrap the result.
     #[derive(Debug)]
     pub static ref FILENAME_TEMPLATE: Regex = Regex::new(r"^friends\d+\.csv$").unwrap();
 }
