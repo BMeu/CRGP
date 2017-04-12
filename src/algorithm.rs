@@ -2,6 +2,7 @@
 
 use std::fs::File;
 use std::io::BufReader;
+use std::io::Result as IOResult;
 use std::io::prelude::*;
 use std::marker;
 use std::result::Result as StdResult;
@@ -115,9 +116,23 @@ pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String
             let retweet_file = BufReader::new(retweet_file);
             // Parse the lines while discarding those that are invalid.
             retweet_file.lines()
-                // TODO: Add `warn!()` with filename and line number about invalid UTF-8.
-                // TODO: Add `info!()` with failures to parse the Retweet.
-                .filter_map(|r| serde_json::from_str::<Tweet>(&r.expect("")).ok())
+                .filter_map(|line: IOResult<String>| -> Option<Tweet> {
+                    match line {
+                        Ok(line) => {
+                            match serde_json::from_str::<Tweet>(&line) {
+                                Ok(tweet) => return Some(tweet),
+                                Err(message) => {
+                                    info!("Failed to parse tweet: {error}", error = message);
+                                    return None;
+                                }
+                            }
+                        },
+                        Err(message) => {
+                            warn!("Invalid line in file {file:?}: {error}", file = retweet_dataset, error = message);
+                            return None;
+                        }
+                    }
+                })
                 .collect()
         } else {
             Vec::new()

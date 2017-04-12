@@ -81,6 +81,7 @@ impl SocialGraphCSVFiles {
     /// empty if there are no valid directories or any errors occurred during reading any of the involved paths.
     pub fn get_valid_directories_in_path<P>(path: P) -> Vec<PathBuf>
         where P: AsRef<Path> {
+        let printable_path: PathBuf = path.as_ref().to_path_buf();
         let mut directories: Vec<PathBuf> = match read_dir(path) {
             Ok(directories) => {
                 directories
@@ -115,8 +116,7 @@ impl SocialGraphCSVFiles {
                     .collect::<Vec<PathBuf>>()
             },
             Err(message) => {
-                // TODO: Print path.
-                error!("Could not read directory: {error}", error = message);
+                error!("Could not read directory {folder:?}: {error}", folder = printable_path, error = message);
                 return Vec::<PathBuf>::new();
             }
         };
@@ -134,6 +134,7 @@ impl SocialGraphCSVFiles {
     /// no valid files or any errors occurred during reading any of the involved paths.
     pub fn get_valid_files_in_path<P>(path: P) -> Vec<PathBuf>
         where P: AsRef<Path> {
+        let printable_path: PathBuf = path.as_ref().to_path_buf();
         let mut files: Vec<PathBuf> = match read_dir(path) {
             Ok(files) => {
                 files
@@ -168,8 +169,7 @@ impl SocialGraphCSVFiles {
                     .collect::<Vec<PathBuf>>()
             },
             Err(message) => {
-                // TODO: Print path.
-                error!("Could not read directory: {error}", error = message);
+                error!("Could not read directory {folder:?}: {error}", folder = printable_path, error = message);
                 return Vec::<PathBuf>::new();
             }
         };
@@ -295,8 +295,7 @@ impl SocialGraphCSVFiles {
             let file = match File::open(&path) {
                 Ok(file) => file,
                 Err(message) => {
-                    // TODO: Print path.
-                    error!("Could not open friends file: {error}", error = message);
+                    error!("Could not open friends file {file:?}: {error}", file = path, error = message);
                     continue;
                 }
             };
@@ -305,8 +304,8 @@ impl SocialGraphCSVFiles {
                 .filter_map(|line: Result<String, Error>| -> Option<u64> {
                     let line: String = match line {
                         Ok(line) => line,
-                        Err(_) => {
-                            // TODO: Add `warn!()` with filename and line number about invalid UTF-8.
+                        Err(message) => {
+                            warn!("Invalid line in file {file:?}: {error}", file = path, error = message);
                             return None;
                         }
                     };

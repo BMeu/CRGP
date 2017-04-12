@@ -3,7 +3,7 @@
 use std::fs::File;
 use std::io::{BufReader, Error, Lines};
 use std::io::prelude::*;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use social_graph::DirectedEdge;
 
@@ -18,6 +18,8 @@ use social_graph::DirectedEdge;
 /// ```
 #[derive(Debug)]
 pub struct SocialGraphTextFile {
+    filename: PathBuf,
+
     /// An iterator over the lines in the file.
     lines: Lines<BufReader<File>>,
 
@@ -38,7 +40,11 @@ impl SocialGraphTextFile {
         };
         let reader: BufReader<File> = BufReader::new(friendship_file);
         let lines: Lines<BufReader<File>> = reader.lines();
-        let mut file = SocialGraphTextFile { lines: lines, current_user_and_friends: None };
+        let mut file = SocialGraphTextFile {
+            filename: filename.as_ref().to_path_buf(),
+            lines: lines,
+            current_user_and_friends: None,
+        };
         file.set_current_user_and_friends();
         Ok(file)
     }
@@ -143,8 +149,8 @@ impl SocialGraphTextFile {
                         None => {}
                     }
                 },
-                Err(_) => {
-                    // TODO: Add `warn!()` with filename and line number about invalid UTF-8.
+                Err(message) => {
+                    warn!("Invalid line in file {file:?}: {error}", file = self.filename, error = message);
                 }
             }
         }
