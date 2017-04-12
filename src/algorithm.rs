@@ -59,6 +59,7 @@ pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String
             let probe = retweet_stream
                 .broadcast()
                 .reconstruct(graph_stream)
+                .exchange(|influence: &InfluenceEdge<u64>| influence.cascade_id)
                 .inspect(move |influence: &InfluenceEdge<u64>| {
                     if print_result {
                         println!("{cascade};{retweet};{user};{influencer};{time};-1",
