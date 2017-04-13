@@ -7,6 +7,7 @@ extern crate lazy_static;
 
 #[cfg(unix)]
 use std::io::Read;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 #[cfg(unix)]
@@ -24,7 +25,7 @@ lazy_static! {
 #[test]
 fn from_csv_files() {
     let batch_size: usize = 1;
-    let print_result: bool = true;
+    let output_directory: Option<PathBuf> = Some(PathBuf::from("."));
     let friendship_dataset = SocialGraphCSVFiles::new("data/tests/friends");
     let friendships: Arc<Mutex<Option<SocialGraphCSVFiles>>> = Arc::new(Mutex::new(Some(friendship_dataset)));
     let retweet_dataset = String::from("data/tests/cascade.json");
@@ -34,7 +35,7 @@ fn from_csv_files() {
     if cfg!(unix) {
         let _lock = STDOUT_MUTEX.lock().unwrap();
         let mut buffer = BufferRedirect::stdout().unwrap();
-        let result: Result<Statistics> = algorithm::execute(friendships, retweet_dataset, batch_size, print_result, timely_arguments);
+        let result: Result<Statistics> = algorithm::execute(friendships, retweet_dataset, batch_size, output_directory, timely_arguments);
         let mut output = String::new();
         buffer.read_to_string(&mut output).unwrap();
         drop(buffer);
@@ -61,7 +62,7 @@ fn from_csv_files() {
         }
     }
     else {
-        let result: Result<Statistics> = algorithm::execute(friendships, retweet_dataset, batch_size, print_result, timely_arguments);
+        let result: Result<Statistics> = algorithm::execute(friendships, retweet_dataset, batch_size, output_directory, timely_arguments);
         assert!(result.is_ok());
     }
 }
@@ -69,7 +70,7 @@ fn from_csv_files() {
 #[test]
 fn from_text_file() {
     let batch_size: usize = 1;
-    let print_result: bool = true;
+    let output_directory: Option<PathBuf> = Some(PathBuf::from("."));
     let friendship_dataset = SocialGraphTextFile::new("data/tests/friends.txt");
     assert!(friendship_dataset.is_ok());
 
@@ -82,7 +83,7 @@ fn from_text_file() {
     if cfg!(unix) {
         let _lock = STDOUT_MUTEX.lock().unwrap();
         let mut buffer = BufferRedirect::stdout().unwrap();
-        let result: Result<Statistics> = algorithm::execute(friendships, retweet_dataset, batch_size, print_result, timely_arguments);
+        let result: Result<Statistics> = algorithm::execute(friendships, retweet_dataset, batch_size, output_directory, timely_arguments);
         let mut output = String::new();
         buffer.read_to_string(&mut output).unwrap();
         drop(buffer);
@@ -109,7 +110,7 @@ fn from_text_file() {
         }
     }
     else {
-        let result: Result<Statistics> = algorithm::execute(friendships, retweet_dataset, batch_size, print_result, timely_arguments);
+        let result: Result<Statistics> = algorithm::execute(friendships, retweet_dataset, batch_size, output_directory, timely_arguments);
         assert!(result.is_ok());
     }
 }

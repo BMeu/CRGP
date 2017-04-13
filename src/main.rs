@@ -19,7 +19,8 @@ extern crate clap;
 extern crate crgplib;
 extern crate flexi_logger;
 
-use std::path::Path;
+use std::env::current_dir;
+use std::path::{Path, PathBuf};
 use std::process;
 use std::sync::{Arc, Mutex};
 
@@ -93,16 +94,19 @@ fn main() {
             .value_name("PROCESSES")
             .help("Number of processes involved in the computation")
             .takes_value(true))
+        .arg(Arg::with_name("output-directory")
+            .short("o")
+            .long("output-directory")
+            .value_name("DIRECTORY")
+            .help("The directory where the result and statistics files will be created. If this argument is not \
+                  specified the current direcotry will be used.")
+            .takes_value(true))
         .arg(Arg::with_name("process")
             .short("p")
             .long("process")
             .value_name("ID")
             .help("Identity of this process; from 0 to n-1")
             .takes_value(true))
-        .arg(Arg::with_name("print-results")
-            .short("r")
-            .long("print-result")
-            .help("Prints the computed influence edges to STDOUT"))
         .arg(Arg::with_name("verbosity")
             .short("v")
             .multiple(true)
@@ -127,7 +131,6 @@ fn main() {
     // Get the arguments. Since these arguments have default values and validators defined none of the `unwrap()`s
     // can fail.
     let batch_size: usize = arguments.value_of("batch-size").unwrap().parse().unwrap();
-    let print_result: bool = arguments.is_present("print-results");
 
     // Get the positional arguments. Since they are required the `unwrap()`s cannot fail.
     let friendship_dataset: String = arguments.value_of("FRIENDS").unwrap().to_owned();
@@ -142,6 +145,16 @@ fn main() {
     let (log_to_file, log_directory): (bool, Option<String>) = match arguments.value_of("log") {
         Some(directory) => (true, Some(String::from(directory))),
         None => (false, None)
+    };
+    let output_directory: Option<PathBuf> = match arguments.value_of("output-directory") {
+        Some(directory) => Some(PathBuf::from(directory)),
+        None => match current_dir() {
+            Ok(directory) => Some(directory),
+            Err(error) => {
+                println!("Error: {message}", message = error);
+                process::exit(ExitCode::IOFailure as i32);
+            }
+        },
     };
     if let Some(processes) = arguments.value_of("processes") {
         timely_arguments.push("-n".to_owned());
@@ -188,14 +201,14 @@ fn main() {
         // The path is a directory, thus use the CSV files parser.
         let social_graph = SocialGraphCSVFiles::new(friendship_path);
         let friendships: Arc<Mutex<Option<_>>> = Arc::new(Mutex::new(Some(social_graph)));
-        algorithm::execute(friendships, retweet_dataset, batch_size, print_result, timely_arguments)
+        algorithm::execute(friendships, retweet_dataset, batch_size, output_directory, timely_arguments)
     }
     else {
         // The path is a file, thus use the text file parser.
         match SocialGraphTextFile::new(friendship_path) {
             Ok(social_graph) => {
                 let friendships: Arc<Mutex<Option<_>>> = Arc::new(Mutex::new(Some(social_graph)));
-                algorithm::execute(friendships, retweet_dataset, batch_size, print_result, timely_arguments)
+                algorithm::execute(friendships, retweet_dataset, batch_size, output_directory, timely_arguments)
             },
             Err(error) => {
                 println!("Error: {message}", message = error);

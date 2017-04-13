@@ -5,6 +5,7 @@ use std::io::BufReader;
 use std::io::Result as IOResult;
 use std::io::prelude::*;
 use std::marker;
+use std::path::PathBuf;
 use std::result::Result as StdResult;
 use std::sync::{Arc, Mutex, MutexGuard};
 
@@ -25,8 +26,8 @@ use twitter::*;
 
 /// Execute the algorithm.
 #[allow(unused_qualifications)]
-pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String, batch_size: usize, print_result: bool,
-                     timely_args: I) -> Result<Statistics>
+pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String, batch_size: usize,
+                     output_directory: Option<PathBuf>, timely_args: I) -> Result<Statistics>
     where F: Iterator<Item=DirectedEdge<u64>> + marker::Send + marker::Sync + 'static,
           I: Iterator<Item=String> {
 
@@ -38,6 +39,9 @@ pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String
         /******************
          * DATAFLOW GRAPH *
          ******************/
+
+        // Clone the variable so we can use it in the next closure.
+        let output_directory_c: Option<PathBuf> = output_directory.clone();
 
         // Reconstruct the cascade.
         // Algorithm:
@@ -62,7 +66,7 @@ pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String
                 .reconstruct(graph_stream)
                 .exchange(|influence: &InfluenceEdge<u64>| influence.cascade_id)
                 .inspect(move |influence: &InfluenceEdge<u64>| {
-                    if print_result {
+                    if output_directory_c.is_some() {
                         println!("{cascade};{retweet};{user};{influencer};{time};-1",
                                  cascade = influence.cascade_id, retweet = influence.retweet_id,
                                  user = influence.influencee, influencer = influence.influencer,
