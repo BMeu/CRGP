@@ -25,7 +25,7 @@ lazy_static! {
 #[test]
 fn from_csv_files() {
     let batch_size: usize = 1;
-    let output_directory: Option<PathBuf> = Some(PathBuf::from("."));
+    let output_directory: Option<PathBuf> = None;
     let friendship_dataset = SocialGraphCSVFiles::new("data/tests/friends");
     let friendships: Arc<Mutex<Option<SocialGraphCSVFiles>>> = Arc::new(Mutex::new(Some(friendship_dataset)));
     let retweet_dataset = String::from("data/tests/cascade.json");
@@ -70,7 +70,7 @@ fn from_csv_files() {
 #[test]
 fn from_text_file() {
     let batch_size: usize = 1;
-    let output_directory: Option<PathBuf> = Some(PathBuf::from("."));
+    let output_directory: Option<PathBuf> = None;
     let friendship_dataset = SocialGraphTextFile::new("data/tests/friends.txt");
     assert!(friendship_dataset.is_ok());
 

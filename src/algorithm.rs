@@ -21,7 +21,7 @@ use Result;
 use Statistics;
 use social_graph::*;
 use timely_extensions::Sync;
-use timely_extensions::operators::Reconstruct;
+use timely_extensions::operators::{Reconstruct, Write};
 use twitter::*;
 
 /// Execute the algorithm.
@@ -64,15 +64,7 @@ pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String
             let probe = retweet_stream
                 .broadcast()
                 .reconstruct(graph_stream)
-                .exchange(|influence: &InfluenceEdge<u64>| influence.cascade_id)
-                .inspect(move |influence: &InfluenceEdge<u64>| {
-                    if output_directory_c.is_some() {
-                        println!("{cascade};{retweet};{user};{influencer};{time};-1",
-                                 cascade = influence.cascade_id, retweet = influence.retweet_id,
-                                 user = influence.influencee, influencer = influence.influencer,
-                                 time = influence.timestamp);
-                    };
-                })
+                .write(output_directory_c)
                 .probe().0;
 
             (graph_input, retweet_input, probe)

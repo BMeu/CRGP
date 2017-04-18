@@ -138,6 +138,7 @@ specified levels.
 **Trace:** `-vvvv`
 
  * Invalid directory and filenames within the directory of the social graph (when using the CSV format).
+ * Creation of result and statistics files.
 
 **Info:** `-vvv`
 
