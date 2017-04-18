@@ -53,12 +53,6 @@ where G::Timestamp: Hash {
                     }
                 });
 
-                // If the output directory is `None`, no edges shall be written.
-                /*let directory: PathBuf = match output_directory {
-                    Some(ref directory) => directory.clone(),
-                    None => return
-                };*/
-
                 // If a timely time is done, write all associated edges.
                 notificator.for_each(|time, _num, _notify| {
                     // TODO: Find a more elegant way to get rid of borrow conflicts.
