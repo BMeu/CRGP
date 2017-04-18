@@ -1,5 +1,6 @@
+logs
+results
 target
-*.log
 
 # IntelliJ IDEA
 .idea
