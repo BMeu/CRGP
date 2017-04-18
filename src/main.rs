@@ -63,16 +63,9 @@ fn main() {
             .default_value("500")
             .validator(|value: String| -> Result<(), String> {
                 // The batch size must be a positive integer.
-                let is_valid = match value.parse::<usize>() {
-                    Ok(value) => value > 0,
-                    Err(_) => false
-                };
-
-                if !is_valid {
-                    Err(String::from("The batch size must be a positive integer."))
-                }
-                else {
-                    Ok(())
+                match value.parse::<usize>() {
+                    Ok(value) if value > 0 => Ok(()),
+                    _ => Err(String::from("The batch size must be a positive integer."))
                 }
             }))
         .arg(Arg::with_name("hostfile")
