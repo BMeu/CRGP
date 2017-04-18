@@ -1,6 +1,13 @@
-logs
-results
+# Binaries & Other Compilations
 target
+
+# Logs
+logs
+*.log
+
+# Results
+results
+cascs-*.csv
 
 # IntelliJ IDEA
 .idea
