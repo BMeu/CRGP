@@ -83,17 +83,21 @@ where G::Timestamp: Hash {
                                         let file = match File::create(path) {
                                             Ok(file) => file,
                                             Err(message) => {
-                                                error!("Could not create {file:?}: {error}", file = path_c, error = message);
+                                                error!("Could not create {file:?}: {error}",
+                                                       file = path_c, error = message);
                                                 continue;
                                             }
                                         };
                                         trace!("Created result file {file:?}", file = path_c);
                                         let _ = cascade_writers.insert(influence.cascade_id, BufWriter::new(file));
                                     }
-                                    let mut cascade_writer: &mut BufWriter<File> = cascade_writers.get_mut(&influence.cascade_id).unwrap();
+                                    let cascade_writer: &mut BufWriter<File> = cascade_writers
+                                        .get_mut(&influence.cascade_id)
+                                        .unwrap();
 
                                     // Write the edge into the writer's buffer.
-                                    let _ = writeln!(cascade_writer, "{cascade};{retweet};{user};{influencer};{time};-1",
+                                    let _ = writeln!(cascade_writer,
+                                                     "{cascade};{retweet};{user};{influencer};{time};-1",
                                                      cascade = influence.cascade_id, retweet = influence.retweet_id,
                                                      user = influence.influencee, influencer = influence.influencer,
                                                      time = influence.timestamp);
