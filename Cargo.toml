@@ -5,7 +5,7 @@ authors = ["Bastian Meyer <bastian@bastianmeyer.eu>"]
 description = "A graph-parallel approach to reconstructing the influences within Retweet cascades."
 repository = "https://bitbucket.org/BMeu/crgp"
 readme = "README.md"
-license-file = "LICENSE.txt"
+license = "MIT OR Apache-2.0"
 keywords = ["twitter", "cascade", "reconstruct", "graph", "influence"]
 categories = ["algorithms", "science", "command-line-interface"]
 
