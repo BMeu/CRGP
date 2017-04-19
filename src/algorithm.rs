@@ -33,16 +33,22 @@ use twitter::*;
 
 lazy_static! {
     /// A regular expression to validate directory names. The name must consist of exactly three digits.
+    // The initialization of the Regex will fail if the expression is invalid. Since the expression is known to be
+    // correct, it is safe to simply unwrap the result.
     #[derive(Debug)]
     pub static ref DIRECTORY_NAME_TEMPLATE: Regex = Regex::new(r"^\d{3}$").unwrap();
 
     /// A regular expression to validate TAR file names. The name must consist of exactly two digits followed by the
     /// extension `.tar`.
+    // The initialization of the Regex will fail if the expression is invalid. Since the expression is known to be
+    // correct, it is safe to simply unwrap the result.
     #[derive(Debug)]
     pub static ref TAR_NAME_TEMPLATE: Regex = Regex::new(r"^\d{2}\.tar$").unwrap();
 
     /// A regular expression to validate file names. The name must be of the form `friends[ID].csv` where `[ID]`
     /// consists of one or more digits.
+    // The initialization of the Regex will fail if the expression is invalid. Since the expression is known to be
+    // correct, it is safe to simply unwrap the result.
     #[derive(Debug)]
     pub static ref FILENAME_TEMPLATE: Regex = Regex::new(r"^\d{3}/\d{3}/friends\d+\.csv$").unwrap();
 }
@@ -166,7 +172,15 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
                     // Open the archive.
                     let archive_file = File::open(path)?;
                     let mut archive = Archive::new(archive_file);
-                    for file in archive.entries().unwrap() {
+                    let archive_entries = match archive.entries() {
+                        Ok(entries) => entries,
+                        Err(message) => {
+                            error!("Could not read contents of archive {archive:?}: {error}",
+                                   archive = path_c, error = message);
+                            continue;
+                        }
+                    };
+                    for file in archive_entries {
                         // Ensure correct reading.
                         let file = match file {
                             Ok(file) => file,

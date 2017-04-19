@@ -91,9 +91,15 @@ where G::Timestamp: Hash {
                                         trace!("Created result file {file:?}", file = path_c);
                                         let _ = cascade_writers.insert(influence.cascade_id, BufWriter::new(file));
                                     }
-                                    let cascade_writer: &mut BufWriter<File> = cascade_writers
-                                        .get_mut(&influence.cascade_id)
-                                        .unwrap();
+                                    let cascade_writer = cascade_writers.get_mut(&influence.cascade_id);
+                                    let cascade_writer: &mut BufWriter<File> = match cascade_writer {
+                                        Some(writer) => writer,
+                                        None => {
+                                            // This should not be possible since the above code will insert a new writer
+                                            // if there is none yet.
+                                            continue;
+                                        }
+                                    };
 
                                     // Write the edge into the writer's buffer.
                                     let _ = writeln!(cascade_writer,
