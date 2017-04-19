@@ -61,7 +61,8 @@ where G::Timestamp: Hash {
 
                 // If a timely time is done, write all associated edges.
                 notificator.for_each(|time, _num, _notify| {
-                    // TODO: Find a more elegant way to get rid of borrow conflicts.
+                    // Introduce this sub-scope to unborrow `influences_at_time` so old entries can be removed from it
+                    // at the end.
                     {
                         let influences_now = match influences_at_time.get(&time) {
                             Some(influences_now) => influences_now,
