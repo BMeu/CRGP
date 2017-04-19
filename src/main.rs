@@ -20,16 +20,14 @@ extern crate crgplib;
 extern crate flexi_logger;
 
 use std::env::current_dir;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process;
-use std::sync::{Arc, Mutex};
 
 use clap::{Arg, ArgMatches};
 use flexi_logger::{LogOptions, with_thread};
 
 use crgplib::Error;
 use crgplib::algorithm;
-use crgplib::social_graph::source::*;
 
 /// The exit codes returned by the program.
 #[derive(Clone, Copy, Debug)]
@@ -187,28 +185,8 @@ fn main() {
         }
     }
 
-    // Initialize and pack the friendships. If the path is a directory, use the CSV files parser, otherwise the text
-    // file parser.
-    let friendship_path = Path::new(&friendship_dataset);
-    let results = if friendship_path.is_dir() {
-        // The path is a directory, thus use the CSV files parser.
-        let social_graph = SocialGraphCSVFiles::new(friendship_path);
-        let friendships: Arc<Mutex<Option<_>>> = Arc::new(Mutex::new(Some(social_graph)));
-        algorithm::execute(friendships, retweet_dataset, batch_size, output_directory, timely_arguments)
-    }
-    else {
-        // The path is a file, thus use the text file parser.
-        match SocialGraphTextFile::new(friendship_path) {
-            Ok(social_graph) => {
-                let friendships: Arc<Mutex<Option<_>>> = Arc::new(Mutex::new(Some(social_graph)));
-                algorithm::execute(friendships, retweet_dataset, batch_size, output_directory, timely_arguments)
-            },
-            Err(error) => {
-                println!("Error: {message}", message = error);
-                process::exit(ExitCode::IOFailure as i32);
-            }
-        }
-    };
+    // Execute the algorithm.
+    let results = algorithm::execute(friendship_dataset, retweet_dataset, batch_size, output_directory, timely_arguments);
 
     // Print the statistics.
     match results {

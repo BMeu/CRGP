@@ -1,16 +1,17 @@
 //! The actual algorithm for reconstructing retweet cascades.
 
+use std::fs::read_dir;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Result as IOResult;
 use std::io::prelude::*;
-use std::marker;
 use std::path::PathBuf;
 use std::result::Result as StdResult;
-use std::sync::{Arc, Mutex, MutexGuard};
 
 use fine_grained::Stopwatch;
+use regex::Regex;
 use serde_json;
+use tar::Archive;
 use timely;
 use timely::dataflow::*;
 use timely::dataflow::operators::*;
@@ -19,17 +20,32 @@ use timely_communication::initialize::WorkerGuards;
 use Error;
 use Result;
 use Statistics;
-use social_graph::*;
+use social_graph::DirectedEdge;
 use timely_extensions::Sync;
 use timely_extensions::operators::{Reconstruct, Write};
 use twitter::*;
 
+lazy_static! {
+    /// A regular expression to validate directory names. The name must consist of exactly three digits.
+    #[derive(Debug)]
+    pub static ref DIRECTORY_NAME_TEMPLATE: Regex = Regex::new(r"^\d{3}$").unwrap();
+
+    /// A regular expression to validate TAR file names. The name must consist of exactly two digits followed by the
+    /// extension `.tar`.
+    #[derive(Debug)]
+    pub static ref TAR_NAME_TEMPLATE: Regex = Regex::new(r"^\d{2}\.tar$").unwrap();
+
+    /// A regular expression to validate file names. The name must be of the form `friends[ID].csv` where `[ID]`
+    /// consists of one or more digits.
+    #[derive(Debug)]
+    pub static ref FILENAME_TEMPLATE: Regex = Regex::new(r"^\d{3}/\d{3}/friends\d+\.csv$").unwrap();
+}
+
 /// Execute the algorithm.
 #[allow(unused_qualifications)]
-pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String, batch_size: usize,
-                     output_directory: Option<PathBuf>, timely_args: I) -> Result<Statistics>
-    where F: Iterator<Item=DirectedEdge<u64>> + marker::Send + marker::Sync + 'static,
-          I: Iterator<Item=String> {
+pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: usize,
+                  output_directory: Option<PathBuf>, timely_args: I) -> Result<Statistics>
+    where I: Iterator<Item=String> {
 
     let result: WorkerGuards<Result<Statistics>> = timely::execute_from_args(timely_args,
                                                                              move |computation| -> Result<Statistics> {
@@ -81,17 +97,145 @@ pub fn execute<F, I>(friendships: Arc<Mutex<Option<F>>>, retweet_dataset: String
         let mut number_of_friendships: u64 = 0;
         if index == 0 {
             info!("Loading social graph into the computation...");
-            let mut friendships: MutexGuard<Option<F>> = match friendships.lock() {
-                Ok(guard) => guard,
-                Err(poisened) => poisened.into_inner()
-            };
-            let friendships: F = match friendships.take() {
-                Some(friendships) => friendships,
-                None => return Err(Error::from(String::from("No friendships")))
-            };
-            for friendship in friendships {
-                number_of_friendships += 1;
-                graph_input.send(friendship);
+            // Top level.
+            for root_entry in read_dir(&friendship_dataset)? {
+                let path: PathBuf = match root_entry {
+                    Ok(entry) => entry.path(),
+                    Err(_) => continue
+                };
+
+                // The entry must be a directory.
+                if !path.is_dir() {
+                    continue;
+                }
+
+                // Get the last part of the path (e.g. `ZZZ` from `/xxx/yyy/ZZZ`).
+                let path_c: PathBuf = path.clone();
+                let directory: &str = match path_c.file_stem() {
+                    Some(directory) => {
+                        match directory.to_str() {
+                            Some(directory) => directory,
+                            None => continue
+                        }
+                    },
+                    None => continue
+                };
+
+                // Validate the name.
+                if !DIRECTORY_NAME_TEMPLATE.is_match(directory) {
+                    trace!("Invalid directory name: {name:?}", name = path);
+                    continue;
+                }
+
+                // TAR archives.
+                for archive_entry in read_dir(path)? {
+                    let path: PathBuf = match archive_entry {
+                        Ok(entry) => entry.path(),
+                        Err(_) => continue
+                    };
+
+                    // The entry must be a file.
+                    if !path.is_file() {
+                        continue;
+                    }
+
+                    // Get the file name.
+                    let path_c: PathBuf = path.clone();
+                    let filename: &str = match path_c.file_name() {
+                        Some(filename) => {
+                            match filename.to_str() {
+                                Some(filename) => filename,
+                                None => continue
+                            }
+                        },
+                        None => continue
+                    };
+
+                    // Validate the name.
+                    if !TAR_NAME_TEMPLATE.is_match(filename) {
+                        trace!("Invalid filename: {name:?}", name = path);
+                        continue;
+                    }
+
+                    // Open the archive.
+                    let archive_file = File::open(path)?;
+                    let mut archive = Archive::new(archive_file);
+                    for file in archive.entries().unwrap() {
+                        // Ensure correct reading.
+                        let file = match file {
+                            Ok(file) => file,
+                            Err(message) => {
+                                error!("Could not read archived file in archive {archive:?}: {error}",
+                                       archive = path_c, error = message);
+                                continue;
+                            }
+                        };
+
+                        let path: PathBuf = match file.path() {
+                            Ok(path) => path.to_path_buf(),
+                            Err(_) => continue
+                        };
+                        // Validate the filename.
+                        match path.to_str() {
+                            Some(path) => {
+                                if !FILENAME_TEMPLATE.is_match(path) {
+                                    trace!("Invalid filename: {name:?}", name = path);
+                                    continue;
+                                }
+                            },
+                            None => continue
+                        }
+
+                        // Get the user ID.
+                        let user: u64 = match path.file_stem() {
+                            Some(stem) => {
+                                match stem.to_str() {
+                                    Some(stem) => {
+
+                                        // `stem` is now `friends[ID]`. Only parse `[ID]`, i.e. skip the first seven characters.
+                                        match stem[7..].parse::<u64>() {
+                                            Ok(id) => id,
+                                            Err(message) => {
+                                                info!("Could not parse user ID '{id}': {error}", id = &stem[7..], error = message);
+                                                continue;
+                                            }
+                                        }
+                                    },
+                                    None => continue
+                                }
+                            },
+                            None => continue
+                        };
+
+                        // Read each line.
+                        let reader = BufReader::new(file);
+                        for line in reader.lines() {
+                            // Ensure correct encoding.
+                            let line: String = match line {
+                                Ok(line) => line,
+                                Err(message) => {
+                                    warn!("Invalid line in file {file:?}: {error}", file = path, error = message);
+                                    continue;
+                                }
+                            };
+
+                            // Parse the friend ID.
+                            let friend: u64 = match line.parse() {
+                                Ok(id) => id,
+                                Err(message) => {
+                                    info!("Could not parse friend ID '{friend}' of user {user}: {error}", friend = line,
+                                          user = user, error = message);
+                                    continue;
+                                }
+                            };
+
+                            // Valid users.
+                            let friendship = DirectedEdge::<u64>::new(user, friend);
+                            number_of_friendships += 1;
+                            graph_input.send(friendship);
+                        }
+                    }
+                }
             }
         }
 
