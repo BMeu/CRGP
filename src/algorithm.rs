@@ -211,12 +211,13 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
                             Some(stem) => {
                                 match stem.to_str() {
                                     Some(stem) => {
-
-                                        // `stem` is now `friends[ID]`. Only parse `[ID]`, i.e. skip the first seven characters.
+                                        // `stem` is now `friends[ID]`. Only parse `[ID]`, i.e. skip the first seven
+                                        // characters.
                                         match stem[7..].parse::<u64>() {
                                             Ok(id) => id,
                                             Err(message) => {
-                                                info!("Could not parse user ID '{id}': {error}", id = &stem[7..], error = message);
+                                                info!("Could not parse user ID '{id}': {error}",
+                                                      id = &stem[7..], error = message);
                                                 continue;
                                             }
                                         }
