@@ -24,12 +24,12 @@ pub trait Reconstruct<G: Scope> {
     /// For a social graph, determine all influences for a retweet within that specific retweet cascade. The ``Stream``
     /// of retweets may contain multiple retweet cascades. Each retweet in the retweet stream is expected to be
     /// broadcast to all workers before calling this operator.
-    fn reconstruct(&self, graph: Stream<G, DirectedEdge<u64>>) -> Stream<G, InfluenceEdge<u64>>;
+    fn reconstruct(&self, graph: Stream<G, (u64, Vec<u64>)>) -> Stream<G, InfluenceEdge<u64>>;
 }
 
 impl<G: Scope> Reconstruct<G> for Stream<G, Tweet>
 where G::Timestamp: Hash {
-    fn reconstruct(&self, graph: Stream<G, DirectedEdge<u64>>) -> Stream<G, InfluenceEdge<u64>> {
+    fn reconstruct(&self, graph: Stream<G, (u64, Vec<u64>)>) -> Stream<G, InfluenceEdge<u64>> {
         // For each user, given by their ID, the set of their friends, given by their ID.
         let mut edges: HashMap<u64, HashSet<u64>> = HashMap:: new();
 
@@ -41,7 +41,7 @@ where G::Timestamp: Hash {
         self.binary_stream(
             &graph,
             Pipeline,
-            Exchange::new(|edge: &DirectedEdge<u64>| edge.source),
+            Exchange::new(|friendships: &(u64, Vec<u64>)| friendships.0),
             "Reconstruct",
             move |retweets, friendships, output| {
                 // Input 1: Process the retweets.
@@ -114,9 +114,9 @@ where G::Timestamp: Hash {
                 // Input 2: Capture all friends for each user.
                 friendships.for_each(|_time, friendship_data| {
                     for ref friendship in friendship_data.iter() {
-                        edges.entry(friendship.source)
+                        edges.entry(friendship.0)
                             .or_insert(HashSet::new())
-                            .insert(friendship.destination);
+                            .extend(friendship.1.iter().cloned());
                     };
                 });
             }

@@ -26,7 +26,6 @@ use timely_communication::initialize::WorkerGuards;
 use Error;
 use Result;
 use Statistics;
-use social_graph::DirectedEdge;
 use timely_extensions::Sync;
 use timely_extensions::operators::{Reconstruct, Write};
 use twitter::*;
@@ -228,33 +227,35 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
                             None => continue
                         };
 
-                        // Read each line.
+                        // Parse the file.
                         let reader = BufReader::new(file);
-                        for line in reader.lines() {
-                            // Ensure correct encoding.
-                            let line: String = match line {
-                                Ok(line) => line,
-                                Err(message) => {
-                                    warn!("Invalid line in file {file:?}: {error}", file = path, error = message);
-                                    continue;
+                        let friendships: Vec<u64> = reader.lines()
+                            .filter_map(|line: IOResult<String>| -> Option<String> {
+                                // Ensure correct encoding.
+                                match line {
+                                    Ok(line) => Some(line),
+                                    Err(message) => {
+                                        warn!("Invalid line in file {file:?}: {error}", file = path, error = message);
+                                        None
+                                    }
                                 }
-                            };
-
-                            // Parse the friend ID.
-                            let friend: u64 = match line.parse() {
-                                Ok(id) => id,
-                                Err(message) => {
-                                    info!("Could not parse friend ID '{friend}' of user {user}: {error}", friend = line,
-                                          user = user, error = message);
-                                    continue;
+                            })
+                            .filter_map(|line: String| -> Option<u64> {
+                                // Parse the friend ID.
+                                match line.parse::<u64>() {
+                                    Ok(id) => Some(id),
+                                    Err(message) => {
+                                        info!("Could not parse friend ID '{friend}' of user {user}: {error}",
+                                        friend = line, user = user, error = message);
+                                        None
+                                    }
                                 }
-                            };
+                            })
+                            .collect();
 
-                            // Valid users.
-                            let friendship = DirectedEdge::<u64>::new(user, friend);
-                            number_of_friendships += 1;
-                            graph_input.send(friendship);
-                        }
+                        // Send the friendships.
+                        number_of_friendships += friendships.len() as u64;
+                        graph_input.send((user, friendships));
                     }
                 }
             }
