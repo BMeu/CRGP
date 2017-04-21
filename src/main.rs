@@ -195,6 +195,7 @@ fn main() {
     let results = algorithm::execute(friendship_dataset, retweet_dataset, batch_size, output_directory, timely_arguments);
 
     // Print the statistics.
+    // TODO: Print only on process with ID 0.
     match results {
         Ok(results) => {
             println!();
