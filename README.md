@@ -28,6 +28,48 @@ three Retweets) on a tiny social graph:
 $ cargo run --release -- data/tests/friends-tar data/tests/cascade.json
 ```
 
+## Distributed Computation
+
+The social graph might quickly get too large to fit into a single computer's main memory. This problem can be
+circumvented by distritubting the computation among several machines. Let's look at an example:
+
+Assume we have got three machines among which we want to distribute our computation; their hostnames are `raspberry`,
+`blackberry`, and `blueberry`. On each of these computers we will be running one process of `CRGP`, thus three in total.
+Each process of `CRGP` can use multiple threads for the computation, so-called *workers*, but all processes must use
+the same number of workers. Since our weakest machine has got four CPU cores, we will tell each process to use four
+workers.
+
+We also have to tell each process where to find the other processes. For this, we create a text file `hosts.txt` with
+the same content on all three machines. On each line it gives the address (either the hostname or the IPv4-address) of
+each computer and the port used for communication, separated by a colon: 
+
+```text
+raspberry:2101
+blackberry:2101
+blueberry:2101
+```
+
+Each process has a unique ID `n` in the interval `[0, N-1]` (where `N` is the total number of processes), corresponding
+to the line numbers in the host file: the process running on the host specified in the first line gets ID `0`, the one
+on line two gets ID `1`, and so on. 
+
+On each of the machines, we can now start `CRGP` with the following command, where in accordance with our hosts file
+`[n]` is `0` on `raspberry`, `1` on `blackberry`, and `2` on `blueberry` (line breaks are only added to improve
+legibility and must be omitted when running the command):
+
+```bash
+$ cargo run --release --
+    --process [n]
+    --processes 3
+    --workers 4
+    --hostfile hosts.txt
+    [FRIENDS]
+    [RETWEETS]
+```
+
+`[FRIENDS]` and `[RETWEETS]` are of course paths to the respective data sets. Only process `0` actually accesses these,
+that is, for all other processes any other path (even an invalid one) can be given (but they must be given).
+
 ## File Formats
 
 `CRGP` requires two input files: a list of friends for each user and the retweets.
