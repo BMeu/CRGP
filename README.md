@@ -25,7 +25,7 @@ This repository includes a data set you can use to test `CRGP`. It consists of t
 three Retweets) on a tiny social graph:
 
 ```bash
-$ cargo run --release -- data/tests/friends-tar data/tests/cascade.json
+$ cargo run --release -- data/social_graph data/cascade.json
 ```
 
 ## Distributed Computation
@@ -95,12 +95,12 @@ For example:
  * The friends of user `1337` are stored in `/000/001/friends1337.csv` within `000/00.tar`.
  * The friends of user `420001000024` are stored in `/001/000/friends420001000024.csv`. within `420/00.tar`
 
-For a full example (with some invalid files for testing), see [`data/tests/friends-tar`](data/tests/friends-tar).
+For a full example (with some invalid files for testing), see [`data/social_graph`](data/social_graph).
 
 ### Retweets
 
 The retweet file is a list of JSON-encoded Retweets, each Retweet on a new line. It may contain Retweets from multiple
-cascades. For an example, see [`data/tests/cascade.json`](data/tests/cascade.json).
+cascades. For an example, see [`data/cascade.json`](data/cascade.json).
 
 Each JSON object must contain the following fields (line breaks added for readibility):
 

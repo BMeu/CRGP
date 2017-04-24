@@ -31,8 +31,8 @@ lazy_static! {
 fn from_tar_archives() {
     let batch_size: usize = 1;
     let output_directory = OutputTarget::StdOut;
-    let friendship_dataset = String::from("data/tests/friends-tar");
-    let retweet_dataset = String::from("data/tests/cascade.json");
+    let friendship_dataset = String::from("data/social_graph");
+    let retweet_dataset = String::from("data/cascade.json");
     let timely_arguments = std::iter::empty::<String>();
 
     // Capturing STDOUT currently only works on Unix systems.
