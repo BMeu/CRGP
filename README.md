@@ -79,8 +79,19 @@ that is, for all other processes any other path (even an invalid one) can be giv
 `CRGP` expects the friends for each user in a CSV file, each user in a defined directory structure within a TAR archive,
 and each TAR archive in a defined directory structure.
 
-Each CSV file contains all the friends (one per line) of a single user. The ID (`[ID]`, must be parsable to `u64`)
-of a user is encoded into the filename and the directory path:
+Each CSV file contains all the friends (one per line) of a single user. The first line of a file may contain meta data
+about the user in the following format:
+
+```text
+[Name];[ID];[#Followers];[#Friends];[#Statuses]
+```
+
+I.e., a semicolon-separated list of the user's screen name, their user ID, how many followers they have, how many
+friends they have, and how many Tweets they wrote. Note that the number of friends in the meta data is allowed to differ
+from the amount of friends actually specified below; this can be used to reduce the size of social graph if the
+subset of it is known for a cascade.
+
+The ID (`[ID]`, must be parsable to `u64`) of a user is encoded into the filename and the directory path:
 
  * Filename: `friends[ID].csv`
  * Directory path (without TAR archive): `[ID]` is padded with leading zeroes to twelve digits, then broken into a path
