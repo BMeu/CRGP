@@ -88,8 +88,8 @@ about the user in the following format:
 
 I.e., a semicolon-separated list of the user's screen name, their user ID, how many followers they have, how many
 friends they have, and how many Tweets they wrote. Note that the number of friends in the meta data is allowed to differ
-from the amount of friends actually specified below; this can be used to reduce the size of social graph if the
-subset of it is known for a cascade.
+from the amount of friends actually specified below; this can be used to reduce the size of social graph if its
+subset is known for a cascade.
 
 The ID (`[ID]`, must be parsable to `u64`) of a user is encoded into the filename and the directory path:
 
