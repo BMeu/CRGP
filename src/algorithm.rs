@@ -105,7 +105,9 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
          ****************/
 
         // Load the social graph into the computation (only on the first worker).
-        let mut number_of_friendships: u64 = 0;
+        let mut total_number_of_actual_friendship: u64 = 0;
+        let mut total_number_of_friendships_given: u64 = 0;
+        let mut number_of_users: u64 = 0;
         if index == 0 {
             info!("Loading social graph into the computation...");
             // Top level.
@@ -229,6 +231,8 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
 
                         // Parse the file.
                         let reader = BufReader::new(file);
+                        let mut is_first_line: bool = true;
+                        let mut actual_number_of_friends: u64 = 0;
                         let friendships: Vec<u64> = reader.lines()
                             .filter_map(|line: IOResult<String>| -> Option<String> {
                                 // Ensure correct encoding.
@@ -245,6 +249,26 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
                                 match line.parse::<u64>() {
                                     Ok(id) => Some(id),
                                     Err(message) => {
+                                        // If this is the first line in the file, it may contain meta data.
+                                        let meta_data: Vec<&str> = if is_first_line {
+                                            is_first_line = false;
+                                            line.split(';')
+                                                .collect()
+                                        } else {
+                                            Vec::new()
+                                        };
+
+                                        // Index 3 contains the actual number of friendships.
+                                        if meta_data.len() == 5 {
+                                            match meta_data[3].parse() {
+                                                Ok(amount) => {
+                                                    actual_number_of_friends = amount;
+                                                    return None;
+                                                },
+                                                Err(_) => {}
+                                            }
+                                        }
+
                                         info!("Could not parse friend ID '{friend}' of user {user}: {error}",
                                         friend = line, user = user, error = message);
                                         None
@@ -254,7 +278,12 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
                             .collect();
 
                         // Send the friendships.
-                        number_of_friendships += friendships.len() as u64;
+                        let given_number_of_friends: u64 = friendships.len() as u64;
+                        info!("User {user}: {given} of {actual} friends found", user = user,
+                              given = given_number_of_friends, actual = actual_number_of_friends);
+                        total_number_of_friendships_given += given_number_of_friends;
+                        total_number_of_actual_friendship += actual_number_of_friends;
+                        number_of_users += 1;
                         graph_input.send((user, friendships));
                     }
                 }
@@ -264,8 +293,11 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
         // Process the entire social graph before continuing.
         computation.sync(&probe, &mut graph_input, &mut retweet_input);
         let time_to_process_social_network: u64 = stopwatch.lap();
-        info!("Finished loading the social graph ({amount} friendships) in {time:.2}ms", amount = number_of_friendships,
+        info!("Finished loading the social graph ({amount} friendships) in {time:.2}ms", amount = total_number_of_friendships_given,
               time = time_to_process_social_network as f64 / 1_000_000.0f64);
+        info!("Found {given} of {actual} friendships in the data set for {users} users",
+              given = total_number_of_friendships_given, actual = total_number_of_actual_friendship,
+              users = number_of_users);
 
 
 
@@ -338,7 +370,7 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
          **********/
 
         stopwatch.stop();
-        Ok(Statistics::new(number_of_friendships, number_of_retweets, batch_size, time_to_setup,
+        Ok(Statistics::new(total_number_of_friendships_given, number_of_retweets, batch_size, time_to_setup,
                            time_to_process_social_network, time_to_load_retweets, time_to_process_retweets,
                            stopwatch.total_time()))
     })?;

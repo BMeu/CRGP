@@ -163,6 +163,7 @@ specified levels.
    * Starting and finishing to load the social graph.
    * Starting and finishing to load the Retweet file into memory.
    * Starting and finishing to process the Retweets (with in-progress information for each batch of Retweets).
+ * Information on the actual number of friends, the given number of friends, and the possibly created fake friends.
 
 **Warn:** `-vv`
 
