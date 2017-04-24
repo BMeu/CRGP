@@ -27,7 +27,7 @@ use Error;
 use Result;
 use Statistics;
 use timely_extensions::Sync;
-use timely_extensions::operators::{Reconstruct, Write};
+use timely_extensions::operators::{OutputTarget, Reconstruct, Write};
 use twitter::*;
 
 lazy_static! {
@@ -55,7 +55,7 @@ lazy_static! {
 /// Execute the algorithm.
 #[allow(unused_qualifications)]
 pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: usize,
-                  output_directory: Option<PathBuf>, timely_args: I) -> Result<Statistics>
+                  output_target: OutputTarget, timely_args: I) -> Result<Statistics>
     where I: Iterator<Item=String> {
 
     let result: WorkerGuards<Result<Statistics>> = timely::execute_from_args(timely_args,
@@ -68,7 +68,7 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
          ******************/
 
         // Clone the variable so we can use it in the next closure.
-        let output_directory_c: Option<PathBuf> = output_directory.clone();
+        let output_target_c: OutputTarget = output_target.clone();
 
         // Reconstruct the cascade.
         // Algorithm:
@@ -91,7 +91,7 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
             let probe = retweet_stream
                 .broadcast()
                 .reconstruct(graph_stream)
-                .write(output_directory_c)
+                .write(output_target_c)
                 .probe().0;
 
             (graph_input, retweet_input, probe)

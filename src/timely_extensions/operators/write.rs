@@ -19,19 +19,52 @@ use timely::dataflow::operators::unary::Unary;
 
 use social_graph::InfluenceEdge;
 
+/// Specify where the result will be written to.
+#[derive(Clone, Debug)]
+pub enum OutputTarget {
+    /// Write the result to a file in the specified directory.
+    Directory(PathBuf),
+
+    /// Write the result to `STDOUT`.
+    StdOut,
+
+    /// Do not write the result at all.
+    None,
+}
+
 /// Write a stream to a file, passing on all seen messages.
 pub trait Write<G: Scope> {
-    /// Write all input messages to a file in the given `output_directory` and pass them on. If `output_directory` is
-    /// `None`, the messages will be written to STDOUT.
+    /// Write all input messages to the given `output_target` and pass them on. If `output_target` is
+    /// `None`, the messages will be passed on without any further operations.
     ///
     /// On any IO error, an error log message will be generated using the
     /// [`log`](https://doc.rust-lang.org/log/log/index.html) crate.
-    fn write(&self, output_directory: Option<PathBuf>) -> Stream<G, InfluenceEdge<u64>>;
+    fn write(&self, output_target: OutputTarget) -> Stream<G, InfluenceEdge<u64>>;
 }
 
 impl<G: Scope> Write<G> for Stream<G, InfluenceEdge<u64>>
 where G::Timestamp: Hash {
-    fn write(&self, output_directory: Option<PathBuf>) -> Stream<G, InfluenceEdge<u64>> {
+    fn write(&self, output_target: OutputTarget) -> Stream<G, InfluenceEdge<u64>> {
+        // If the output target is None, return an operator that simply passes the input on.
+        match output_target {
+            OutputTarget::None => {
+                return self.unary_stream(
+                    Exchange::new(|influence: &InfluenceEdge<u64>| influence.cascade_id),
+                    "Write",
+                    |influences, output| {
+                        influences.for_each(|time, influence_data| {
+                            for ref influence in influence_data.iter() {
+                                // Tell the compile the influence edge is of type 'InfluenceEdge<u64>'.
+                                let influence: &InfluenceEdge<u64> = influence;
+                                output.session(&time).give(influence.clone());
+                            }
+                        })
+                    }
+                )
+            },
+            _ => {},
+        }
+
         // For each cascade, a separate file writer.
         let mut cascade_writers: HashMap<u64, BufWriter<File>> = HashMap::new();
 
@@ -73,8 +106,8 @@ where G::Timestamp: Hash {
                             // Tell the compiler the influence edge is of type 'InfluenceEdge<u64>'.
                             let influence: &InfluenceEdge<u64> = influence;
 
-                            match output_directory {
-                                Some(ref directory) => {
+                            match output_target {
+                                OutputTarget::Directory(ref directory) => {
                                     // Get the writer for this cascade. If there is none, create it.
                                     let has_writer: bool = cascade_writers.contains_key(&influence.cascade_id);
                                     if !has_writer {
@@ -109,12 +142,13 @@ where G::Timestamp: Hash {
                                                      user = influence.influencee, influencer = influence.influencer,
                                                      time = influence.timestamp);
                                 },
-                                None => {
+                                OutputTarget::StdOut => {
                                     println!("{cascade};{retweet};{user};{influencer};{time};-1",
                                              cascade = influence.cascade_id, retweet = influence.retweet_id,
                                              user = influence.influencee, influencer = influence.influencer,
                                              time = influence.timestamp);
-                                }
+                                },
+                                OutputTarget::None => {}
                             }
                         }
                     }

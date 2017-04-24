@@ -34,6 +34,7 @@ use flexi_logger::{LogOptions, with_thread};
 
 use crgplib::Error;
 use crgplib::algorithm;
+use crgplib::timely_extensions::operators::OutputTarget;
 
 /// The exit codes returned by the program.
 #[derive(Clone, Copy, Debug)]
@@ -98,6 +99,9 @@ fn main() {
             .help("The directory where the result and statistics files will be created. If this argument is not \
                   specified the current direcotry will be used.")
             .takes_value(true))
+        .arg(Arg::with_name("no-output")
+            .long("no-output")
+            .help("Do not write any results. This setting overwrites \"--output-directory\"."))
         .arg(Arg::with_name("process")
             .short("p")
             .long("process")
@@ -143,16 +147,19 @@ fn main() {
         Some(directory) => (true, Some(String::from(directory))),
         None => (false, None)
     };
-    let output_directory: Option<PathBuf> = match arguments.value_of("output-directory") {
-        Some(directory) => Some(PathBuf::from(directory)),
+    let mut output_target: OutputTarget = match arguments.value_of("output-directory") {
+        Some(directory) => OutputTarget::Directory(PathBuf::from(directory)),
         None => match current_dir() {
-            Ok(directory) => Some(directory),
+            Ok(directory) => OutputTarget::Directory(directory),
             Err(error) => {
                 println!("Error: {message}", message = error);
                 process::exit(ExitCode::IOFailure as i32);
             }
         },
     };
+    if arguments.is_present("no-output") {
+        output_target = OutputTarget::None;
+    }
     if let Some(processes) = arguments.value_of("processes") {
         timely_arguments.push("-n".to_owned());
         timely_arguments.push(processes.to_owned());
@@ -192,7 +199,7 @@ fn main() {
     }
 
     // Execute the algorithm.
-    let results = algorithm::execute(friendship_dataset, retweet_dataset, batch_size, output_directory, timely_arguments);
+    let results = algorithm::execute(friendship_dataset, retweet_dataset, batch_size, output_target, timely_arguments);
 
     // Print the statistics.
     // TODO: Print only on process with ID 0.

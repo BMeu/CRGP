@@ -13,7 +13,6 @@ extern crate lazy_static;
 
 #[cfg(unix)]
 use std::io::Read;
-use std::path::PathBuf;
 use std::sync::Mutex;
 
 #[cfg(unix)]
@@ -21,6 +20,7 @@ use gag::BufferRedirect;
 
 use crgplib::{Result, Statistics};
 use crgplib::algorithm;
+use crgplib::timely_extensions::operators::OutputTarget;
 
 #[cfg(unix)]
 lazy_static! {
@@ -30,7 +30,7 @@ lazy_static! {
 #[test]
 fn from_tar_archives() {
     let batch_size: usize = 1;
-    let output_directory: Option<PathBuf> = None;
+    let output_directory = OutputTarget::StdOut;
     let friendship_dataset = String::from("data/tests/friends-tar");
     let retweet_dataset = String::from("data/tests/cascade.json");
     let timely_arguments = std::iter::empty::<String>();
