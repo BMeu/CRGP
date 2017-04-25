@@ -1,0 +1,26 @@
+[package]
+name = "crgp_lib"
+version = "0.2.1"
+authors = ["Bastian Meyer <bastian@bastianmeyer.eu>"]
+description = "A graph-parallel library for reconstructing the influences within Retweet cascades."
+repository = "https://bitbucket.org/BMeu/crgp"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+keywords = ["twitter", "cascade", "reconstruct", "graph", "influence"]
+categories = ["algorithms", "science"]
+
+[dependencies]
+abomonation = "0.4"
+fine_grained = "0.1"
+lazy_static = "0.2"
+log = "0.3"
+regex = "0.2"
+serde = "0.9"
+serde_derive = "0.9"
+serde_json = "0.9"
+tar = "0.4"
+timely = "0.1.0"
+timely_communication = "0.1.5"
+
+[target.'cfg(unix)'.dev-dependencies]
+gag = "0.1"

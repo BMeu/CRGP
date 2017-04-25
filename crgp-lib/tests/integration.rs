@@ -4,7 +4,7 @@
 // MIT license <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your option. This file may not be copied,
 // modified, or distributed except according to those terms.
 
-extern crate crgplib;
+extern crate crgp_lib;
 #[cfg(unix)]
 extern crate gag;
 #[cfg(unix)]
@@ -18,9 +18,9 @@ use std::sync::Mutex;
 #[cfg(unix)]
 use gag::BufferRedirect;
 
-use crgplib::{Result, Statistics};
-use crgplib::algorithm;
-use crgplib::timely_extensions::operators::OutputTarget;
+use crgp_lib::{Result, Statistics};
+use crgp_lib::algorithm;
+use crgp_lib::timely_extensions::operators::OutputTarget;
 
 #[cfg(unix)]
 lazy_static! {
@@ -31,8 +31,8 @@ lazy_static! {
 fn from_tar_archives() {
     let batch_size: usize = 1;
     let output_directory = OutputTarget::StdOut;
-    let friendship_dataset = String::from("data/social_graph");
-    let retweet_dataset = String::from("data/cascade.json");
+    let friendship_dataset = String::from("../data/social_graph");
+    let retweet_dataset = String::from("../data/cascade.json");
     let timely_arguments = std::iter::empty::<String>();
 
     // Capturing STDOUT currently only works on Unix systems.

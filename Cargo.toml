@@ -9,23 +9,13 @@ license = "MIT OR Apache-2.0"
 keywords = ["twitter", "cascade", "reconstruct", "graph", "influence"]
 categories = ["algorithms", "science", "command-line-interface"]
 
-[lib]
-name = "crgplib"
+[workspace]
+members = [
+    ".",
+    "crgp-lib"
+]
 
 [dependencies]
-abomonation = "0.4"
 clap = "~2.21.0"
-fine_grained = "0.1"
+crgp_lib = { path = "crgp-lib" }
 flexi_logger = "0.5"
-lazy_static = "0.2"
-log = "0.3"
-regex = "0.2"
-serde = "0.9"
-serde_derive = "0.9"
-serde_json = "0.9"
-tar = "0.4"
-timely = "0.1.0"
-timely_communication = "0.1.5"
-
-[target.'cfg(unix)'.dev-dependencies]
-gag = "0.1"

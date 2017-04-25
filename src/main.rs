@@ -22,7 +22,7 @@
 
 #[macro_use]
 extern crate clap;
-extern crate crgplib;
+extern crate crgp_lib;
 extern crate flexi_logger;
 
 use std::env::current_dir;
@@ -32,9 +32,9 @@ use std::process;
 use clap::{Arg, ArgMatches};
 use flexi_logger::{LogOptions, with_thread};
 
-use crgplib::Error;
-use crgplib::algorithm;
-use crgplib::timely_extensions::operators::OutputTarget;
+use crgp_lib::Error;
+use crgp_lib::algorithm;
+use crgp_lib::timely_extensions::operators::OutputTarget;
 
 /// The exit codes returned by the program.
 #[derive(Clone, Copy, Debug)]
