@@ -26,11 +26,13 @@ extern crate tar;
 extern crate timely;
 extern crate timely_communication;
 
+pub use configuration::Configuration;
 pub use error::Error;
 pub use error::Result;
 pub use statistics::Statistics;
 
 pub mod algorithm;
+pub mod configuration;
 mod error;
 pub mod social_graph;
 mod statistics;

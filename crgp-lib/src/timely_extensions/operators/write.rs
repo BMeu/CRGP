@@ -22,7 +22,7 @@ use timely::dataflow::operators::unary::Unary;
 use social_graph::InfluenceEdge;
 
 /// Specify where the result will be written to.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum OutputTarget {
     /// Write the result to a file in the specified directory.
     Directory(PathBuf),
