@@ -9,6 +9,8 @@
 use std::fs::read_dir;
 use std::fs::File;
 use std::io::BufReader;
+use std::io::Error as IOError;
+use std::io::ErrorKind as IOErrorKind;
 use std::io::Result as IOResult;
 use std::io::prelude::*;
 use std::path::PathBuf;
@@ -307,8 +309,14 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
 
         // Load the retweets (on the first worker).
         let retweets: Vec<Tweet> = if index == 0 {
+            let path = PathBuf::from(&retweet_dataset);
+            if !path.is_file() {
+                error!("Retweet dataset is a not a file");
+                return Err(Error::from(IOError::new(IOErrorKind::InvalidInput, "Retweet dataset is not a file")));
+            }
+
             info!("Loading the Retweets into memory...");
-            let retweet_file = match File::open(&retweet_dataset) {
+            let retweet_file = match File::open(&path) {
                 Ok(file) => file,
                 Err(error) => {
                     error!("Could not open Retweet dataset: {error}", error = error);
