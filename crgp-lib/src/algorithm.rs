@@ -20,9 +20,9 @@ use fine_grained::Stopwatch;
 use regex::Regex;
 use serde_json;
 use tar::Archive;
-use timely;
-use timely::dataflow::*;
-use timely::dataflow::operators::*;
+use timely::dataflow::operators::{Broadcast, Input, Probe};
+use timely::execute::execute_from_args;
+use timely::dataflow::scopes::Scope;
 use timely_communication::initialize::WorkerGuards;
 
 use Error;
@@ -30,7 +30,7 @@ use Result;
 use Statistics;
 use timely_extensions::Sync;
 use timely_extensions::operators::{OutputTarget, Reconstruct, Write};
-use twitter::*;
+use twitter::Tweet;
 
 lazy_static! {
     /// A regular expression to validate directory names. The name must consist of exactly three digits.
@@ -60,8 +60,8 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
                   output_target: OutputTarget, timely_args: I) -> Result<Statistics>
     where I: Iterator<Item=String> {
 
-    let result: WorkerGuards<Result<Statistics>> = timely::execute_from_args(timely_args,
-                                                                             move |computation| -> Result<Statistics> {
+    let result: WorkerGuards<Result<Statistics>> = execute_from_args(timely_args,
+                                                                     move |computation| -> Result<Statistics> {
         let index = computation.index();
         let mut stopwatch = Stopwatch::start_new();
 

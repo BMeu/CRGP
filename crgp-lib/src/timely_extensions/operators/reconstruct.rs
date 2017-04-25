@@ -7,13 +7,13 @@
 //! Reconstruct retweet cascades.
 
 use std::collections::{HashMap, HashSet};
-use std::hash::*;
+use std::hash::Hash;
 
 use timely::dataflow::{Stream, Scope};
 use timely::dataflow::channels::pact::{Exchange, Pipeline};
 use timely::dataflow::operators::binary::Binary;
 
-use social_graph::*;
+use social_graph::InfluenceEdge;
 use twitter::Tweet;
 
 /// Reconstruct retweet cascades.
