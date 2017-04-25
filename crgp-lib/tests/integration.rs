@@ -18,7 +18,8 @@ use std::sync::Mutex;
 #[cfg(unix)]
 use gag::BufferRedirect;
 
-use crgp_lib::{Result, Statistics};
+use crgp_lib::Result;
+use crgp_lib::Statistics;
 use crgp_lib::algorithm;
 use crgp_lib::timely_extensions::operators::OutputTarget;
 

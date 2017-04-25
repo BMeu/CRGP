@@ -6,14 +6,16 @@
 
 //! Write a stream to a file.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fs::File;
 use std::hash::Hash;
 use std::io::Write as IOWrite;
 use std::io::BufWriter;
 use std::path::PathBuf;
 
-use timely::dataflow::{Stream, Scope};
+use timely::dataflow::Stream;
+use timely::dataflow::Scope;
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::operators::unary::Unary;
 

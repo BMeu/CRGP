@@ -20,7 +20,9 @@ use fine_grained::Stopwatch;
 use regex::Regex;
 use serde_json;
 use tar::Archive;
-use timely::dataflow::operators::{Broadcast, Input, Probe};
+use timely::dataflow::operators::Broadcast;
+use timely::dataflow::operators::Input;
+use timely::dataflow::operators::Probe;
 use timely::execute::execute_from_args;
 use timely::dataflow::scopes::Scope;
 use timely_communication::initialize::WorkerGuards;
@@ -29,7 +31,9 @@ use Error;
 use Result;
 use Statistics;
 use timely_extensions::Sync;
-use timely_extensions::operators::{OutputTarget, Reconstruct, Write};
+use timely_extensions::operators::OutputTarget;
+use timely_extensions::operators::Reconstruct;
+use timely_extensions::operators::Write;
 use twitter::Tweet;
 
 lazy_static! {

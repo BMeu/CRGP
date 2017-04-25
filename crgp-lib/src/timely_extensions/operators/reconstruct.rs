@@ -6,11 +6,14 @@
 
 //! Reconstruct retweet cascades.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::hash::Hash;
 
-use timely::dataflow::{Stream, Scope};
-use timely::dataflow::channels::pact::{Exchange, Pipeline};
+use timely::dataflow::Stream;
+use timely::dataflow::Scope;
+use timely::dataflow::channels::pact::Exchange;
+use timely::dataflow::channels::pact::Pipeline;
 use timely::dataflow::operators::binary::Binary;
 
 use social_graph::InfluenceEdge;

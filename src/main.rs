@@ -29,8 +29,10 @@ use std::env::current_dir;
 use std::path::PathBuf;
 use std::process;
 
-use clap::{Arg, ArgMatches};
-use flexi_logger::{LogOptions, with_thread};
+use clap::Arg;
+use clap::ArgMatches;
+use flexi_logger::with_thread;
+use flexi_logger::LogOptions;
 
 use crgp_lib::Error;
 use crgp_lib::algorithm;
