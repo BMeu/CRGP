@@ -7,7 +7,7 @@
 //! Representations of tweets.
 
 use abomonation::Abomonation;
-use super::User;
+use twitter::User;
 
 /// Tweets are the basic atomic building block of all things Twitter.
 ///
