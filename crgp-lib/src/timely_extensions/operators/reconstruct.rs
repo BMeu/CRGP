@@ -31,7 +31,7 @@ impl<G: Scope> Reconstruct<G> for Stream<G, Tweet>
 where G::Timestamp: Hash {
     fn reconstruct(&self, graph: Stream<G, (u64, Vec<u64>)>) -> Stream<G, InfluenceEdge<u64>> {
         // For each user, given by their ID, the set of their friends, given by their ID.
-        let mut edges: HashMap<u64, HashSet<u64>> = HashMap:: new();
+        let mut edges: HashMap<u64, HashSet<u64>> = HashMap::new();
 
         // For each cascade, given by its ID, a set of activated users, given by their ID, i.e. those users who have
         // retweeted within this cascade before, per worker. Users are associated with the time at which they first
