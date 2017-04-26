@@ -6,10 +6,11 @@
 
 //! Algorithm configuration.
 
-use timely_extensions::operators::OutputTarget;
 use timely_communication::initialize::Configuration as TimelyConfiguration;
 
+use Error;
 use Result;
+use timely_extensions::operators::OutputTarget;
 
 /// Configuration for the `CRGP` algorithm.
 ///
@@ -38,6 +39,7 @@ use Result;
 /// assert_eq!(configuration.output_target,
 ///            OutputTarget::Directory(PathBuf::from("results")));
 /// assert_eq!(configuration.process_id, 0);
+/// assert_eq!(configuration.report_connection_progress, false);
 /// assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
 /// assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
 /// ```
@@ -46,20 +48,24 @@ pub struct Configuration {
     /// Number of Retweets being processed at once.
     pub batch_size: usize,
 
-    /// Path to the file containing the host list.
-    pub hosts: Option<String>,
+    /// A list of host addresses, each in the form `address:port`, where address may be a hostname or an IPv4 address.
+    pub hosts: Option<Vec<String>>,
 
     /// Number of processes involved in the computation.
-    pub number_of_processes: u64,
+    pub number_of_processes: usize,
 
     /// Number of per-process worker threads.
-    pub number_of_workers: u64,
+    pub number_of_workers: usize,
 
     /// Target for writing results.
     pub output_target: OutputTarget,
 
     /// Identity of this process, from `0` to `number_of_processes - 1`.
-    pub process_id: u64,
+    pub process_id: usize,
+
+    // TODO: Once using timely logging, replace `Print` in docs with `Log`.
+    /// Print connection progress when using multiple processes.
+    pub report_connection_progress: bool,
 
     /// Path to the file containing the Retweets.
     pub retweets: String,
@@ -79,6 +85,7 @@ impl Configuration {
     ///  * `number_of_workers`: `1`
     ///  * `output_target`: `OutputTarget::StdOut`
     ///  * `process_id`: `0`
+    ///  * `report_connection_progress`: `false`
     pub fn default(retweets: String, social_graph: String) -> Configuration {
         Configuration {
             batch_size: 500,
@@ -87,6 +94,7 @@ impl Configuration {
             number_of_workers: 1,
             output_target: OutputTarget::StdOut,
             process_id: 0,
+            report_connection_progress: false,
             retweets: retweets,
             social_graph: social_graph,
         }
@@ -99,9 +107,9 @@ impl Configuration {
         self
     }
 
-    /// Set the path to the host list file.
+    /// Set the host list.
     #[inline]
-    pub fn hosts(mut self, hosts: Option<String>) -> Configuration {
+    pub fn hosts(mut self, hosts: Option<Vec<String>>) -> Configuration {
         self.hosts = hosts;
         self
     }
@@ -115,21 +123,28 @@ impl Configuration {
 
     /// Set the identity of this process.
     #[inline]
-    pub fn process_id(mut self, id: u64) -> Configuration {
+    pub fn process_id(mut self, id: usize) -> Configuration {
         self.process_id = id;
         self
     }
 
     /// Set the number of involved processes.
     #[inline]
-    pub fn processes(mut self, processes: u64) -> Configuration {
+    pub fn processes(mut self, processes: usize) -> Configuration {
         self.number_of_processes = processes;
+        self
+    }
+
+    /// Toggle connection progress reports.
+    #[inline]
+    pub fn report_connection_progress(mut self, report: bool) -> Configuration {
+        self.report_connection_progress = report;
         self
     }
 
     /// Set the number of per-process workers.
     #[inline]
-    pub fn workers(mut self, workers: u64) -> Configuration {
+    pub fn workers(mut self, workers: usize) -> Configuration {
         self.number_of_workers = workers;
         self
     }
@@ -139,16 +154,52 @@ impl Configuration {
     /// This function mimics `timely_communication::initialize::Configuration::from_args()`.
     #[doc(hidden)]
     #[inline]
-    pub fn get_timely_configuration(&self) -> Result<TimelyConfiguration> {
-        unimplemented!()
+    pub fn get_timely_configuration(&mut self) -> Result<TimelyConfiguration> {
+        if self.process_id >= self.number_of_processes {
+            return Err(Error::from(String::from("the process ID is not in range of all processes")));
+        }
+
+        if self.number_of_processes > 1 {
+            // Cluster of processes.
+
+            // If no hosts are given, run on localhost.
+            let mut host_addresses = Vec::<String>::new();
+            if let Some(ref hosts) = self.hosts {
+                if hosts.len() != self.number_of_processes {
+                    return Err(Error::from(String::from(format!("{hosts} hosts given, but expected {processes}",
+                                                                hosts = hosts.len(),
+                                                                processes = self.number_of_processes))));
+                }
+                host_addresses = hosts.clone();
+            }
+            else {
+                for index in 0..self.number_of_processes {
+                    host_addresses.push(format!("localhost:{port}", port = 2101 + index));
+                }
+
+                self.hosts = Some(host_addresses.clone());
+            }
+
+            Ok(TimelyConfiguration::Cluster(self.number_of_workers, self.process_id, host_addresses,
+                                            self.report_connection_progress))
+        }
+        else if self.number_of_workers > 1 {
+            // One process, multiple workers.
+            Ok(TimelyConfiguration::Process(self.number_of_workers))
+        }
+        else {
+            // Single process, single thread.
+            Ok(TimelyConfiguration::Thread)
+        }
     }
 }
 
 
 #[cfg(test)]
 mod tests {
+    use std::error::Error;
     use std::path::PathBuf;
-
+    use timely_communication::initialize::Configuration as TimelyConfiguration;
     use timely_extensions::operators::OutputTarget;
 
     use super::*;
@@ -166,6 +217,7 @@ mod tests {
         assert_eq!(configuration.number_of_workers, 1);
         assert_eq!(configuration.output_target, OutputTarget::StdOut);
         assert_eq!(configuration.process_id, 0);
+        assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
     }
@@ -184,6 +236,7 @@ mod tests {
         assert_eq!(configuration.number_of_workers, 1);
         assert_eq!(configuration.output_target, OutputTarget::StdOut);
         assert_eq!(configuration.process_id, 0);
+        assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
     }
@@ -192,17 +245,26 @@ mod tests {
     fn hosts() {
         let retweets = String::from("path/to/retweets.json");
         let social_graph = String::from("path/to/social/graph");
-        let hosts = String::from("hosts.txt");
+        let hosts = vec![
+            String::from("host1:2101"),
+            String::from("host1:2102"),
+            String::from("host1:2103"),
+        ];
 
         let configuration = Configuration::default(retweets, social_graph)
             .hosts(Some(hosts));
 
         assert_eq!(configuration.batch_size, 500);
-        assert_eq!(configuration.hosts, Some(String::from("hosts.txt")));
+        assert_eq!(configuration.hosts, Some(vec![
+            String::from("host1:2101"),
+            String::from("host1:2102"),
+            String::from("host1:2103"),
+        ]));
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 1);
         assert_eq!(configuration.output_target, OutputTarget::StdOut);
         assert_eq!(configuration.process_id, 0);
+        assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
     }
@@ -223,6 +285,7 @@ mod tests {
         assert_eq!(configuration.output_target,
                    OutputTarget::Directory(PathBuf::from("results")));
         assert_eq!(configuration.process_id, 0);
+        assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
     }
@@ -241,6 +304,7 @@ mod tests {
         assert_eq!(configuration.number_of_workers, 1);
         assert_eq!(configuration.output_target, OutputTarget::StdOut);
         assert_eq!(configuration.process_id, 42);
+        assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
     }
@@ -259,6 +323,26 @@ mod tests {
         assert_eq!(configuration.number_of_workers, 1);
         assert_eq!(configuration.output_target, OutputTarget::StdOut);
         assert_eq!(configuration.process_id, 0);
+        assert_eq!(configuration.report_connection_progress, false);
+        assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+    }
+
+    #[test]
+    fn report_connection_progress() {
+        let retweets = String::from("path/to/retweets.json");
+        let social_graph = String::from("path/to/social/graph");
+
+        let configuration = Configuration::default(retweets, social_graph)
+            .report_connection_progress(true);
+
+        assert_eq!(configuration.batch_size, 500);
+        assert_eq!(configuration.hosts, None);
+        assert_eq!(configuration.number_of_processes, 1);
+        assert_eq!(configuration.number_of_workers, 1);
+        assert_eq!(configuration.output_target, OutputTarget::StdOut);
+        assert_eq!(configuration.process_id, 0);
+        assert_eq!(configuration.report_connection_progress, true);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
     }
@@ -277,12 +361,123 @@ mod tests {
         assert_eq!(configuration.number_of_workers, 42);
         assert_eq!(configuration.output_target, OutputTarget::StdOut);
         assert_eq!(configuration.process_id, 0);
+        assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
     }
 
     #[test]
     fn get_timely_configuration() {
-        assert!(true);
+        let retweets = String::from("path/to/retweets.json");
+        let social_graph = String::from("path/to/social/graph");
+
+        // Single thread by default.
+        let mut configuration = Configuration::default(retweets.clone(), social_graph.clone());
+        let timely_config = configuration.get_timely_configuration();
+        assert!(timely_config.is_ok());
+        match timely_config.unwrap() {
+            TimelyConfiguration::Thread => {
+                assert!(true)
+            },
+            _ => assert!(false, "wrong timely configuration, expected `TimelyConfiguration::Thread`")
+        }
+
+        // Multiple threads.
+        let mut configuration = Configuration::default(retweets.clone(), social_graph.clone())
+            .workers(13);
+        let timely_config = configuration.get_timely_configuration();
+        assert!(timely_config.is_ok());
+        match timely_config.unwrap() {
+            TimelyConfiguration::Process(workers) => {
+                assert_eq!(workers, 13);
+            },
+            _ => assert!(false, "wrong timely configuration, expected `TimelyConfiguration::Process(..)`")
+        }
+
+        // Multiple processes, wrong process ID.
+        let mut configuration = Configuration::default(retweets.clone(), social_graph.clone())
+            .workers(13)
+            .processes(42)
+            .process_id(43);
+        let timely_config = configuration.get_timely_configuration();
+        assert!(timely_config.is_err());
+        // Since `TimelyConfiguration` does not implement `Debug`, we have to get rid of it before calling `unwrap_err`.
+        assert_eq!(timely_config.map(|_| ()).unwrap_err().description(),
+                   "the process ID is not in range of all processes");
+
+        // Multiple processes, with hosts, wrong number of addresses.
+        let mut configuration = Configuration::default(retweets.clone(), social_graph.clone())
+            .workers(13)
+            .processes(42)
+            .process_id(2)
+            .hosts(Some(vec![
+                String::from("host1:2101"),
+                String::from("host1:2102"),
+                String::from("host1:2103")
+            ]));
+        let timely_config = configuration.get_timely_configuration();
+        assert!(timely_config.is_err());
+        // Since `TimelyConfiguration` does not implement `Debug`, we have to get rid of it before calling `unwrap_err`.
+        assert_eq!(timely_config.map(|_| ()).unwrap_err().description(),
+                   "3 hosts given, but expected 42");
+
+        // Multiple processes, with hosts.
+        let mut configuration = Configuration::default(retweets.clone(), social_graph.clone())
+            .workers(13)
+            .processes(3)
+            .process_id(2)
+            .hosts(Some(vec![
+                String::from("host1:2101"),
+                String::from("host1:2102"),
+                String::from("host1:2103")
+            ]));
+        let timely_config = configuration.get_timely_configuration();
+        assert!(timely_config.is_ok());
+        match timely_config.unwrap() {
+            TimelyConfiguration::Cluster(workers, id, hosts, report) => {
+                assert_eq!(workers, 13);
+                assert_eq!(id, 2);
+                assert_eq!(hosts, vec![
+                    String::from("host1:2101"),
+                    String::from("host1:2102"),
+                    String::from("host1:2103")
+                ]);
+                assert_eq!(report, false);
+            },
+            _ => assert!(false, "wrong timely configuration, expected `TimelyConfiguration::Cluster(..)`")
+        }
+        // The configuration must still contain the host list.
+        assert_eq!(configuration.hosts, Some(vec![
+            String::from("host1:2101"),
+            String::from("host1:2102"),
+            String::from("host1:2103")
+        ]));
+
+        // Multiple processes, without hosts.
+        let mut configuration = Configuration::default(retweets.clone(), social_graph.clone())
+            .workers(13)
+            .processes(3)
+            .process_id(2);
+        let timely_config = configuration.get_timely_configuration();
+        assert!(timely_config.is_ok());
+        match timely_config.unwrap() {
+            TimelyConfiguration::Cluster(workers, id, hosts, report) => {
+                assert_eq!(workers, 13);
+                assert_eq!(id, 2);
+                assert_eq!(hosts, vec![
+                    String::from("localhost:2101"),
+                    String::from("localhost:2102"),
+                    String::from("localhost:2103")
+                ]);
+                assert_eq!(report, false);
+            },
+            _ => assert!(false, "wrong timely configuration, expected `TimelyConfiguration::Cluster(..)`")
+        }
+        // The config hosts should be set afterwards.
+        assert_eq!(configuration.hosts, Some(vec![
+            String::from("localhost:2101"),
+            String::from("localhost:2102"),
+            String::from("localhost:2103")
+        ]));
     }
 }
