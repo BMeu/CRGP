@@ -18,10 +18,10 @@ use std::sync::Mutex;
 #[cfg(unix)]
 use gag::BufferRedirect;
 
+use crgp_lib::Configuration;
 use crgp_lib::Result;
 use crgp_lib::Statistics;
 use crgp_lib::algorithm;
-use crgp_lib::timely_extensions::operators::OutputTarget;
 
 #[cfg(unix)]
 lazy_static! {
@@ -30,17 +30,17 @@ lazy_static! {
 
 #[test]
 fn from_tar_archives() {
-    let batch_size: usize = 1;
-    let output_directory = OutputTarget::StdOut;
     let friendship_dataset = String::from("../data/social_graph");
     let retweet_dataset = String::from("../data/cascade.json");
-    let timely_arguments = std::iter::empty::<String>();
+
+    let configuration = Configuration::default(retweet_dataset, friendship_dataset)
+        .batch_size(1);
 
     // Capturing STDOUT currently only works on Unix systems.
     if cfg!(unix) {
         let _lock = STDOUT_MUTEX.lock().unwrap();
         let mut buffer = BufferRedirect::stdout().unwrap();
-        let result: Result<Statistics> = algorithm::execute(friendship_dataset, retweet_dataset, batch_size, output_directory, timely_arguments);
+        let result: Result<Statistics> = algorithm::execute(configuration);
         let mut output = String::new();
         buffer.read_to_string(&mut output).unwrap();
         drop(buffer);
@@ -66,8 +66,8 @@ fn from_tar_archives() {
             assert!(influences.contains(expected_line), "Missing influence: {}", expected_line);
         }
     }
-        else {
-            let result: Result<Statistics> = algorithm::execute(friendship_dataset, retweet_dataset, batch_size, output_directory, timely_arguments);
-            assert!(result.is_ok());
-        }
+    else {
+        let result: Result<Statistics> = algorithm::execute(configuration);
+        assert!(result.is_ok());
+    }
 }
