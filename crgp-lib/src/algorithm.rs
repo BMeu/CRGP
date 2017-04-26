@@ -69,6 +69,9 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
         let index = computation.index();
         let mut stopwatch = Stopwatch::start_new();
 
+        // Log the algorithm configuration.
+        info!("{:?}", configuration);
+
         /******************
          * DATAFLOW GRAPH *
          ******************/

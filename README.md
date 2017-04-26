@@ -157,6 +157,7 @@ specified levels.
 
 **Info:** `-vvv`
 
+ * Algorithm parameters (e.g. batch size, data sets, number of processes and workers, ...).
  * Failure to parse user IDs.
  * Failure to parse Retweets.
  * The following events during the algorithm execution:
