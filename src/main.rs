@@ -26,17 +26,23 @@ extern crate crgp_lib;
 extern crate flexi_logger;
 
 use std::env::current_dir;
+use std::fs::File;
+use std::io::BufRead;
+use std::io::BufReader;
+use std::io::Error as IOError;
 use std::path::PathBuf;
 use std::process;
 
 use clap::Arg;
 use clap::ArgMatches;
-use flexi_logger::with_thread;
-use flexi_logger::LogOptions;
-
+use crgp_lib::Configuration;
 use crgp_lib::Error;
 use crgp_lib::algorithm;
 use crgp_lib::timely_extensions::operators::OutputTarget;
+use flexi_logger::with_thread;
+use flexi_logger::LogOptions;
+
+pub mod validation;
 
 /// The exit codes returned by the program.
 #[derive(Clone, Copy, Debug)]
@@ -68,13 +74,7 @@ fn main() {
             .help("Size of retweet batches")
             .takes_value(true)
             .default_value("500")
-            .validator(|value: String| -> Result<(), String> {
-                // The batch size must be a positive integer.
-                match value.parse::<usize>() {
-                    Ok(value) if value > 0 => Ok(()),
-                    _ => Err(String::from("The batch size must be a positive integer."))
-                }
-            }))
+            .validator(validation::positive_usize))
         .arg(Arg::with_name("hostfile")
             .short("f")
             .long("hostfile")
@@ -93,7 +93,9 @@ fn main() {
             .long("processes")
             .value_name("PROCESSES")
             .help("Number of processes involved in the computation")
-            .takes_value(true))
+            .takes_value(true)
+            .default_value("1")
+            .validator(validation::positive_usize))
         .arg(Arg::with_name("output-directory")
             .short("o")
             .long("output-directory")
@@ -109,7 +111,9 @@ fn main() {
             .long("process")
             .value_name("ID")
             .help("Identity of this process; from 0 to n-1")
-            .takes_value(true))
+            .takes_value(true)
+            .default_value("0")
+            .validator(validation::usize))
         .arg(Arg::with_name("verbosity")
             .short("v")
             .multiple(true)
@@ -120,7 +124,9 @@ fn main() {
             .long("workers")
             .value_name("WORKERS")
             .help("Number of per-process worker threads")
-            .takes_value(true))
+            .takes_value(true)
+            .default_value("1")
+            .validator(validation::positive_usize))
         .arg(Arg::with_name("FRIENDS")
             .help("Path to the friendship dataset")
             .required(true)
@@ -131,45 +137,61 @@ fn main() {
             .index(2))
         .get_matches();
 
-    // Get the arguments. Since these arguments have default values and validators defined none of the `unwrap()`s
-    // can fail.
-    let batch_size: usize = arguments.value_of("batch-size").unwrap().parse().unwrap();
 
     // Get the positional arguments. Since they are required the `unwrap()`s cannot fail.
-    let friendship_dataset: String = arguments.value_of("FRIENDS").unwrap().to_owned();
-    let retweet_dataset: String = arguments.value_of("RETWEETS").unwrap().to_owned();
+    let social_graph_path: String = arguments.value_of("FRIENDS").unwrap().to_owned();
+    let retweet_path: String = arguments.value_of("RETWEETS").unwrap().to_owned();
 
-    // Create the arguments for the timely execution.
-    let mut timely_arguments: Vec<String> = Vec::new();
-    if let Some(hostfile) = arguments.value_of("hostfile") {
-        timely_arguments.push("-h".to_owned());
-        timely_arguments.push(hostfile.to_owned());
-    }
+    // Get the arguments with default values. Since these arguments have default values and validators defined none
+    // of the `unwrap()`s can fail.
+    let batch_size: usize = arguments.value_of("batch-size").unwrap().parse().unwrap();
+    let process_id: usize = arguments.value_of("process").unwrap().parse().unwrap();
+    let processes: usize = arguments.value_of("processes").unwrap().parse().unwrap();
+    let workers: usize = arguments.value_of("workers").unwrap().parse().unwrap();
+
+    // Determine the output target.
+    let output_target: OutputTarget = if arguments.is_present("no-output") {
+        OutputTarget::None
+    } else {
+        match arguments.value_of("output-directory") {
+            Some(directory) => OutputTarget::Directory(PathBuf::from(directory)),
+            None => match current_dir() {
+                Ok(directory) => OutputTarget::Directory(directory),
+                Err(error) => {
+                    println!("Error: {message}", message = error);
+                    process::exit(ExitCode::IOFailure as i32);
+                }
+            },
+        }
+    };
+
+    // Get the hosts.
+    let hosts: Option<Vec<String>> = match arguments.value_of("hostfile") {
+        Some(file) => {
+            let file = match File::open(file) {
+                Ok(file) => file,
+                Err(error) => {
+                    println!("Error: {message}", message = error);
+                    process::exit(ExitCode::IOFailure as i32);
+                }
+            };
+            let reader = BufReader::new(file);
+            match reader.lines().collect::<Result<Vec<String>, IOError>>() {
+                Ok(hosts) => Some(hosts),
+                Err(error) => {
+                    println!("Error: {message}", message = error);
+                    process::exit(ExitCode::IOFailure as i32);
+                }
+            }
+        },
+        None => None,
+    };
+
+    // Get the logger arguments.
     let (log_to_file, log_directory): (bool, Option<String>) = match arguments.value_of("log") {
         Some(directory) => (true, Some(String::from(directory))),
         None => (false, None)
     };
-    let mut output_target: OutputTarget = match arguments.value_of("output-directory") {
-        Some(directory) => OutputTarget::Directory(PathBuf::from(directory)),
-        None => match current_dir() {
-            Ok(directory) => OutputTarget::Directory(directory),
-            Err(error) => {
-                println!("Error: {message}", message = error);
-                process::exit(ExitCode::IOFailure as i32);
-            }
-        },
-    };
-    if arguments.is_present("no-output") {
-        output_target = OutputTarget::None;
-    }
-    if let Some(processes) = arguments.value_of("processes") {
-        timely_arguments.push("-n".to_owned());
-        timely_arguments.push(processes.to_owned());
-    }
-    if let Some(process) = arguments.value_of("process") {
-        timely_arguments.push("-p".to_owned());
-        timely_arguments.push(process.to_owned());
-    }
     let verbosity: Option<String> = match arguments.occurrences_of("verbosity") {
         0 => None,
         1 => Some(String::from("error")),
@@ -177,11 +199,6 @@ fn main() {
         3 => Some(String::from("info")),
         4 | _ => Some(String::from("trace"))
     };
-    if let Some(workers) = arguments.value_of("workers") {
-        timely_arguments.push("-w".to_owned());
-        timely_arguments.push(workers.to_owned());
-    }
-    let timely_arguments: std::vec::IntoIter<String> = timely_arguments.into_iter();
 
     // Initialize the logger.
     if let Some(verbosity) = verbosity {
@@ -200,8 +217,17 @@ fn main() {
         }
     }
 
+    // Set the algorithm configuration.
+    let configuration = Configuration::default(retweet_path, social_graph_path)
+        .batch_size(batch_size)
+        .hosts(hosts)
+        .output_target(output_target)
+        .process_id(process_id)
+        .processes(processes)
+        .workers(workers);
+
     // Execute the algorithm.
-    let results = algorithm::execute(friendship_dataset, retweet_dataset, batch_size, output_target, timely_arguments);
+    let results = algorithm::execute(configuration);
 
     // Print the statistics.
     // TODO: Print only on process with ID 0.

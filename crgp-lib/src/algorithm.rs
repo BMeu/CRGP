@@ -23,10 +23,12 @@ use tar::Archive;
 use timely::dataflow::operators::Broadcast;
 use timely::dataflow::operators::Input;
 use timely::dataflow::operators::Probe;
-use timely::execute::execute_from_args;
+use timely::execute::execute as timely_execute;
 use timely::dataflow::scopes::Scope;
+use timely_communication::initialize::Configuration as TimelyConfiguration;
 use timely_communication::initialize::WorkerGuards;
 
+use Configuration;
 use Error;
 use Result;
 use Statistics;
@@ -60,12 +62,10 @@ lazy_static! {
 
 /// Execute the algorithm.
 #[allow(unused_qualifications)]
-pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_size: usize,
-                  output_target: OutputTarget, timely_args: I) -> Result<Statistics>
-    where I: Iterator<Item=String> {
+pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
 
-    let result: WorkerGuards<Result<Statistics>> = execute_from_args(timely_args,
-                                                                     move |computation| -> Result<Statistics> {
+    let timely_configuration: TimelyConfiguration = configuration.get_timely_configuration()?;
+    let result: WorkerGuards<Result<Statistics>> = timely_execute(timely_configuration, move |computation| -> Result<Statistics> {
         let index = computation.index();
         let mut stopwatch = Stopwatch::start_new();
 
@@ -74,7 +74,7 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
          ******************/
 
         // Clone the variable so we can use it in the next closure.
-        let output_target_c: OutputTarget = output_target.clone();
+        let output_target: OutputTarget = configuration.output_target.clone();
 
         // Reconstruct the cascade.
         // Algorithm:
@@ -97,7 +97,7 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
             let probe = retweet_stream
                 .broadcast()
                 .reconstruct(graph_stream)
-                .write(output_target_c)
+                .write(output_target)
                 .probe().0;
 
             (graph_input, retweet_input, probe)
@@ -117,7 +117,7 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
         if index == 0 {
             info!("Loading social graph into the computation...");
             // Top level.
-            for root_entry in read_dir(&friendship_dataset)? {
+            for root_entry in read_dir(&configuration.social_graph)? {
                 let path: PathBuf = match root_entry {
                     Ok(entry) => entry.path(),
                     Err(_) => continue
@@ -313,7 +313,7 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
 
         // Load the retweets (on the first worker).
         let retweets: Vec<Tweet> = if index == 0 {
-            let path = PathBuf::from(&retweet_dataset);
+            let path = PathBuf::from(&configuration.retweets);
             if !path.is_file() {
                 error!("Retweet dataset is a not a file");
                 return Err(Error::from(IOError::new(IOErrorKind::InvalidInput, "Retweet dataset is not a file")));
@@ -342,7 +342,8 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
                             }
                         },
                         Err(message) => {
-                            warn!("Invalid line in file {file:?}: {error}", file = retweet_dataset, error = message);
+                            warn!("Invalid line in file {file:?}: {error}",
+                                  file = configuration.retweets, error = message);
                             return None;
                         }
                     }
@@ -358,6 +359,7 @@ pub fn execute<I>(friendship_dataset: String, retweet_dataset: String, batch_siz
 
         // Process the retweets.
         info!("Processing the Retweets...");
+        let batch_size: usize = configuration.batch_size;
         let mut round = 0;
         for retweet in retweets {
             retweet_input.send(retweet);
