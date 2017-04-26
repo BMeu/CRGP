@@ -21,3 +21,52 @@ pub fn positive_usize(value: String) -> Result<(), String> {
         _ => Err(String::from("The value must be a positive integer."))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn usize() {
+        let result: Result<(), String> = super::usize(String::from(""));
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), String::from("The value must be an integer."));
+
+        let result: Result<(), String> = super::usize(String::from("a"));
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), String::from("The value must be an integer."));
+
+        let result: Result<(), String> = super::usize(String::from("-1"));
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), String::from("The value must be an integer."));
+
+        let result: Result<(), String> = super::usize(String::from("0"));
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), ());
+
+        let result: Result<(), String> = super::usize(String::from("1"));
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), ());
+    }
+    
+    #[test]
+    fn positive_usize() {
+        let result: Result<(), String> = super::positive_usize(String::from(""));
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), String::from("The value must be a positive integer."));
+
+        let result: Result<(), String> = super::positive_usize(String::from("a"));
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), String::from("The value must be a positive integer."));
+
+        let result: Result<(), String> = super::positive_usize(String::from("-1"));
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), String::from("The value must be a positive integer."));
+
+        let result: Result<(), String> = super::positive_usize(String::from("0"));
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), String::from("The value must be a positive integer."));
+
+        let result: Result<(), String> = super::positive_usize(String::from("1"));
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), ());
+    }
+}
