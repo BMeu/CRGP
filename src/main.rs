@@ -114,6 +114,10 @@ fn main() {
             .takes_value(true)
             .default_value("0")
             .validator(validation::usize))
+        .arg(Arg::with_name("report-connection-progress")
+            .long("report-connection-progress")
+            // TODO: Replace "Print" with "Log" once using logs in timely.
+            .help("Print connection progress when using multiple processes."))
         .arg(Arg::with_name("verbosity")
             .short("v")
             .multiple(true)
@@ -148,6 +152,7 @@ fn main() {
     let process_id: usize = arguments.value_of("process").unwrap().parse().unwrap();
     let processes: usize = arguments.value_of("processes").unwrap().parse().unwrap();
     let workers: usize = arguments.value_of("workers").unwrap().parse().unwrap();
+    let report_connection_progess: bool = arguments.is_present("report-connection-progress");
 
     // Determine the output target.
     let output_target: OutputTarget = if arguments.is_present("no-output") {
@@ -224,6 +229,7 @@ fn main() {
         .output_target(output_target)
         .process_id(process_id)
         .processes(processes)
+        .report_connection_progress(report_connection_progess)
         .workers(workers);
 
     // Execute the algorithm.
