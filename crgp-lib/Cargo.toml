@@ -19,8 +19,8 @@ serde = "0.9"
 serde_derive = "0.9"
 serde_json = "0.9"
 tar = "0.4"
-timely = "0.1.0"
-timely_communication = "0.1.5"
+timely = "0.1"
+timely_communication = "0.1"
 
 [target.'cfg(unix)'.dev-dependencies]
 gag = "0.1"
