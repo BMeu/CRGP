@@ -100,8 +100,7 @@ fn main() {
             .validator(validation::usize))
         .arg(Arg::with_name("report-connection-progress")
             .long("report-connection-progress")
-            // TODO: Replace "Print" with "Log" once using logs in timely.
-            .help("Print connection progress when using multiple processes."))
+            .help("Print connection progress to STDOUT when using multiple processes."))
         .arg(Arg::with_name("verbosity")
             .short("v")
             .multiple(true)

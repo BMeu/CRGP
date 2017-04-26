@@ -63,8 +63,7 @@ pub struct Configuration {
     /// Identity of this process, from `0` to `number_of_processes - 1`.
     pub process_id: usize,
 
-    // TODO: Once using timely logging, replace `Print` in docs with `Log`.
-    /// Print connection progress when using multiple processes.
+    /// Print connection progress to STDOUT when using multiple processes.
     pub report_connection_progress: bool,
 
     /// Path to the file containing the Retweets.
