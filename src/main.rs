@@ -26,36 +26,20 @@ extern crate crgp_lib;
 extern crate flexi_logger;
 
 use std::env::current_dir;
+use std::error::Error as StdError;
 use std::path::PathBuf;
-use std::process;
 
 use clap::Arg;
 use clap::ArgMatches;
-use flexi_logger::with_thread;
-use flexi_logger::LogOptions;
-
 use crgp_lib::Error;
 use crgp_lib::algorithm;
 use crgp_lib::timely_extensions::operators::OutputTarget;
+use flexi_logger::with_thread;
+use flexi_logger::LogOptions;
 
-/// The exit codes returned by the program.
-#[derive(Clone, Copy, Debug)]
-pub enum ExitCode {
-    /// Successful (i.e. expected) execution (Code: `0`).
-    Success = 0,
+pub use exit::ExitCode;
 
-    /// Invalid program parameters (Code: `1`).
-    IncorrectUsage = 1,
-
-    /// Failure due to I/O operations (Code: `2`).
-    IOFailure = 2,
-
-    /// Failure during logger initialization (Code: `3`).
-    LoggerFailure = 3,
-
-    /// Execution failure (Code: `4`).
-    ExecutionFailure = 4,
-}
+pub mod exit;
 
 /// Execute the program.
 fn main() {
@@ -154,8 +138,7 @@ fn main() {
         None => match current_dir() {
             Ok(directory) => OutputTarget::Directory(directory),
             Err(error) => {
-                println!("Error: {message}", message = error);
-                process::exit(ExitCode::IOFailure as i32);
+                exit::fail_from_error(Error::from(error));
             }
         },
     };
@@ -194,8 +177,7 @@ fn main() {
         match logger_initialization {
             Ok(_) => {},
             Err(error) => {
-                println!("Error: {message}", message = error);
-                process::exit(ExitCode::LoggerFailure as i32);
+                exit::fail_with_message(ExitCode::LoggerFailure, error.description());
             }
         }
     }
@@ -223,20 +205,10 @@ fn main() {
             println!();
             println!("  Retweet Processing Rate: {} RT/s", results.retweet_processing_rate());
 
-            process::exit(ExitCode::Success as i32);
+            exit::succeed();
         },
         Err(error) => {
-            print!("Error: ");
-            match error {
-                Error::IO(message) => {
-                    println!("{}", message);
-                    process::exit(ExitCode::IOFailure as i32);
-                },
-                Error::Timely(message) => {
-                    println!("{}", message);
-                    process::exit(ExitCode::ExecutionFailure as i32);
-                }
-            }
+            exit::fail_from_error(error);
         }
     };
 }
