@@ -16,6 +16,6 @@ members = [
 ]
 
 [dependencies]
-clap = "~2.21.0"
+clap = "2.21"
 crgp_lib = { path = "crgp-lib" }
 flexi_logger = "0.5"
