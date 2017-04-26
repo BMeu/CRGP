@@ -32,7 +32,6 @@ use std::io::BufRead;
 use std::io::BufReader;
 use std::io::Error as IOError;
 use std::path::PathBuf;
-use std::process;
 
 use clap::Arg;
 use clap::ArgMatches;
@@ -126,10 +125,6 @@ fn main() {
             .index(2))
         .get_matches();
 
-    // Get the arguments. Since these arguments have default values and validators defined none of the `unwrap()`s
-    // can fail.
-    let batch_size: usize = arguments.value_of("batch-size").unwrap().parse().unwrap();
-
     // Get the positional arguments. Since they are required the `unwrap()`s cannot fail.
     let social_graph_path: String = arguments.value_of("FRIENDS").unwrap().to_owned();
     let retweet_path: String = arguments.value_of("RETWEETS").unwrap().to_owned();
@@ -163,8 +158,7 @@ fn main() {
             let file = match File::open(file) {
                 Ok(file) => file,
                 Err(error) => {
-                    println!("Error: {message}", message = error);
-                    process::exit(ExitCode::IOFailure as i32);
+                    exit::fail_from_error(Error::from(error));
                 }
             };
             let reader = BufReader::new(file);
