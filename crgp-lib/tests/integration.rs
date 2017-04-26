@@ -31,7 +31,7 @@ lazy_static! {
 #[test]
 fn from_tar_archives() {
     let friendship_dataset = String::from("../data/social_graph");
-    let retweet_dataset = String::from("../data/cascade.json");
+    let retweet_dataset = String::from("../data/retweets.json");
 
     let configuration = Configuration::default(retweet_dataset, friendship_dataset)
         .batch_size(1);

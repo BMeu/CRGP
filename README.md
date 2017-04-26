@@ -25,7 +25,7 @@ This repository includes a data set you can use to test `CRGP`. It consists of t
 three Retweets) on a tiny social graph:
 
 ```bash
-$ cargo run --release -- data/social_graph data/cascade.json
+$ cargo run --release -- data/social_graph data/retweets.json
 ```
 
 ## Distributed Computation
@@ -111,7 +111,7 @@ For a full example (with some invalid files for testing), see [`data/social_grap
 ### Retweets
 
 The retweet file is a list of JSON-encoded Retweets, each Retweet on a new line. It may contain Retweets from multiple
-cascades. For an example, see [`data/cascade.json`](data/cascade.json).
+cascades. For an example, see [`data/retweets.json`](data/retweets.json).
 
 Each JSON object must contain the following fields (line breaks added for readibility):
 
