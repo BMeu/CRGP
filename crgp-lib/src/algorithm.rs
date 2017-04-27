@@ -118,7 +118,7 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
         let mut total_number_of_friendships_given: u64 = 0;
         let mut number_of_users: u64 = 0;
         if index == 0 {
-            info!("Loading social graph into the computation...");
+            info!("Loading social graph...");
             // Top level.
             for root_entry in read_dir(&configuration.social_graph)? {
                 let path: PathBuf = match root_entry {
@@ -180,7 +180,14 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                     }
 
                     // Open the archive.
-                    let archive_file = File::open(path)?;
+                    let archive_file = match File::open(path) {
+                        Ok(file) => file,
+                        Err(message) => {
+                            error!("Could not open archive {archive:?}: {error}",
+                                   archive = path_c, error = message);
+                            continue;
+                        }
+                    };
                     let mut archive = Archive::new(archive_file);
                     let archive_entries = match archive.entries() {
                         Ok(entries) => entries,
@@ -226,7 +233,7 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                                         match stem[7..].parse::<u64>() {
                                             Ok(id) => id,
                                             Err(message) => {
-                                                info!("Could not parse user ID '{id}': {error}",
+                                                warn!("Could not parse user ID '{id}': {error}",
                                                       id = &stem[7..], error = message);
                                                 continue;
                                             }
@@ -278,18 +285,24 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                                             }
                                         }
 
-                                        info!("Could not parse friend ID '{friend}' of user {user}: {error}",
-                                        friend = line, user = user, error = message);
+                                        warn!("Could not parse friend ID '{friend}' of user {user}: {error}",
+                                              friend = line, user = user, error = message);
                                         None
                                     }
                                 }
                             })
                             .collect();
 
+                        if friendships.len() == 0 {
+                            warn!("User {user} does not have any friends", user = user);
+                            continue;
+                        }
+
                         // Send the friendships.
                         let given_number_of_friends: u64 = friendships.len() as u64;
-                        info!("User {user}: {given} of {actual} friends found", user = user,
-                              given = given_number_of_friends, actual = actual_number_of_friends);
+                        trace!("User {user}: {given} of {actual} friends found", user = user,
+                               given = given_number_of_friends, actual = actual_number_of_friends);
+
                         total_number_of_friendships_given += given_number_of_friends;
                         total_number_of_actual_friendship += actual_number_of_friends;
                         number_of_users += 1;
@@ -302,7 +315,7 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
         // Process the entire social graph before continuing.
         computation.sync(&probe, &mut graph_input, &mut retweet_input);
         let time_to_process_social_network: u64 = stopwatch.lap();
-        info!("Finished loading the social graph ({amount} friendships) in {time:.2}ms", amount = total_number_of_friendships_given,
+        info!("Finished loading the social graph in {time:.2}ms",
               time = time_to_process_social_network as f64 / 1_000_000.0f64);
         info!("Found {given} of {actual} friendships in the data set for {users} users",
               given = total_number_of_friendships_given, actual = total_number_of_actual_friendship,
@@ -318,15 +331,15 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
         let retweets: Vec<Tweet> = if index == 0 {
             let path = PathBuf::from(&configuration.retweets);
             if !path.is_file() {
-                error!("Retweet dataset is a not a file");
-                return Err(Error::from(IOError::new(IOErrorKind::InvalidInput, "Retweet dataset is not a file")));
+                error!("Retweet data set is a not a file");
+                return Err(Error::from(IOError::new(IOErrorKind::InvalidInput, "Retweet data set is not a file")));
             }
 
-            info!("Loading the Retweets into memory...");
+            info!("Loading Retweets");
             let retweet_file = match File::open(&path) {
                 Ok(file) => file,
                 Err(error) => {
-                    error!("Could not open Retweet dataset: {error}", error = error);
+                    error!("Could not open Retweet data set: {error}", error = error);
                     return Err(Error::from(error));
                 }
             };
@@ -339,7 +352,7 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                             match serde_json::from_str::<Tweet>(&line) {
                                 Ok(tweet) => return Some(tweet),
                                 Err(message) => {
-                                    info!("Failed to parse tweet: {error}", error = message);
+                                    warn!("Failed to parse Tweet: {error}", error = message);
                                     return None;
                                 }
                             }
@@ -357,11 +370,11 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
         };
         let number_of_retweets: u64 = retweets.len() as u64;
         let time_to_load_retweets: u64 = stopwatch.lap();
-        info!("Finished loading the Retweets into memory in {time:.2}ms",
+        info!("Finished loading Retweets in {time:.2}ms",
               time = time_to_load_retweets as f64 / 1_000_000.0f64);
 
         // Process the retweets.
-        info!("Processing the Retweets...");
+        info!("Processing Retweets");
         let batch_size: usize = configuration.batch_size;
         let mut round = 0;
         for retweet in retweets {
@@ -369,7 +382,7 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
 
             let is_batch_complete: bool = round % batch_size == (batch_size - 1);
             if is_batch_complete {
-                info!("Processed {amount} of {total} Retweets...", amount = round + 1, total = number_of_retweets);
+                trace!("Processed {amount} of {total} Retweets...", amount = round + 1, total = number_of_retweets);
                 computation.sync(&probe, &mut retweet_input, &mut graph_input);
             }
 

@@ -155,31 +155,31 @@ specified levels.
 
 **Trace:** `-vvvv`
 
-* Invalid directory and filenames within the social graph directory and TAR files.
+* Invalid directory and file names within the social graph directory and TAR files.
 * Creation of result and statistics files.
+* Per-user information on the user's actual number of friends, the given number of friends, and the possibly created
+  fake friends.
+* In-progress information for each processed batch of Retweets.
 
 **Info:** `-vvv`
 
 * Algorithm parameters (e.g. batch size, data sets, number of processes and workers, ...).
-* Failure to parse user IDs.
-* Failure to parse Retweets.
-* The following events during the algorithm execution:
+* The following algorithm execution events:
     * Starting and finishing to load the social graph.
     * Starting and finishing to load the Retweet file into memory.
-    * Starting and finishing to process the Retweets (with in-progress information for each batch of Retweets).
-* Information on the actual number of friends, the given number of friends, and the possibly created fake friends.
+    * Starting and finishing to process the Retweets.
+* Overall information on the actual number of friends in the social graph, the given number of friends, and the possibly
+  created fake friends.
 
 **Warn:** `-vv`
 
+* Parse failures: user IDs, Retweets.
 * Encountering users without any friends when loading the social graph.
 * Encountering input (e.g. in files) that is not valid UTF-8.
 
 **Error:** `-v`
 
-* Failure to read the contents of a directory.
-* Failure to open files.
- 
-
+* Failures during I/O operations.
 
 ## Author
 
