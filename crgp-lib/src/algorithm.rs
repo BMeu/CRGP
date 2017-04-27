@@ -306,7 +306,7 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
 
                         if given_number_of_friends > actual_number_of_friends {
                             warn!("User {user} has more friends ({given}) than claimed ({claim})", user = user,
-                                  given = given_number_of_friends, actual_number_of_friends);
+                                  given = given_number_of_friends, claim = actual_number_of_friends);
                         }
 
                         // Introduce dummy friends if required.
