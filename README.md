@@ -152,29 +152,29 @@ specified levels.
 
 **Trace:** `-vvvv`
 
- * Invalid directory and filenames within the directory of the social graph (when using the CSV format).
- * Creation of result and statistics files.
+* Invalid directory and filenames within the directory of the social graph (when using the CSV format).
+* Creation of result and statistics files.
 
 **Info:** `-vvv`
 
- * Algorithm parameters (e.g. batch size, data sets, number of processes and workers, ...).
- * Failure to parse user IDs.
- * Failure to parse Retweets.
- * The following events during the algorithm execution:
-   * Starting and finishing to load the social graph.
-   * Starting and finishing to load the Retweet file into memory.
-   * Starting and finishing to process the Retweets (with in-progress information for each batch of Retweets).
- * Information on the actual number of friends, the given number of friends, and the possibly created fake friends.
+* Algorithm parameters (e.g. batch size, data sets, number of processes and workers, ...).
+* Failure to parse user IDs.
+* Failure to parse Retweets.
+* The following events during the algorithm execution:
+    * Starting and finishing to load the social graph.
+    * Starting and finishing to load the Retweet file into memory.
+    * Starting and finishing to process the Retweets (with in-progress information for each batch of Retweets).
+* Information on the actual number of friends, the given number of friends, and the possibly created fake friends.
 
 **Warn:** `-vv`
 
- * Encountering users without any friends when loading the social graph.
- * Encountering input (e.g. in files) that is not valid UTF-8.
+* Encountering users without any friends when loading the social graph.
+* Encountering input (e.g. in files) that is not valid UTF-8.
 
 **Error:** `-v`
 
- * Failure to read the contents of a directory.
- * Failure to open files.
+* Failure to read the contents of a directory.
+* Failure to open files.
  
 
 
