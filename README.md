@@ -70,6 +70,9 @@ $ cargo run --release --
 `[FRIENDS]` and `[RETWEETS]` are of course paths to the respective data sets. Only process `0` actually accesses these,
 that is, for all other processes any other path (even an invalid one) can be given (but they must be given).
 
+If you do not specify a host file but use `N > 1` processes, `CRGP` will automatically use `localhost` on the ports
+`2101` through `2101 + N - 1` as hosts. This way, you can easily test the distributed computation on a single machine.
+
 ## File Formats
 
 `CRGP` requires two input files: a list of friends for each user and the retweets.
