@@ -152,7 +152,7 @@ specified levels.
 
 **Trace:** `-vvvv`
 
-* Invalid directory and filenames within the directory of the social graph (when using the CSV format).
+* Invalid directory and filenames within the social graph directory and TAR files.
 * Creation of result and statistics files.
 
 **Info:** `-vvv`
