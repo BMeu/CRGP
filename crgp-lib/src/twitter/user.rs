@@ -8,6 +8,8 @@
 
 use abomonation::Abomonation;
 
+use UserID;
+
 /// Users can be anyone or anything.
 ///
 /// Users tweet, follow, create lists, have a home timeline, can be mentioned, and can be looked up in bulk.
@@ -19,7 +21,7 @@ use abomonation::Abomonation;
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct User {
     /// Integer representation of the unique identifier for this user.
-    pub id: u64,
+    pub id: UserID,
 
     /// The screen name, handle, or alias that this user identifies themselves with. Screen names are unique, but
     /// subject to change.

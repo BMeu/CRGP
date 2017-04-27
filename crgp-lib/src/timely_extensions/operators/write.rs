@@ -19,6 +19,7 @@ use timely::dataflow::Scope;
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::operators::unary::Unary;
 
+use UserID;
 use social_graph::InfluenceEdge;
 
 /// Specify where the result will be written to.
@@ -41,23 +42,23 @@ pub trait Write<G: Scope> {
     ///
     /// On any IO error, an error log message will be generated using the
     /// [`log`](https://doc.rust-lang.org/log/log/index.html) crate.
-    fn write(&self, output_target: OutputTarget) -> Stream<G, InfluenceEdge<u64>>;
+    fn write(&self, output_target: OutputTarget) -> Stream<G, InfluenceEdge<UserID>>;
 }
 
-impl<G: Scope> Write<G> for Stream<G, InfluenceEdge<u64>>
+impl<G: Scope> Write<G> for Stream<G, InfluenceEdge<UserID>>
 where G::Timestamp: Hash {
-    fn write(&self, output_target: OutputTarget) -> Stream<G, InfluenceEdge<u64>> {
+    fn write(&self, output_target: OutputTarget) -> Stream<G, InfluenceEdge<UserID>> {
         // If the output target is None, return an operator that simply passes the input on.
         match output_target {
             OutputTarget::None => {
                 return self.unary_stream(
-                    Exchange::new(|influence: &InfluenceEdge<u64>| influence.cascade_id),
+                    Exchange::new(|influence: &InfluenceEdge<UserID>| influence.cascade_id),
                     "Write",
                     |influences, output| {
                         influences.for_each(|time, influence_data| {
                             for ref influence in influence_data.iter() {
-                                // Tell the compile the influence edge is of type 'InfluenceEdge<u64>'.
-                                let influence: &InfluenceEdge<u64> = influence;
+                                // Tell the compiler the influence edge is of type 'InfluenceEdge<UserID>'.
+                                let influence: &InfluenceEdge<UserID> = influence;
                                 output.session(&time).give(influence.clone());
                             }
                         })
@@ -71,10 +72,10 @@ where G::Timestamp: Hash {
         let mut cascade_writers: HashMap<u64, BufWriter<File>> = HashMap::new();
 
         // For each timely time, a list of the influences seen at that time.
-        let mut influences_at_time: HashMap<G::Timestamp, HashSet<InfluenceEdge<u64>>> = HashMap::new();
+        let mut influences_at_time: HashMap<G::Timestamp, HashSet<InfluenceEdge<UserID>>> = HashMap::new();
 
         self.unary_notify(
-            Exchange::new(|influence: &InfluenceEdge<u64>| influence.cascade_id),
+            Exchange::new(|influence: &InfluenceEdge<UserID>| influence.cascade_id),
             "Write",
             Vec::new(),
             move |influences, output, notificator| {
@@ -87,7 +88,7 @@ where G::Timestamp: Hash {
 
                     for ref influence in influence_data.iter() {
                         // Tell the compile the influence edge is of type 'InfluenceEdge<u64>'.
-                        let influence: &InfluenceEdge<u64> = influence;
+                        let influence: &InfluenceEdge<UserID> = influence;
 
                         influences_now.insert(influence.clone());
                         output.session(&time).give(influence.clone());
@@ -106,7 +107,7 @@ where G::Timestamp: Hash {
 
                         for influence in influences_now {
                             // Tell the compiler the influence edge is of type 'InfluenceEdge<u64>'.
-                            let influence: &InfluenceEdge<u64> = influence;
+                            let influence: &InfluenceEdge<UserID> = influence;
 
                             match output_target {
                                 OutputTarget::Directory(ref directory) => {

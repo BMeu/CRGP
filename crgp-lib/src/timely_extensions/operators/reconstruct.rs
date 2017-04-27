@@ -16,6 +16,7 @@ use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::channels::pact::Pipeline;
 use timely::dataflow::operators::binary::Binary;
 
+use UserID;
 use social_graph::InfluenceEdge;
 use twitter::Tweet;
 
@@ -27,24 +28,24 @@ pub trait Reconstruct<G: Scope> {
     /// For a social graph, determine all influences for a retweet within that specific retweet cascade. The ``Stream``
     /// of retweets may contain multiple retweet cascades. Each retweet in the retweet stream is expected to be
     /// broadcast to all workers before calling this operator.
-    fn reconstruct(&self, graph: Stream<G, (u64, Vec<u64>)>) -> Stream<G, InfluenceEdge<u64>>;
+    fn reconstruct(&self, graph: Stream<G, (UserID, Vec<UserID>)>) -> Stream<G, InfluenceEdge<UserID>>;
 }
 
 impl<G: Scope> Reconstruct<G> for Stream<G, Tweet>
 where G::Timestamp: Hash {
-    fn reconstruct(&self, graph: Stream<G, (u64, Vec<u64>)>) -> Stream<G, InfluenceEdge<u64>> {
+    fn reconstruct(&self, graph: Stream<G, (UserID, Vec<UserID>)>) -> Stream<G, InfluenceEdge<UserID>> {
         // For each user, given by their ID, the set of their friends, given by their ID.
-        let mut edges: HashMap<u64, HashSet<u64>> = HashMap::new();
+        let mut edges: HashMap<UserID, HashSet<UserID>> = HashMap::new();
 
         // For each cascade, given by its ID, a set of activated users, given by their ID, i.e. those users who have
         // retweeted within this cascade before, per worker. Users are associated with the time at which they first
         // retweeted within a cascade.
-        let mut activations: HashMap<u64, HashMap<u64, u64>> = HashMap::new();
+        let mut activations: HashMap<u64, HashMap<UserID, u64>> = HashMap::new();
 
         self.binary_stream(
             &graph,
             Pipeline,
-            Exchange::new(|friendships: &(u64, Vec<u64>)| friendships.0),
+            Exchange::new(|friendships: &(UserID, Vec<UserID>)| friendships.0.abs() as u64),
             "Reconstruct",
             move |retweets, friendships, output| {
                 // Input 1: Process the retweets.
@@ -60,7 +61,7 @@ where G::Timestamp: Hash {
                         };
 
                         // Mark this user as active for this cascade.
-                        let ref mut cascade_activations: HashMap<u64, u64> = *activations.entry(original_tweet.id)
+                        let ref mut cascade_activations: HashMap<UserID, u64> = *activations.entry(original_tweet.id)
                             .or_insert_with(|| {
                                 // Create a new map for the activations of this cascade and insert the original tweeter.
                                 let mut cascade_activations = HashMap::new();
@@ -72,7 +73,7 @@ where G::Timestamp: Hash {
 
                         // If this is the worker storing the retweeting user's friends, find
                         // all influences. Otherwise, move on.
-                        let friends: &HashSet<u64> = match edges.get(&retweet.user.id) {
+                        let friends: &HashSet<UserID> = match edges.get(&retweet.user.id) {
                             Some(friends) => friends,
                             None => continue
                         };
@@ -97,7 +98,7 @@ where G::Timestamp: Hash {
                             // Iterate over the activations.
                             for (user_id, activation_timestamp) in cascade_activations {
                                 // If the current activation is not a friend, move on.
-                                let friend: u64 = match friends.get(user_id) {
+                                let friend: UserID = match friends.get(user_id) {
                                     Some(friend) => *friend,
                                     None => continue
                                 };

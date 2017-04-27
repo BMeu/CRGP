@@ -8,6 +8,8 @@
 
 use abomonation::Abomonation;
 
+use UserID;
+
 /// A directed edge between nodes of type ``T`` representing influence in a Retweet cascade.
 ///
 /// The influence flows from the ``influencer`` to the ``influencee`` and is valid only for the cascade given by
@@ -50,7 +52,7 @@ impl<T> InfluenceEdge<T>
     }
 }
 
-unsafe_abomonate!(InfluenceEdge<u64> : influencer, influencee, timestamp, cascade_id);
+unsafe_abomonate!(InfluenceEdge<UserID> : influencer, influencee, timestamp, cascade_id);
 
 #[cfg(test)]
 mod tests {

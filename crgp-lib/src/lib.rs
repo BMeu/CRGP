@@ -26,6 +26,7 @@ extern crate tar;
 extern crate timely;
 extern crate timely_communication;
 
+pub use algorithm::UserID;
 pub use configuration::Configuration;
 pub use error::Error;
 pub use error::Result;

@@ -38,6 +38,11 @@ use timely_extensions::operators::Reconstruct;
 use timely_extensions::operators::Write;
 use twitter::Tweet;
 
+/// An alias for user IDs to improve code legibility.
+///
+/// If the stored value is negative, the ID belongs to a dummy user who was created to pad the social graph.
+pub type UserID = i64;
+
 lazy_static! {
     /// A regular expression to validate directory names. The name must consist of exactly three digits.
     // The initialization of the Regex will fail if the expression is invalid. Since the expression is known to be
@@ -224,13 +229,13 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                         }
 
                         // Get the user ID.
-                        let user: u64 = match path.file_stem() {
+                        let user: UserID = match path.file_stem() {
                             Some(stem) => {
                                 match stem.to_str() {
                                     Some(stem) => {
                                         // `stem` is now `friends[ID]`. Only parse `[ID]`, i.e. skip the first seven
                                         // characters.
-                                        match stem[7..].parse::<u64>() {
+                                        match stem[7..].parse::<UserID>() {
                                             Ok(id) => id,
                                             Err(message) => {
                                                 warn!("Could not parse user ID '{id}': {error}",
@@ -249,7 +254,7 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                         let reader = BufReader::new(file);
                         let mut is_first_line: bool = true;
                         let mut actual_number_of_friends: u64 = 0;
-                        let friendships: Vec<u64> = reader.lines()
+                        let friendships: Vec<UserID> = reader.lines()
                             .filter_map(|line: IOResult<String>| -> Option<String> {
                                 // Ensure correct encoding.
                                 match line {
@@ -260,9 +265,9 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                                     }
                                 }
                             })
-                            .filter_map(|line: String| -> Option<u64> {
+                            .filter_map(|line: String| -> Option<UserID> {
                                 // Parse the friend ID.
-                                match line.parse::<u64>() {
+                                match line.parse::<UserID>() {
                                     Ok(id) => Some(id),
                                     Err(message) => {
                                         // If this is the first line in the file, it may contain meta data.
