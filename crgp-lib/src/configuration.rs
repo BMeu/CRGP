@@ -30,6 +30,7 @@ use timely_extensions::operators::OutputTarget;
 ///
 /// let configuration = Configuration::default(retweets, social_graph)
 ///     .output_target(OutputTarget::Directory(output))
+///     .pad_with_dummy_users(true)
 ///     .workers(2);
 ///
 /// assert_eq!(configuration.batch_size, 500);
@@ -38,6 +39,7 @@ use timely_extensions::operators::OutputTarget;
 /// assert_eq!(configuration.number_of_workers, 2);
 /// assert_eq!(configuration.output_target,
 ///            OutputTarget::Directory(PathBuf::from("results")));
+/// assert_eq!(configuration.pad_with_dummy_users, true);
 /// assert_eq!(configuration.process_id, 0);
 /// assert_eq!(configuration.report_connection_progress, false);
 /// assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
@@ -59,6 +61,13 @@ pub struct Configuration {
 
     /// Target for writing results.
     pub output_target: OutputTarget,
+
+    /// If the given friend list for each user is only a subset of their friends, create as many dummy users as needed
+    /// to reach the user's actual number of friends.
+    ///
+    /// This is useful if the social graph passed to `CRGP` contains only the friends that are known to be active in
+    /// a given cascade (e.g. to save memory on disk), but you are interested in the real-world performance of `CRGP`.
+    pub pad_with_dummy_users: bool,
 
     /// Identity of this process, from `0` to `number_of_processes - 1`.
     pub process_id: usize,
@@ -83,6 +92,7 @@ impl Configuration {
     ///  * `number_of_processes`: `1`
     ///  * `number_of_workers`: `1`
     ///  * `output_target`: `OutputTarget::StdOut`
+    ///  * `pad_with_dummy_users`: `false`
     ///  * `process_id`: `0`
     ///  * `report_connection_progress`: `false`
     pub fn default(retweets: String, social_graph: String) -> Configuration {
@@ -92,6 +102,7 @@ impl Configuration {
             number_of_processes: 1,
             number_of_workers: 1,
             output_target: OutputTarget::StdOut,
+            pad_with_dummy_users: false,
             process_id: 0,
             report_connection_progress: false,
             retweets: retweets,
@@ -117,6 +128,13 @@ impl Configuration {
     #[inline]
     pub fn output_target(mut self, target: OutputTarget) -> Configuration {
         self.output_target = target;
+        self
+    }
+
+    /// Toggle the creation of dummy users.
+    #[inline]
+    pub fn pad_with_dummy_users(mut self, pad: bool) -> Configuration {
+        self.pad_with_dummy_users = pad;
         self
     }
 
@@ -215,6 +233,7 @@ mod tests {
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 1);
         assert_eq!(configuration.output_target, OutputTarget::StdOut);
+        assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
@@ -234,6 +253,7 @@ mod tests {
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 1);
         assert_eq!(configuration.output_target, OutputTarget::StdOut);
+        assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
@@ -262,6 +282,7 @@ mod tests {
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 1);
         assert_eq!(configuration.output_target, OutputTarget::StdOut);
+        assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
@@ -283,6 +304,27 @@ mod tests {
         assert_eq!(configuration.number_of_workers, 1);
         assert_eq!(configuration.output_target,
                    OutputTarget::Directory(PathBuf::from("results")));
+        assert_eq!(configuration.pad_with_dummy_users, false);
+        assert_eq!(configuration.process_id, 0);
+        assert_eq!(configuration.report_connection_progress, false);
+        assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+    }
+
+    #[test]
+    fn pad_with_dummy_users() {
+        let retweets = String::from("path/to/retweets.json");
+        let social_graph = String::from("path/to/social/graph");
+
+        let configuration = Configuration::default(retweets, social_graph)
+            .pad_with_dummy_users(true);
+
+        assert_eq!(configuration.batch_size, 500);
+        assert_eq!(configuration.hosts, None);
+        assert_eq!(configuration.number_of_processes, 1);
+        assert_eq!(configuration.number_of_workers, 1);
+        assert_eq!(configuration.output_target, OutputTarget::StdOut);
+        assert_eq!(configuration.pad_with_dummy_users, true);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
@@ -302,6 +344,7 @@ mod tests {
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 1);
         assert_eq!(configuration.output_target, OutputTarget::StdOut);
+        assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 42);
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
@@ -321,6 +364,7 @@ mod tests {
         assert_eq!(configuration.number_of_processes, 42);
         assert_eq!(configuration.number_of_workers, 1);
         assert_eq!(configuration.output_target, OutputTarget::StdOut);
+        assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
@@ -340,6 +384,7 @@ mod tests {
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 1);
         assert_eq!(configuration.output_target, OutputTarget::StdOut);
+        assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, true);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
@@ -359,6 +404,7 @@ mod tests {
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 42);
         assert_eq!(configuration.output_target, OutputTarget::StdOut);
+        assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));

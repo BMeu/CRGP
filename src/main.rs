@@ -72,6 +72,10 @@ fn main() {
             .help("The directory where log files will be created (if logging is enabled via '-v'). If this argument is \
                   not specified log messages will be written to STDERR.")
             .takes_value(true))
+        .arg(Arg::with_name("pad-users")
+            .long("pad-users")
+            .help("If the given friend list for each user is only a subset of their friends, create as many dummy \
+                  users as needed to reach the user's actual number of friends."))
         .arg(Arg::with_name("processes")
             .short("n")
             .long("processes")
@@ -135,6 +139,7 @@ fn main() {
     let processes: usize = arguments.value_of("processes").unwrap().parse().unwrap();
     let workers: usize = arguments.value_of("workers").unwrap().parse().unwrap();
     let report_connection_progess: bool = arguments.is_present("report-connection-progress");
+    let pad_with_dummy_users: bool = arguments.is_present("pad-users");
 
     // Determine the output target.
     let output_target: OutputTarget = if arguments.is_present("no-output") {
@@ -205,6 +210,7 @@ fn main() {
         .batch_size(batch_size)
         .hosts(hosts)
         .output_target(output_target)
+        .pad_with_dummy_users(pad_with_dummy_users)
         .process_id(process_id)
         .processes(processes)
         .report_connection_progress(report_connection_progess)
