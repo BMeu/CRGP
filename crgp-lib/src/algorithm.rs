@@ -305,8 +305,11 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                                given = given_number_of_friends, actual = actual_number_of_friends);
 
                         // Introduce dummy friends if required.
-                        let number_of_missing_friends: u64 = actual_number_of_friends - given_number_of_friends;
-                        if configuration.pad_with_dummy_users && number_of_missing_friends > 0 {
+                        let user_has_missing_friends: bool = given_number_of_friends < actual_number_of_friends;
+                        if configuration.pad_with_dummy_users && user_has_missing_friends {
+                            // At this point, the given number of friends is guaranteed to be smaller than the actual
+                            // number of friends.
+                            let number_of_missing_friends: u64 = actual_number_of_friends - given_number_of_friends;
                             for _ in 0..number_of_missing_friends {
                                 last_dummy_user_id -= 1;
                                 friendships.push(last_dummy_user_id);
