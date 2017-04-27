@@ -119,10 +119,12 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
          ****************/
 
         // Load the social graph into the computation (only on the first worker).
-        let mut total_number_of_actual_friendship: u64 = 0;
+        let mut total_number_of_actual_friendships: u64 = 0;
         let mut total_number_of_friendships_given: u64 = 0;
         let mut number_of_users: u64 = 0;
         if index == 0 {
+            let mut last_dummy_user_id: UserID = 0;
+
             info!("Loading social graph...");
             // Top level.
             for root_entry in read_dir(&configuration.social_graph)? {
@@ -254,7 +256,7 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                         let reader = BufReader::new(file);
                         let mut is_first_line: bool = true;
                         let mut actual_number_of_friends: u64 = 0;
-                        let friendships: Vec<UserID> = reader.lines()
+                        let mut friendships: Vec<UserID> = reader.lines()
                             .filter_map(|line: IOResult<String>| -> Option<String> {
                                 // Ensure correct encoding.
                                 match line {
@@ -298,19 +300,32 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                             })
                             .collect();
 
+                        let given_number_of_friends: u64 = friendships.len() as u64;
+                        trace!("User {user}: {given} of {actual} friends found", user = user,
+                               given = given_number_of_friends, actual = actual_number_of_friends);
+
+                        // Introduce dummy friends if required.
+                        let number_of_missing_friends: u64 = actual_number_of_friends - given_number_of_friends;
+                        if configuration.pad_with_dummy_users && number_of_missing_friends > 0 {
+                            for _ in 0..number_of_missing_friends {
+                                last_dummy_user_id -= 1;
+                                friendships.push(last_dummy_user_id);
+                            }
+                            trace!("User {user}: created {number} dummy friends", user = user,
+                                   number = number_of_missing_friends);
+                        }
+
+                        // If the user still has no friends, continue.
                         if friendships.len() == 0 {
                             warn!("User {user} does not have any friends", user = user);
                             continue;
                         }
 
-                        // Send the friendships.
-                        let given_number_of_friends: u64 = friendships.len() as u64;
-                        trace!("User {user}: {given} of {actual} friends found", user = user,
-                               given = given_number_of_friends, actual = actual_number_of_friends);
-
+                        // Update social graph statistics.
                         total_number_of_friendships_given += given_number_of_friends;
-                        total_number_of_actual_friendship += actual_number_of_friends;
+                        total_number_of_actual_friendships += actual_number_of_friends;
                         number_of_users += 1;
+
                         graph_input.send((user, friendships));
                     }
                 }
@@ -320,11 +335,21 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
         // Process the entire social graph before continuing.
         computation.sync(&probe, &mut graph_input, &mut retweet_input);
         let time_to_process_social_network: u64 = stopwatch.lap();
-        info!("Finished loading the social graph in {time:.2}ms",
-              time = time_to_process_social_network as f64 / 1_000_000.0f64);
-        info!("Found {given} of {actual} friendships in the data set for {users} users",
-              given = total_number_of_friendships_given, actual = total_number_of_actual_friendship,
-              users = number_of_users);
+
+        // Log loading information only on the first worker.
+        if index == 0 {
+            info!("Finished loading the social graph in {time:.2}ms",
+                  time = time_to_process_social_network as f64 / 1_000_000.0f64);
+            info!("Found {given} of {actual} friendships in the data set for {users} users",
+                  given = total_number_of_friendships_given, actual = total_number_of_actual_friendships,
+                  users = number_of_users);
+            if configuration.pad_with_dummy_users {
+                let number_of_dummy_users: u64 = total_number_of_actual_friendships - total_number_of_friendships_given;
+                info!("Created {number} dummy friends", number = number_of_users);
+                // For the statistics, add the dummy friends to the size of the social graph.
+                total_number_of_friendships_given += number_of_dummy_users;
+            }
+        }
 
 
 
