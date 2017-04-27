@@ -174,6 +174,7 @@ specified levels.
 **Warn:** `-vv`
 
 * Parse failures: user IDs, Retweets.
+* Encountering users with more friends than the meta data claims.
 * Encountering users without any friends when loading the social graph.
 * Encountering input (e.g. in files) that is not valid UTF-8.
 

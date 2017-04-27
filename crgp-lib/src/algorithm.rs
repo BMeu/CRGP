@@ -304,6 +304,11 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                         trace!("User {user}: {given} of {actual} friends found", user = user,
                                given = given_number_of_friends, actual = actual_number_of_friends);
 
+                        if given_number_of_friends > actual_number_of_friends {
+                            warn!("User {user} has more friends ({given}) than claimed ({claim})", user = user,
+                                  given = given_number_of_friends, actual_number_of_friends);
+                        }
+
                         // Introduce dummy friends if required.
                         let user_has_missing_friends: bool = given_number_of_friends < actual_number_of_friends;
                         if configuration.pad_with_dummy_users && user_has_missing_friends {
