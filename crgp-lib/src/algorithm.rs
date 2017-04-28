@@ -123,8 +123,6 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
         let mut total_number_of_friendships_given: u64 = 0;
         let mut number_of_users: u64 = 0;
         if index == 0 {
-            let mut last_dummy_user_id: UserID = 0;
-
             info!("Loading social graph...");
             // Top level.
             for root_entry in read_dir(&configuration.social_graph)? {
@@ -315,9 +313,8 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                             // At this point, the given number of friends is guaranteed to be smaller than the actual
                             // number of friends.
                             let number_of_missing_friends: u64 = actual_number_of_friends - given_number_of_friends;
-                            for _ in 0..number_of_missing_friends {
-                                last_dummy_user_id -= 1;
-                                friendships.push(last_dummy_user_id);
+                            for dummy_id in 1..(number_of_missing_friends + 1) {
+                                friendships.push(-(dummy_id as i64));
                             }
                             trace!("User {user}: created {number} dummy friends", user = user,
                                    number = number_of_missing_friends);
