@@ -80,6 +80,12 @@ pub struct Configuration {
 
     /// Path to the data set containing the social graph.
     pub social_graph: String,
+
+    /// Private field to prevent initialization without the provided methods.
+    ///
+    /// All other fields should be public for easy access without getter functions. However, adding more fields later
+    /// could break code if the `Configuration` were manually initialized.
+    _prevent_outside_initialization: bool,
 }
 
 impl Configuration {
@@ -107,6 +113,7 @@ impl Configuration {
             report_connection_progress: false,
             retweets: retweets,
             social_graph: social_graph,
+            _prevent_outside_initialization: true,
         }
     }
 
@@ -238,6 +245,7 @@ mod tests {
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
@@ -258,6 +266,7 @@ mod tests {
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
@@ -287,6 +296,7 @@ mod tests {
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
@@ -309,6 +319,7 @@ mod tests {
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
@@ -329,6 +340,7 @@ mod tests {
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
@@ -349,6 +361,7 @@ mod tests {
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
@@ -369,6 +382,7 @@ mod tests {
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
@@ -389,6 +403,7 @@ mod tests {
         assert_eq!(configuration.report_connection_progress, true);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
@@ -409,6 +424,7 @@ mod tests {
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
