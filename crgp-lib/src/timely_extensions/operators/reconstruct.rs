@@ -50,10 +50,7 @@ where G::Timestamp: Hash {
             move |retweets, friendships, output| {
                 // Input 1: Process the retweets.
                 retweets.for_each(|time, retweet_data| {
-                    for ref retweet in retweet_data.iter() {
-                        // Tell the compiler the retweet is of type 'Tweet'.
-                        let retweet: &Tweet = retweet;
-
+                    for retweet in retweet_data.iter() {
                         // Skip all tweets that are not retweets.
                         let original_tweet: &Tweet = match retweet.retweeted_status {
                             Some(ref t) => t,
@@ -117,9 +114,9 @@ where G::Timestamp: Hash {
 
                 // Input 2: Capture all friends for each user.
                 friendships.for_each(|_time, friendship_data| {
-                    for ref friendship in friendship_data.iter() {
+                    for friendship in friendship_data.iter() {
                         edges.entry(friendship.0)
-                            .or_insert(HashSet::new())
+                            .or_insert_with(HashSet::new)
                             .extend(friendship.1.iter().cloned());
                     };
                 });

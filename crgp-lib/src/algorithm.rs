@@ -281,12 +281,9 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
 
                                         // Index 3 contains the actual number of friendships.
                                         if meta_data.len() == 5 {
-                                            match meta_data[3].parse() {
-                                                Ok(amount) => {
-                                                    actual_number_of_friends = amount;
-                                                    return None;
-                                                },
-                                                Err(_) => {}
+                                            if let Ok(amount) = meta_data[3].parse() {
+                                                actual_number_of_friends = amount;
+                                                return None;
                                             }
                                         }
 
@@ -321,7 +318,7 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                         }
 
                         // If the user still has no friends, continue.
-                        if friendships.len() == 0 {
+                        if friendships.is_empty() {
                             warn!("User {user} does not have any friends", user = user);
                             continue;
                         }
@@ -385,17 +382,17 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                     match line {
                         Ok(line) => {
                             match serde_json::from_str::<Tweet>(&line) {
-                                Ok(tweet) => return Some(tweet),
+                                Ok(tweet) => Some(tweet),
                                 Err(message) => {
                                     warn!("Failed to parse Tweet: {error}", error = message);
-                                    return None;
+                                    None
                                 }
                             }
                         },
                         Err(message) => {
                             warn!("Invalid line in file {file:?}: {error}",
                                   file = configuration.retweets, error = message);
-                            return None;
+                            None
                         }
                     }
                 })
@@ -411,17 +408,14 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
         // Process the retweets.
         info!("Processing Retweets");
         let batch_size: usize = configuration.batch_size;
-        let mut round = 0;
-        for retweet in retweets {
-            retweet_input.send(retweet);
+        for (round, retweet) in retweets.iter().enumerate() {
+            retweet_input.send(retweet.clone());
 
             let is_batch_complete: bool = round % batch_size == (batch_size - 1);
             if is_batch_complete {
                 trace!("Processed {amount} of {total} Retweets...", amount = round + 1, total = number_of_retweets);
                 computation.sync(&probe, &mut retweet_input, &mut graph_input);
             }
-
-            round += 1;
         }
         computation.sync(&probe, &mut retweet_input, &mut graph_input);
         let time_to_process_retweets: u64 = stopwatch.lap();

@@ -49,23 +49,18 @@ impl<G: Scope> Write<G> for Stream<G, InfluenceEdge<UserID>>
 where G::Timestamp: Hash {
     fn write(&self, output_target: OutputTarget) -> Stream<G, InfluenceEdge<UserID>> {
         // If the output target is None, return an operator that simply passes the input on.
-        match output_target {
-            OutputTarget::None => {
-                return self.unary_stream(
-                    Exchange::new(|influence: &InfluenceEdge<UserID>| influence.cascade_id),
-                    "Write",
-                    |influences, output| {
-                        influences.for_each(|time, influence_data| {
-                            for ref influence in influence_data.iter() {
-                                // Tell the compiler the influence edge is of type 'InfluenceEdge<UserID>'.
-                                let influence: &InfluenceEdge<UserID> = influence;
-                                output.session(&time).give(influence.clone());
-                            }
-                        })
-                    }
-                )
-            },
-            _ => {},
+        if let OutputTarget::None = output_target {
+            return self.unary_stream(
+                Exchange::new(|influence: &InfluenceEdge<UserID>| influence.cascade_id),
+                "Write",
+                |influences, output| {
+                    influences.for_each(|time, influence_data| {
+                        for influence in influence_data.iter() {
+                            output.session(&time).give(influence.clone());
+                        }
+                    })
+                }
+            )
         }
 
         // For each cascade, a separate file writer.
@@ -84,12 +79,9 @@ where G::Timestamp: Hash {
                     notificator.notify_at(time.clone());
 
                     let mut influences_now = influences_at_time.entry(time.time())
-                        .or_insert(HashSet::new());
+                        .or_insert_with(HashSet::new);
 
-                    for ref influence in influence_data.iter() {
-                        // Tell the compile the influence edge is of type 'InfluenceEdge<u64>'.
-                        let influence: &InfluenceEdge<UserID> = influence;
-
+                    for influence in influence_data.iter() {
                         influences_now.insert(influence.clone());
                         output.session(&time).give(influence.clone());
                     }
