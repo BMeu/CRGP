@@ -8,6 +8,7 @@ logs
 # Results
 results
 cascs-*.csv
+crgp_*.toml
 
 # IntelliJ IDEA
 .idea

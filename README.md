@@ -19,6 +19,10 @@ This will compile `CRGP` with all its dependencies and run the binary. A full li
 $ cargo run --release -- -h
 ```
 
+### Requirements
+
+`CRGP` requires Rust in version 1.17 or greater.
+
 ## Example
 
 This repository includes a data set you can use to test `CRGP`. It consists of two tiny Retweet cascades (each with

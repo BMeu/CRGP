@@ -24,12 +24,16 @@
 extern crate clap;
 extern crate crgp_lib;
 extern crate flexi_logger;
+extern crate time;
+extern crate toml;
 
 use std::env::current_dir;
 use std::error::Error as StdError;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
+use std::io::Write;
+use std::io::BufWriter;
 use std::io::Error as IOError;
 use std::path::PathBuf;
 
@@ -41,11 +45,16 @@ use crgp_lib::algorithm;
 use crgp_lib::timely_extensions::operators::OutputTarget;
 use flexi_logger::with_thread;
 use flexi_logger::LogOptions;
+use time::Tm;
+use time::TmFmt;
 
 pub use exit::ExitCode;
 
 pub mod validation;
 pub mod exit;
+
+// TODO: Get from crate?
+const PROGRAM_NAME: &str = "crgp";
 
 /// Execute the program.
 fn main() {
@@ -155,6 +164,7 @@ fn main() {
             },
         }
     };
+    let output_target_statistics: OutputTarget = output_target.clone();
 
     // Get the hosts.
     let hosts: Option<Vec<String>> = match arguments.value_of("hostfile") {
@@ -219,10 +229,39 @@ fn main() {
     // Execute the algorithm.
     let results = algorithm::execute(configuration);
 
-    // Print the statistics.
+    // Write the statistics.
     match results {
         Ok(results) => {
             if process_id == 0 {
+                // Only save to file if output is requested.
+                if let OutputTarget::Directory(directory) = output_target_statistics {
+                    // Parse the statistics to TOML.
+                    if let Ok(results) = toml::to_string(&results) {
+                        // Create the file name from the program name and the current time.
+                        let current_time: Tm = time::now();
+                        // The unwrap is save, since the format string is known to be correct.
+                        let time_formatted: TmFmt = current_time.strftime("%Y-%m-%d_%H-%M-%S").unwrap();
+                        let filename = format!("{program}_{time}.toml", program = PROGRAM_NAME, time = time_formatted);
+                        let path: PathBuf = directory.join(filename);
+                        let path_c: PathBuf = path.clone();
+
+                        // Create the file and save the results.
+                        if let Ok(file) = File::create(path) {
+                            let mut writer: BufWriter<File> = BufWriter::new(file);
+                            if let Ok(_) = writeln!(writer, "{}", results) {
+                                if let Ok(_) = writer.flush() {
+                                    println!("Statistics saved to {path:?}", path = path_c);
+                                    exit::succeed();
+                                }
+                            }
+                        }
+                    }
+
+                    // Some error occurred along the way.
+                    println!("Error: could not create statistics file. Printing to STDOUT instead.");
+                }
+
+                // Writing to file failed (or was not requested) - print to STDOUT instead.
                 println!();
                 println!("Results:");
                 println!("  #Friendships: {}", results.number_of_friendships());
