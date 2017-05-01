@@ -429,9 +429,16 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
          **********/
 
         stopwatch.stop();
-        Ok(Statistics::new(total_number_of_friendships_given, number_of_retweets, batch_size, time_to_setup,
-                           time_to_process_social_network, time_to_load_retweets, time_to_process_retweets,
-                           stopwatch.total_time()))
+        let statistics = Statistics::new()
+            .number_of_friendships(total_number_of_friendships_given)
+            .number_of_retweets(number_of_retweets)
+            .batch_size(batch_size)
+            .time_to_setup(time_to_setup)
+            .time_to_process_social_graph(time_to_process_social_network)
+            .time_to_load_retweets(time_to_load_retweets)
+            .time_to_process_retweets(time_to_process_retweets)
+            .total_time(stopwatch.total_time());
+        Ok(statistics)
     })?;
 
     // The result returned from the computation is several layers of nested Result types. Flatten them to the expected

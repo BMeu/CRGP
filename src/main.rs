@@ -264,20 +264,20 @@ fn main() {
                 // Writing to file failed (or was not requested) - print to STDOUT instead.
                 println!();
                 println!("Results:");
-                println!("  #Friendships: {}", results.number_of_friendships());
-                println!("  #Retweets: {}", results.number_of_retweets());
-                println!("  Batch Size: {}", results.batch_size());
+                println!("  #Friendships: {}", results.number_of_friendships);
+                println!("  #Retweets: {}", results.number_of_retweets);
+                println!("  Batch Size: {}", results.batch_size);
                 println!();
-                println!("  Time to set up the computation: {:.2}ms", results.time_to_setup() as f64 / 1_000_000.0f64);
+                println!("  Time to set up the computation: {:.2}ms", results.time_to_setup as f64 / 1_000_000.0f64);
                 println!("  Time to load and process the social network: {:.2}ms",
-                         results.time_to_process_social_graph() as f64 / 1_000_000.0f64);
+                         results.time_to_process_social_graph as f64 / 1_000_000.0f64);
                 println!("  Time to load the retweets: {:.2}ms",
-                         results.time_to_load_retweets() as f64 / 1_000_000.0f64);
+                         results.time_to_load_retweets as f64 / 1_000_000.0f64);
                 println!("  Time to process the retweets: {:.2}ms",
-                         results.time_to_process_retweets() as f64 / 1_000_000.0f64);
-                println!("  Total time: {:.2}ms", results.total_time() as f64 / 1_000_000.0f64);
+                         results.time_to_process_retweets as f64 / 1_000_000.0f64);
+                println!("  Total time: {:.2}ms", results.total_time as f64 / 1_000_000.0f64);
                 println!();
-                println!("  Retweet Processing Rate: {} RT/s", results.retweet_processing_rate());
+                println!("  Retweet Processing Rate: {} RT/s", results.retweet_processing_rate);
             }
 
             exit::succeed();

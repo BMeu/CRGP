@@ -12,84 +12,120 @@
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub struct Statistics {
     /// Number of friendships in the social graph.
-    number_of_friendships: u64,
+    pub number_of_friendships: u64,
 
     /// Number of retweets processed.
-    number_of_retweets: u64,
+    pub number_of_retweets: u64,
 
     /// Size of the Retweet batches.
-    batch_size: usize,
+    pub batch_size: usize,
 
-    /// Time to set up the computation.
-    time_to_setup: u64,
+    /// Time to set up the computation (in `ns`).
+    pub time_to_setup: u64,
 
-    /// Time to load and process the social graph.
-    time_to_process_social_graph: u64,
+    /// Time to load and process the social graph (in `ns`).
+    pub time_to_process_social_graph: u64,
 
-    /// Time to load the retweets.
-    time_to_load_retweets: u64,
+    /// Time to load the retweets (in `ns`).
+    pub time_to_load_retweets: u64,
 
-    /// Time to process the retweets.
-    time_to_process_retweets: u64,
+    /// Time to process the retweets (in `ns`).
+    pub time_to_process_retweets: u64,
 
-    /// Total time of the computation.
-    total_time: u64
+    /// Total time of the computation (in `ns`).
+    pub total_time: u64,
+
+    /// Average Retweet processing rate in Retweets per seconds (`RT/s`).
+    ///
+    /// This field will automatically be set whenever `number_of_retweets` or `time_to_process_retweets` are set.
+    pub retweet_processing_rate: u64,
+
+    /// Private field to prevent initialization without the provided methods.
+    ///
+    /// All other fields should be public for easy access without getter functions. However, adding more fields later
+    /// could break code if the `Statistics` were manually initialized.
+    #[serde(skip_serializing)]
+    _prevent_outside_initialization: bool,
 }
 
 impl Statistics {
-    /// Collect statistics about the influence computation. Times must be given in nanoseconds.
-    pub fn new(number_of_friendships: u64, number_of_retweets: u64, batch_size: usize, time_to_setup: u64,
-               time_to_process_social_graph: u64, time_to_load_retweets: u64, time_to_process_retweets: u64,
-               total_time: u64) -> Statistics {
-        Statistics { number_of_friendships: number_of_friendships, number_of_retweets: number_of_retweets,
-            batch_size: batch_size, time_to_setup: time_to_setup,
-            time_to_process_social_graph: time_to_process_social_graph, time_to_load_retweets: time_to_load_retweets,
-            time_to_process_retweets: time_to_process_retweets, total_time: total_time }
+    /// Initialize default statistics.
+    pub fn new() -> Statistics {
+        Statistics {
+            number_of_friendships: 0,
+            number_of_retweets: 0,
+            batch_size: 0,
+            time_to_setup: 0,
+            time_to_process_social_graph: 0,
+            time_to_load_retweets: 0,
+            time_to_process_retweets: 0,
+            total_time: 0,
+            retweet_processing_rate: 0,
+            _prevent_outside_initialization: true
+        }
     }
 
-    /// Get the number of friendships in the social graph.
-    pub fn number_of_friendships(&self) -> u64 {
-        self.number_of_friendships
+    /// Set the number of friendships in the social graph.
+    pub fn number_of_friendships(mut self, number_of_friendships: u64) -> Statistics {
+        self.number_of_friendships = number_of_friendships;
+        self
     }
 
-    /// Get the total number of retweets processed.
-    pub fn number_of_retweets(&self) -> u64 {
-        self.number_of_retweets
+    /// Set the total number of retweets processed.
+    ///
+    /// Also automatically sets the Retweet processing rate (if the Retweet processing rate is not `0`).
+    pub fn number_of_retweets(mut self, number_of_retwets: u64) -> Statistics {
+        self.number_of_retweets = number_of_retwets;
+        if self.retweet_processing_rate != 0 {
+            self.calculate_retweet_processing_rate();
+        }
+        self
     }
 
-    /// Get the size of the Retweet batches.
-    pub fn batch_size(&self) -> usize {
-        self.batch_size
+    /// Set the size of the Retweet batches.
+    pub fn batch_size(mut self, batch_size: usize) -> Statistics {
+        self.batch_size = batch_size;
+        self
     }
 
-    /// Get the time to set up the computation (in nanoseconds).
-    pub fn time_to_setup(&self) -> u64 {
-        self.time_to_setup
+    /// Set the time to set up the computation (in nanoseconds).
+    pub fn time_to_setup(mut self, setup_time: u64) -> Statistics {
+        self.time_to_setup = setup_time;
+        self
     }
 
-    /// Get the time to load and process the social graph (in nanoseconds).
-    pub fn time_to_process_social_graph(&self) -> u64 {
-        self.time_to_process_social_graph
+    /// Set the time to load and process the social graph (in nanoseconds).
+    pub fn time_to_process_social_graph(mut self, social_graph_processing_time: u64) -> Statistics {
+        self.time_to_process_social_graph = social_graph_processing_time;
+        self
     }
 
-    /// Get the time to load the retweets (in nanoseconds).
-    pub fn time_to_load_retweets(&self) -> u64 {
-        self.time_to_load_retweets
+    /// Set the time to load the retweets (in nanoseconds).
+    pub fn time_to_load_retweets(mut self, retweet_loading_time: u64) -> Statistics {
+        self.time_to_load_retweets = retweet_loading_time;
+        self
     }
 
-    /// Get the time to process the retweets (in nanoseconds).
-    pub fn time_to_process_retweets(&self) -> u64 {
-        self.time_to_process_retweets
+    /// Set the time to process the retweets (in nanoseconds).
+    ///
+    /// Also automatically sets the Retweet processing rate.
+    pub fn time_to_process_retweets(mut self, retweet_processing_time: u64) -> Statistics {
+        self.time_to_process_retweets = retweet_processing_time;
+        self.calculate_retweet_processing_rate();
+        self
     }
 
-    /// Get the total time it took the computation to finish (in nanoseconds).
-    pub fn total_time(&self) -> u64 {
-        self.total_time
+    /// Set the total time it took the computation to finish (in nanoseconds).
+    pub fn total_time(mut self, total_time: u64) -> Statistics {
+        self.total_time = total_time;
+        self
     }
 
-    /// Get the average Retweet processing rate in Retweets per seconds (RT/s).
-    pub fn retweet_processing_rate(&self) -> u64 {
-        (self.number_of_retweets as f64 / (self.time_to_process_retweets as f64 / 1_000_000_000.0f64)) as u64
+    /// Set the average Retweet processing rate in Retweets per seconds (RT/s).
+    fn calculate_retweet_processing_rate(&mut self) {
+        self.retweet_processing_rate = (self.number_of_retweets as f64 /
+                                        (self.time_to_process_retweets as f64 / 1_000_000_000.0f64)
+                                       ) as u64
     }
 }
 
@@ -99,69 +135,156 @@ mod tests {
 
     #[test]
     fn new() {
-        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
-        assert_eq!(statistics.number_of_friendships, 1);
-        assert_eq!(statistics.number_of_retweets, 2);
-        assert_eq!(statistics.batch_size, 3);
-        assert_eq!(statistics.time_to_setup, 4);
-        assert_eq!(statistics.time_to_process_social_graph, 5);
-        assert_eq!(statistics.time_to_load_retweets, 6);
-        assert_eq!(statistics.time_to_process_retweets, 7);
-        assert_eq!(statistics.total_time, 8);
+        let statistics = Statistics::new();
+        assert_eq!(statistics.number_of_friendships, 0);
+        assert_eq!(statistics.number_of_retweets, 0);
+        assert_eq!(statistics.batch_size, 0);
+        assert_eq!(statistics.time_to_setup, 0);
+        assert_eq!(statistics.time_to_process_social_graph, 0);
+        assert_eq!(statistics.time_to_load_retweets, 0);
+        assert_eq!(statistics.time_to_process_retweets, 0);
+        assert_eq!(statistics.total_time, 0);
+        assert_eq!(statistics.retweet_processing_rate, 0);
+        assert!(statistics._prevent_outside_initialization);
     }
 
     #[test]
     fn number_of_friendships() {
-        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
-        assert_eq!(statistics.number_of_friendships(), 1);
+        let statistics = Statistics::new()
+            .number_of_friendships(42);
+        assert_eq!(statistics.number_of_friendships, 42);
+        assert_eq!(statistics.number_of_retweets, 0);
+        assert_eq!(statistics.batch_size, 0);
+        assert_eq!(statistics.time_to_setup, 0);
+        assert_eq!(statistics.time_to_process_social_graph, 0);
+        assert_eq!(statistics.time_to_load_retweets, 0);
+        assert_eq!(statistics.time_to_process_retweets, 0);
+        assert_eq!(statistics.total_time, 0);
+        assert_eq!(statistics.retweet_processing_rate, 0);
+        assert!(statistics._prevent_outside_initialization);
     }
 
     #[test]
     fn number_of_retweets() {
-        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
-        assert_eq!(statistics.number_of_retweets(), 2);
+        let statistics = Statistics::new()
+            .number_of_retweets(42);
+        assert_eq!(statistics.number_of_friendships, 0);
+        assert_eq!(statistics.number_of_retweets, 42);
+        assert_eq!(statistics.batch_size, 0);
+        assert_eq!(statistics.time_to_setup, 0);
+        assert_eq!(statistics.time_to_process_social_graph, 0);
+        assert_eq!(statistics.time_to_load_retweets, 0);
+        assert_eq!(statistics.time_to_process_retweets, 0);
+        assert_eq!(statistics.total_time, 0);
+        assert_eq!(statistics.retweet_processing_rate, 0);
+        assert!(statistics._prevent_outside_initialization);
     }
 
     #[test]
     fn batch_size() {
-        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
-        assert_eq!(statistics.batch_size(), 3);
+        let statistics = Statistics::new()
+            .batch_size(42);
+        assert_eq!(statistics.number_of_friendships, 0);
+        assert_eq!(statistics.number_of_retweets, 0);
+        assert_eq!(statistics.batch_size, 42);
+        assert_eq!(statistics.time_to_setup, 0);
+        assert_eq!(statistics.time_to_process_social_graph, 0);
+        assert_eq!(statistics.time_to_load_retweets, 0);
+        assert_eq!(statistics.time_to_process_retweets, 0);
+        assert_eq!(statistics.total_time, 0);
+        assert_eq!(statistics.retweet_processing_rate, 0);
+        assert!(statistics._prevent_outside_initialization);
     }
 
     #[test]
     fn time_to_setup() {
-        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
-        assert_eq!(statistics.time_to_setup(), 4);
+        let statistics = Statistics::new()
+            .time_to_setup(42);
+        assert_eq!(statistics.number_of_friendships, 0);
+        assert_eq!(statistics.number_of_retweets, 0);
+        assert_eq!(statistics.batch_size, 0);
+        assert_eq!(statistics.time_to_setup, 42);
+        assert_eq!(statistics.time_to_process_social_graph, 0);
+        assert_eq!(statistics.time_to_load_retweets, 0);
+        assert_eq!(statistics.time_to_process_retweets, 0);
+        assert_eq!(statistics.total_time, 0);
+        assert_eq!(statistics.retweet_processing_rate, 0);
+        assert!(statistics._prevent_outside_initialization);
     }
 
     #[test]
     fn time_to_process_social_graph() {
-        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
-        assert_eq!(statistics.time_to_process_social_graph(), 5);
+        let statistics = Statistics::new()
+            .time_to_process_social_graph(42);
+        assert_eq!(statistics.number_of_friendships, 0);
+        assert_eq!(statistics.number_of_retweets, 0);
+        assert_eq!(statistics.batch_size, 0);
+        assert_eq!(statistics.time_to_setup, 0);
+        assert_eq!(statistics.time_to_process_social_graph, 42);
+        assert_eq!(statistics.time_to_load_retweets, 0);
+        assert_eq!(statistics.time_to_process_retweets, 0);
+        assert_eq!(statistics.total_time, 0);
+        assert_eq!(statistics.retweet_processing_rate, 0);
+        assert!(statistics._prevent_outside_initialization);
     }
 
     #[test]
     fn time_to_load_retweets() {
-        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
-        assert_eq!(statistics.time_to_load_retweets(), 6);
+        let statistics = Statistics::new()
+            .time_to_load_retweets(42);
+        assert_eq!(statistics.number_of_friendships, 0);
+        assert_eq!(statistics.number_of_retweets, 0);
+        assert_eq!(statistics.batch_size, 0);
+        assert_eq!(statistics.time_to_setup, 0);
+        assert_eq!(statistics.time_to_process_social_graph, 0);
+        assert_eq!(statistics.time_to_load_retweets, 42);
+        assert_eq!(statistics.time_to_process_retweets, 0);
+        assert_eq!(statistics.total_time, 0);
+        assert_eq!(statistics.retweet_processing_rate, 0);
+        assert!(statistics._prevent_outside_initialization);
     }
 
     #[test]
     fn time_to_process_retweets() {
-        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
-        assert_eq!(statistics.time_to_process_retweets(), 7);
+        // The Retweet processing rate should also be updated (if number of Retweets is given).
+        let statistics = Statistics::new()
+            .number_of_retweets(3)
+            .time_to_process_retweets(2_000_000_000);
+        assert_eq!(statistics.number_of_friendships, 0);
+        assert_eq!(statistics.number_of_retweets, 3);
+        assert_eq!(statistics.batch_size, 0);
+        assert_eq!(statistics.time_to_setup, 0);
+        assert_eq!(statistics.time_to_process_social_graph, 0);
+        assert_eq!(statistics.time_to_load_retweets, 0);
+        assert_eq!(statistics.time_to_process_retweets, 2_000_000_000);
+        assert_eq!(statistics.total_time, 0);
+        assert_eq!(statistics.retweet_processing_rate, 1);
+        assert!(statistics._prevent_outside_initialization);
     }
 
     #[test]
     fn total_time() {
-        let statistics = Statistics::new(1, 2, 3, 4, 5, 6, 7, 8);
-        assert_eq!(statistics.total_time(), 8);
+        let statistics = Statistics::new()
+            .total_time(42);
+        assert_eq!(statistics.number_of_friendships, 0);
+        assert_eq!(statistics.number_of_retweets, 0);
+        assert_eq!(statistics.batch_size, 0);
+        assert_eq!(statistics.time_to_setup, 0);
+        assert_eq!(statistics.time_to_process_social_graph, 0);
+        assert_eq!(statistics.time_to_load_retweets, 0);
+        assert_eq!(statistics.time_to_process_retweets, 0);
+        assert_eq!(statistics.total_time, 42);
+        assert_eq!(statistics.retweet_processing_rate, 0);
+        assert!(statistics._prevent_outside_initialization);
     }
 
     #[test]
     fn retweet_processing_rate() {
-        let statistics = Statistics::new(0, 3, 0, 0, 0, 0, 2_000_000_000, 0);
+        let mut statistics = Statistics::new();
+        statistics.number_of_retweets = 3;
+        statistics.time_to_process_retweets = 2_000_000_000;
+        statistics.calculate_retweet_processing_rate();
         // 1.5 RT/s => 1 RT/s.
-        assert_eq!(statistics.retweet_processing_rate(), 1);
+        assert_eq!(statistics.retweet_processing_rate, 1);
     }
 }
