@@ -6,11 +6,16 @@
 
 //! Collection of statistics about the execution of the algorithm.
 
+use Algorithm;
+
 /// Collection of statistics about the execution of the algorithm.
 ///
 /// Times are given in nanoseconds.
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub struct Statistics {
+    /// The algorithm used for reconstruction.
+    pub algorithm: Algorithm,
+
     /// Number of friendships in the social graph.
     pub number_of_friendships: u64,
 
@@ -50,8 +55,9 @@ pub struct Statistics {
 
 impl Statistics {
     /// Initialize default statistics.
-    pub fn new() -> Statistics {
+    pub fn new(algorithm: Algorithm) -> Statistics {
         Statistics {
+            algorithm: algorithm,
             number_of_friendships: 0,
             number_of_retweets: 0,
             batch_size: 0,
@@ -131,11 +137,13 @@ impl Statistics {
 
 #[cfg(test)]
 mod tests {
+    use Algorithm;
     use super::*;
 
     #[test]
     fn new() {
-        let statistics = Statistics::new();
+        let statistics = Statistics::new(Algorithm::GlobalActivations);
+        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
         assert_eq!(statistics.number_of_friendships, 0);
         assert_eq!(statistics.number_of_retweets, 0);
         assert_eq!(statistics.batch_size, 0);
@@ -150,8 +158,9 @@ mod tests {
 
     #[test]
     fn number_of_friendships() {
-        let statistics = Statistics::new()
+        let statistics = Statistics::new(Algorithm::GlobalActivations)
             .number_of_friendships(42);
+        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
         assert_eq!(statistics.number_of_friendships, 42);
         assert_eq!(statistics.number_of_retweets, 0);
         assert_eq!(statistics.batch_size, 0);
@@ -166,8 +175,9 @@ mod tests {
 
     #[test]
     fn number_of_retweets() {
-        let statistics = Statistics::new()
+        let statistics = Statistics::new(Algorithm::GlobalActivations)
             .number_of_retweets(42);
+        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
         assert_eq!(statistics.number_of_friendships, 0);
         assert_eq!(statistics.number_of_retweets, 42);
         assert_eq!(statistics.batch_size, 0);
@@ -182,8 +192,9 @@ mod tests {
 
     #[test]
     fn batch_size() {
-        let statistics = Statistics::new()
+        let statistics = Statistics::new(Algorithm::GlobalActivations)
             .batch_size(42);
+        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
         assert_eq!(statistics.number_of_friendships, 0);
         assert_eq!(statistics.number_of_retweets, 0);
         assert_eq!(statistics.batch_size, 42);
@@ -198,8 +209,9 @@ mod tests {
 
     #[test]
     fn time_to_setup() {
-        let statistics = Statistics::new()
+        let statistics = Statistics::new(Algorithm::GlobalActivations)
             .time_to_setup(42);
+        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
         assert_eq!(statistics.number_of_friendships, 0);
         assert_eq!(statistics.number_of_retweets, 0);
         assert_eq!(statistics.batch_size, 0);
@@ -214,8 +226,9 @@ mod tests {
 
     #[test]
     fn time_to_process_social_graph() {
-        let statistics = Statistics::new()
+        let statistics = Statistics::new(Algorithm::GlobalActivations)
             .time_to_process_social_graph(42);
+        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
         assert_eq!(statistics.number_of_friendships, 0);
         assert_eq!(statistics.number_of_retweets, 0);
         assert_eq!(statistics.batch_size, 0);
@@ -230,8 +243,9 @@ mod tests {
 
     #[test]
     fn time_to_load_retweets() {
-        let statistics = Statistics::new()
+        let statistics = Statistics::new(Algorithm::GlobalActivations)
             .time_to_load_retweets(42);
+        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
         assert_eq!(statistics.number_of_friendships, 0);
         assert_eq!(statistics.number_of_retweets, 0);
         assert_eq!(statistics.batch_size, 0);
@@ -247,9 +261,10 @@ mod tests {
     #[test]
     fn time_to_process_retweets() {
         // The Retweet processing rate should also be updated (if number of Retweets is given).
-        let statistics = Statistics::new()
+        let statistics = Statistics::new(Algorithm::GlobalActivations)
             .number_of_retweets(3)
             .time_to_process_retweets(2_000_000_000);
+        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
         assert_eq!(statistics.number_of_friendships, 0);
         assert_eq!(statistics.number_of_retweets, 3);
         assert_eq!(statistics.batch_size, 0);
@@ -264,8 +279,9 @@ mod tests {
 
     #[test]
     fn total_time() {
-        let statistics = Statistics::new()
+        let statistics = Statistics::new(Algorithm::GlobalActivations)
             .total_time(42);
+        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
         assert_eq!(statistics.number_of_friendships, 0);
         assert_eq!(statistics.number_of_retweets, 0);
         assert_eq!(statistics.batch_size, 0);
@@ -280,7 +296,7 @@ mod tests {
 
     #[test]
     fn retweet_processing_rate() {
-        let mut statistics = Statistics::new();
+        let mut statistics = Statistics::new(Algorithm::GlobalActivations);
         statistics.number_of_retweets = 3;
         statistics.time_to_process_retweets = 2_000_000_000;
         statistics.calculate_retweet_processing_rate();

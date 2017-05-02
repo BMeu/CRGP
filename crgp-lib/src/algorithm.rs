@@ -51,7 +51,7 @@ use twitter::Tweet;
 pub type UserID = i64;
 
 /// Available algorithms for reconstruction.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Algorithm {
     /// First, find possible influences, exchange them, filter.
     FPI,
@@ -483,7 +483,7 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
          **********/
 
         stopwatch.stop();
-        let statistics = Statistics::new()
+        let statistics = Statistics::new(configuration.algorithm)
             .number_of_friendships(total_number_of_friendships_given)
             .number_of_retweets(number_of_retweets)
             .batch_size(batch_size)
