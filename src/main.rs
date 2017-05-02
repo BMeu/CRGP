@@ -61,6 +61,12 @@ const PROGRAM_NAME: &str = "crgp";
 fn main() {
     // Define the usage.
     let arguments: ArgMatches = app_from_crate!()
+        .arg(Arg::with_name("algorithm")
+            .long("algorithm")
+            .takes_value(true)
+            .possible_values(&["GALE", "LEAF"])
+            .default_value("GALE")
+            .help("Use the specified algorithm."))
         .arg(Arg::with_name("batch-size")
             .short("b")
             .long("batch-size")
@@ -69,9 +75,6 @@ fn main() {
             .takes_value(true)
             .default_value("500")
             .validator(validation::positive_usize))
-        .arg(Arg::with_name("fpi-algorithm")
-            .long("fpi-algorithm")
-            .help("Use the FPI algorithm."))
         .arg(Arg::with_name("hostfile")
             .short("f")
             .long("hostfile")
@@ -147,17 +150,18 @@ fn main() {
 
     // Get the arguments with default values. Since these arguments have default values and validators defined none
     // of the `unwrap()`s can fail.
+    let given_algorithm: &str = arguments.value_of("algorithm").unwrap();
+    let algorithm: Algorithm = if given_algorithm == "LEAF" {
+        Algorithm::LEAF
+    } else {
+        Algorithm::GALE
+    };
     let batch_size: usize = arguments.value_of("batch-size").unwrap().parse().unwrap();
     let process_id: usize = arguments.value_of("process").unwrap().parse().unwrap();
     let processes: usize = arguments.value_of("processes").unwrap().parse().unwrap();
     let workers: usize = arguments.value_of("workers").unwrap().parse().unwrap();
     let report_connection_progess: bool = arguments.is_present("report-connection-progress");
     let pad_with_dummy_users: bool = arguments.is_present("pad-users");
-    let algorithm: Algorithm = if arguments.is_present("fpi-algorithm") {
-        Algorithm::FPI
-    } else {
-        Algorithm::GlobalActivations
-    };
 
     // Determine the output target.
     let output_target: OutputTarget = if arguments.is_present("no-output") {

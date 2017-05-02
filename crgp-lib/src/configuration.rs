@@ -112,7 +112,7 @@ impl Configuration {
     ///  * `report_connection_progress`: `false`
     pub fn default(retweets: String, social_graph: String) -> Configuration {
         Configuration {
-            algorithm: Algorithm::GlobalActivations,
+            algorithm: Algorithm::GALE,
             batch_size: 500,
             hosts: None,
             number_of_processes: 1,
@@ -253,7 +253,7 @@ mod tests {
 
         let configuration = Configuration::default(retweets, social_graph);
 
-        assert_eq!(configuration.algorithm, Algorithm::GlobalActivations);
+        assert_eq!(configuration.algorithm, Algorithm::GALE);
         assert_eq!(configuration.batch_size, 500);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 1);
@@ -273,9 +273,9 @@ mod tests {
         let social_graph = String::from("path/to/social/graph");
 
         let configuration = Configuration::default(retweets, social_graph)
-            .algorithm(Algorithm::FPI);
+            .algorithm(Algorithm::LEAF);
 
-        assert_eq!(configuration.algorithm, Algorithm::FPI);
+        assert_eq!(configuration.algorithm, Algorithm::LEAF);
         assert_eq!(configuration.batch_size, 500);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 1);
@@ -297,7 +297,7 @@ mod tests {
         let configuration = Configuration::default(retweets, social_graph)
             .batch_size(1);
 
-        assert_eq!(configuration.algorithm, Algorithm::GlobalActivations);
+        assert_eq!(configuration.algorithm, Algorithm::GALE);
         assert_eq!(configuration.batch_size, 1);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 1);
@@ -324,7 +324,7 @@ mod tests {
         let configuration = Configuration::default(retweets, social_graph)
             .hosts(Some(hosts));
 
-        assert_eq!(configuration.algorithm, Algorithm::GlobalActivations);
+        assert_eq!(configuration.algorithm, Algorithm::GALE);
         assert_eq!(configuration.batch_size, 500);
         assert_eq!(configuration.hosts, Some(vec![
             String::from("host1:2101"),
@@ -351,7 +351,7 @@ mod tests {
         let configuration = Configuration::default(retweets, social_graph)
             .output_target(OutputTarget::Directory(output));
 
-        assert_eq!(configuration.algorithm, Algorithm::GlobalActivations);
+        assert_eq!(configuration.algorithm, Algorithm::GALE);
         assert_eq!(configuration.batch_size, 500);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 1);
@@ -374,7 +374,7 @@ mod tests {
         let configuration = Configuration::default(retweets, social_graph)
             .pad_with_dummy_users(true);
 
-        assert_eq!(configuration.algorithm, Algorithm::GlobalActivations);
+        assert_eq!(configuration.algorithm, Algorithm::GALE);
         assert_eq!(configuration.batch_size, 500);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 1);
@@ -396,7 +396,7 @@ mod tests {
         let configuration = Configuration::default(retweets, social_graph)
             .process_id(42);
 
-        assert_eq!(configuration.algorithm, Algorithm::GlobalActivations);
+        assert_eq!(configuration.algorithm, Algorithm::GALE);
         assert_eq!(configuration.batch_size, 500);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 1);
@@ -418,7 +418,7 @@ mod tests {
         let configuration = Configuration::default(retweets, social_graph)
             .processes(42);
 
-        assert_eq!(configuration.algorithm, Algorithm::GlobalActivations);
+        assert_eq!(configuration.algorithm, Algorithm::GALE);
         assert_eq!(configuration.batch_size, 500);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 42);
@@ -440,7 +440,7 @@ mod tests {
         let configuration = Configuration::default(retweets, social_graph)
             .report_connection_progress(true);
 
-        assert_eq!(configuration.algorithm, Algorithm::GlobalActivations);
+        assert_eq!(configuration.algorithm, Algorithm::GALE);
         assert_eq!(configuration.batch_size, 500);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 1);
@@ -462,7 +462,7 @@ mod tests {
         let configuration = Configuration::default(retweets, social_graph)
             .workers(42);
 
-        assert_eq!(configuration.algorithm, Algorithm::GlobalActivations);
+        assert_eq!(configuration.algorithm, Algorithm::GALE);
         assert_eq!(configuration.batch_size, 500);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 1);

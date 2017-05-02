@@ -30,12 +30,12 @@ lazy_static! {
 }
 
 #[test]
-fn algorithm_execution_fpi() {
+fn algorithm_execution_leaf() {
     let friendship_dataset = String::from("../data/social_graph");
     let retweet_dataset = String::from("../data/retweets.json");
 
     let configuration = Configuration::default(retweet_dataset, friendship_dataset)
-        .algorithm(Algorithm::FPI)
+        .algorithm(Algorithm::LEAF)
         .batch_size(1);
 
     // Capturing STDOUT currently only works on Unix systems.
@@ -75,12 +75,12 @@ fn algorithm_execution_fpi() {
 }
 
 #[test]
-fn algorithm_execution_fpi_with_dummy_users() {
+fn algorithm_execution_leaf_with_dummy_users() {
     let friendship_dataset = String::from("../data/social_graph");
     let retweet_dataset = String::from("../data/retweets.json");
 
     let configuration = Configuration::default(retweet_dataset, friendship_dataset)
-        .algorithm(Algorithm::FPI)
+        .algorithm(Algorithm::LEAF)
         .batch_size(1)
         .pad_with_dummy_users(true);
 
@@ -121,7 +121,7 @@ fn algorithm_execution_fpi_with_dummy_users() {
 }
 
 #[test]
-fn algorithm_execution_global() {
+fn algorithm_execution_gale() {
     let friendship_dataset = String::from("../data/social_graph");
     let retweet_dataset = String::from("../data/retweets.json");
 
@@ -165,7 +165,7 @@ fn algorithm_execution_global() {
 }
 
 #[test]
-fn algorithm_execution_global_with_dummy_users() {
+fn algorithm_execution_gale_with_dummy_users() {
     let friendship_dataset = String::from("../data/social_graph");
     let retweet_dataset = String::from("../data/retweets.json");
 

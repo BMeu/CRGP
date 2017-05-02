@@ -53,11 +53,16 @@ pub type UserID = i64;
 /// Available algorithms for reconstruction.
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Algorithm {
-    /// First, find possible influences, exchange them, filter.
-    FPI,
+    /// Activate user and produce possible influences on worker storing the user's friends, filter possible influences
+    /// on worker storing influencer's friends.
+    ///
+    /// `LEAF` = Local Edges, Activations, and Filtering
+    LEAF,
 
-    /// Mark users active on each worker.
-    GlobalActivations,
+    /// Activate retweeting users on all workers, produce influence edges on the worker storing the user's friends.
+    ///
+    /// `GALE` = Global Activations, Local Edges
+    GALE,
 }
 
 lazy_static! {
@@ -102,21 +107,17 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
         let output_target: OutputTarget = configuration.output_target.clone();
 
         // Reconstruct the cascade.
-        // Algorithm:
-        // 1. Send all friendship edges (u1 -> u2, u1 follows u2) to respective workers (based on u1).
-        // 2. Broadcast the current retweet r* to all workers.
-        // 3. Each worker marks the user u* of r* as activated for the retweet's cascade.
-        // 4. The worker storing u*'s friends produces the influence edges:
-        //    a. If u* has more friends than there are activated users for this cascade, iterate over the cascade's
-        //       activations. Otherwise, iterate over u*'s friends.
-        //    b. For the current user u in the iteration, produce an influence edge if:
-        //       i.   For activation iteration: u is a friend of u*, and
-        //       ii.  (The retweet occurred after the activation of u, or
-        //       iii. u is the poster of the original tweet).
         let (mut graph_input, mut retweet_input, probe) = match configuration.algorithm {
-            Algorithm::FPI => {
+            Algorithm::LEAF => {
+                // Algorithm:
+                // 1. Send all friendship edges (u1 -> u2, u1 follows u2) to respective workers (based on u1).
+                // 2. Send a retweet made by u* to the worker storing u*'s friendships.
+                // 3. On this worker: mark u* and the original user u as active for this cascade.
+                // 4. On this worker: for all friends of u*, create (possible) influence edges (PIE) for this
+                //    cascade, from the friend u' to u*, with timestamp of u*'s retweet.
+                // 5. Send each PIE to the worker storing u'.
+                // 6. On this worker: filter all PIEs, output only those where u' has been activated before.
                 computation.scoped::<u64, _, _>(move |scope| {
-
                     // Create the inputs.
                     let (graph_input, graph_stream) = scope.new_input();
                     let (retweet_input, retweet_stream) = scope.new_input();
@@ -124,14 +125,17 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                     // For each cascade, given by its ID, a set of activated users, given by their ID, i.e.
                     // those users who have retweeted within this cascade before, per worker. Since this map
                     // is required within two closures, dynamic borrow checks are required.
-                    let activations_influences: Rc<RefCell<HashMap<u64, HashMap<UserID, u64>>>> = Rc::new(RefCell::new(HashMap::new()));
+                    let activations_influences: Rc<RefCell<HashMap<u64, HashMap<UserID, u64>>>> =
+                        Rc::new(RefCell::new(HashMap::new()));
                     let activations_possible_influences = activations_influences.clone();
 
                     let probe = graph_stream
                         .find_possible_influences(retweet_stream, activations_possible_influences)
                         .exchange(|influence: &InfluenceEdge<UserID>| influence.influencer as u64)
                         .filter(move |influence: &InfluenceEdge<UserID>| {
-                            let is_influencer_activated: bool = match activations_influences.borrow().get(&influence.cascade_id) {
+                            let is_influencer_activated: bool = match activations_influences.borrow()
+                                .get(&influence.cascade_id)
+                            {
                                 Some(users) => match users.get(&influence.influencer) {
                                     Some(activation_timestamp) => &influence.timestamp >= activation_timestamp,
                                     None => false
@@ -148,7 +152,18 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                     (graph_input, retweet_input, probe)
                 })
             },
-            Algorithm::GlobalActivations => {
+            Algorithm::GALE => {
+                // Algorithm:
+                // 1. Send all friendship edges (u1 -> u2, u1 follows u2) to respective workers (based on u1).
+                // 2. Broadcast the current retweet r* to all workers.
+                // 3. Each worker marks the user u* of r* as activated for the retweet's cascade.
+                // 4. The worker storing u*'s friends produces the influence edges:
+                //    a. If u* has more friends than there are activated users for this cascade, iterate over the
+                //       cascade's activations. Otherwise, iterate over u*'s friends.
+                //    b. For the current user u in the iteration, produce an influence edge if:
+                //       i.   For activation iteration: u is a friend of u*, and
+                //       ii.  (The retweet occurred after the activation of u, or
+                //       iii. u is the poster of the original tweet).
                 computation.scoped::<u64, _, _>(move |scope| {
                     // Create the inputs.
                     let (graph_input, graph_stream) = scope.new_input();
