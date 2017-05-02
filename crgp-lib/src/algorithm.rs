@@ -137,7 +137,7 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
                                 .get(&influence.cascade_id)
                             {
                                 Some(users) => match users.get(&influence.influencer) {
-                                    Some(activation_timestamp) => &influence.timestamp >= activation_timestamp,
+                                    Some(activation_timestamp) => &influence.timestamp > activation_timestamp,
                                     None => false
                                 },
                                 None => false
