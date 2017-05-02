@@ -438,6 +438,10 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
             .time_to_load_retweets(time_to_load_retweets)
             .time_to_process_retweets(time_to_process_retweets)
             .total_time(stopwatch.total_time());
+
+        // Log the statistics.
+        info!("{:?}", statistics);
+
         Ok(statistics)
     })?;
 

@@ -174,6 +174,7 @@ specified levels.
     * Starting and finishing to process the Retweets.
 * Overall information on the actual number of friends in the social graph, the given number of friends, and the possibly
   created fake friends.
+* Execution statistics.
 
 **Warn:** `-vv`
 
