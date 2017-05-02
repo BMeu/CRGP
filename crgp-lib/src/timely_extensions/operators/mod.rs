@@ -9,9 +9,11 @@
 //! A collection of functions taking typed ``Stream`` objects from ``timely`` as input and producing new ``Stream``
 //! objects as output. These custom operators are specialized for the use in ``CRGP``.
 
+pub use self::find_possible_influences::FindPossibleInfluences;
 pub use self::reconstruct::Reconstruct;
 pub use self::write::OutputTarget;
 pub use self::write::Write;
 
+pub mod find_possible_influences;
 pub mod reconstruct;
 pub mod write;

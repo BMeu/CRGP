@@ -39,6 +39,7 @@ use std::path::PathBuf;
 
 use clap::Arg;
 use clap::ArgMatches;
+use crgp_lib::Algorithm;
 use crgp_lib::Configuration;
 use crgp_lib::Error;
 use crgp_lib::algorithm;
@@ -68,6 +69,9 @@ fn main() {
             .takes_value(true)
             .default_value("500")
             .validator(validation::positive_usize))
+        .arg(Arg::with_name("fpi-algorithm")
+            .long("fpi-algorithm")
+            .help("Use the FPI algorithm."))
         .arg(Arg::with_name("hostfile")
             .short("f")
             .long("hostfile")
@@ -149,6 +153,11 @@ fn main() {
     let workers: usize = arguments.value_of("workers").unwrap().parse().unwrap();
     let report_connection_progess: bool = arguments.is_present("report-connection-progress");
     let pad_with_dummy_users: bool = arguments.is_present("pad-users");
+    let algorithm: Algorithm = if arguments.is_present("fpi-algirhtm") {
+        Algorithm::FPI
+    } else {
+        Algorithm::GlobalActivations
+    };
 
     // Determine the output target.
     let output_target: OutputTarget = if arguments.is_present("no-output") {
@@ -217,6 +226,7 @@ fn main() {
 
     // Set the algorithm configuration.
     let configuration = Configuration::default(retweet_path, social_graph_path)
+        .algorithm(algorithm)
         .batch_size(batch_size)
         .hosts(hosts)
         .output_target(output_target)
