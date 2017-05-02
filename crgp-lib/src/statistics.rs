@@ -6,24 +6,18 @@
 
 //! Collection of statistics about the execution of the algorithm.
 
-use Algorithm;
+use Configuration;
 
 /// Collection of statistics about the execution of the algorithm.
 ///
 /// Times are given in nanoseconds.
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Statistics {
-    /// The algorithm used for reconstruction.
-    pub algorithm: Algorithm,
-
     /// Number of friendships in the social graph.
     pub number_of_friendships: u64,
 
     /// Number of retweets processed.
     pub number_of_retweets: u64,
-
-    /// Size of the Retweet batches.
-    pub batch_size: usize,
 
     /// Time to set up the computation (in `ns`).
     pub time_to_setup: u64,
@@ -45,6 +39,9 @@ pub struct Statistics {
     /// This field will automatically be set whenever `number_of_retweets` or `time_to_process_retweets` are set.
     pub retweet_processing_rate: u64,
 
+    /// The algorithm used for reconstruction.
+    pub configuration: Configuration,
+
     /// Private field to prevent initialization without the provided methods.
     ///
     /// All other fields should be public for easy access without getter functions. However, adding more fields later
@@ -55,12 +52,11 @@ pub struct Statistics {
 
 impl Statistics {
     /// Initialize default statistics.
-    pub fn new(algorithm: Algorithm) -> Statistics {
+    pub fn new(configuration: Configuration) -> Statistics {
         Statistics {
-            algorithm: algorithm,
+            configuration: configuration,
             number_of_friendships: 0,
             number_of_retweets: 0,
-            batch_size: 0,
             time_to_setup: 0,
             time_to_process_social_graph: 0,
             time_to_load_retweets: 0,
@@ -85,12 +81,6 @@ impl Statistics {
         if self.retweet_processing_rate != 0 {
             self.calculate_retweet_processing_rate();
         }
-        self
-    }
-
-    /// Set the size of the Retweet batches.
-    pub fn batch_size(mut self, batch_size: usize) -> Statistics {
-        self.batch_size = batch_size;
         self
     }
 
@@ -137,16 +127,18 @@ impl Statistics {
 
 #[cfg(test)]
 mod tests {
-    use Algorithm;
     use super::*;
 
     #[test]
     fn new() {
-        let statistics = Statistics::new(Algorithm::GlobalActivations);
-        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
+        let retweets = String::from("path/to/retweets.json");
+        let social_graph = String::from("path/to/social/graph");
+        let configuration = Configuration::default(retweets, social_graph);
+
+        let statistics = Statistics::new(configuration.clone());
+        assert_eq!(statistics.configuration, configuration);
         assert_eq!(statistics.number_of_friendships, 0);
         assert_eq!(statistics.number_of_retweets, 0);
-        assert_eq!(statistics.batch_size, 0);
         assert_eq!(statistics.time_to_setup, 0);
         assert_eq!(statistics.time_to_process_social_graph, 0);
         assert_eq!(statistics.time_to_load_retweets, 0);
@@ -158,12 +150,15 @@ mod tests {
 
     #[test]
     fn number_of_friendships() {
-        let statistics = Statistics::new(Algorithm::GlobalActivations)
+        let retweets = String::from("path/to/retweets.json");
+        let social_graph = String::from("path/to/social/graph");
+        let configuration = Configuration::default(retweets, social_graph);
+
+        let statistics = Statistics::new(configuration.clone())
             .number_of_friendships(42);
-        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
+        assert_eq!(statistics.configuration, configuration);
         assert_eq!(statistics.number_of_friendships, 42);
         assert_eq!(statistics.number_of_retweets, 0);
-        assert_eq!(statistics.batch_size, 0);
         assert_eq!(statistics.time_to_setup, 0);
         assert_eq!(statistics.time_to_process_social_graph, 0);
         assert_eq!(statistics.time_to_load_retweets, 0);
@@ -175,29 +170,15 @@ mod tests {
 
     #[test]
     fn number_of_retweets() {
-        let statistics = Statistics::new(Algorithm::GlobalActivations)
+        let retweets = String::from("path/to/retweets.json");
+        let social_graph = String::from("path/to/social/graph");
+        let configuration = Configuration::default(retweets, social_graph);
+
+        let statistics = Statistics::new(configuration.clone())
             .number_of_retweets(42);
-        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
+        assert_eq!(statistics.configuration, configuration);
         assert_eq!(statistics.number_of_friendships, 0);
         assert_eq!(statistics.number_of_retweets, 42);
-        assert_eq!(statistics.batch_size, 0);
-        assert_eq!(statistics.time_to_setup, 0);
-        assert_eq!(statistics.time_to_process_social_graph, 0);
-        assert_eq!(statistics.time_to_load_retweets, 0);
-        assert_eq!(statistics.time_to_process_retweets, 0);
-        assert_eq!(statistics.total_time, 0);
-        assert_eq!(statistics.retweet_processing_rate, 0);
-        assert!(statistics._prevent_outside_initialization);
-    }
-
-    #[test]
-    fn batch_size() {
-        let statistics = Statistics::new(Algorithm::GlobalActivations)
-            .batch_size(42);
-        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
-        assert_eq!(statistics.number_of_friendships, 0);
-        assert_eq!(statistics.number_of_retweets, 0);
-        assert_eq!(statistics.batch_size, 42);
         assert_eq!(statistics.time_to_setup, 0);
         assert_eq!(statistics.time_to_process_social_graph, 0);
         assert_eq!(statistics.time_to_load_retweets, 0);
@@ -209,12 +190,15 @@ mod tests {
 
     #[test]
     fn time_to_setup() {
-        let statistics = Statistics::new(Algorithm::GlobalActivations)
+        let retweets = String::from("path/to/retweets.json");
+        let social_graph = String::from("path/to/social/graph");
+        let configuration = Configuration::default(retweets, social_graph);
+
+        let statistics = Statistics::new(configuration.clone())
             .time_to_setup(42);
-        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
+        assert_eq!(statistics.configuration, configuration);
         assert_eq!(statistics.number_of_friendships, 0);
         assert_eq!(statistics.number_of_retweets, 0);
-        assert_eq!(statistics.batch_size, 0);
         assert_eq!(statistics.time_to_setup, 42);
         assert_eq!(statistics.time_to_process_social_graph, 0);
         assert_eq!(statistics.time_to_load_retweets, 0);
@@ -226,12 +210,15 @@ mod tests {
 
     #[test]
     fn time_to_process_social_graph() {
-        let statistics = Statistics::new(Algorithm::GlobalActivations)
+        let retweets = String::from("path/to/retweets.json");
+        let social_graph = String::from("path/to/social/graph");
+        let configuration = Configuration::default(retweets, social_graph);
+
+        let statistics = Statistics::new(configuration.clone())
             .time_to_process_social_graph(42);
-        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
+        assert_eq!(statistics.configuration, configuration);
         assert_eq!(statistics.number_of_friendships, 0);
         assert_eq!(statistics.number_of_retweets, 0);
-        assert_eq!(statistics.batch_size, 0);
         assert_eq!(statistics.time_to_setup, 0);
         assert_eq!(statistics.time_to_process_social_graph, 42);
         assert_eq!(statistics.time_to_load_retweets, 0);
@@ -243,12 +230,15 @@ mod tests {
 
     #[test]
     fn time_to_load_retweets() {
-        let statistics = Statistics::new(Algorithm::GlobalActivations)
+        let retweets = String::from("path/to/retweets.json");
+        let social_graph = String::from("path/to/social/graph");
+        let configuration = Configuration::default(retweets, social_graph);
+
+        let statistics = Statistics::new(configuration.clone())
             .time_to_load_retweets(42);
-        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
+        assert_eq!(statistics.configuration, configuration);
         assert_eq!(statistics.number_of_friendships, 0);
         assert_eq!(statistics.number_of_retweets, 0);
-        assert_eq!(statistics.batch_size, 0);
         assert_eq!(statistics.time_to_setup, 0);
         assert_eq!(statistics.time_to_process_social_graph, 0);
         assert_eq!(statistics.time_to_load_retweets, 42);
@@ -260,14 +250,17 @@ mod tests {
 
     #[test]
     fn time_to_process_retweets() {
+        let retweets = String::from("path/to/retweets.json");
+        let social_graph = String::from("path/to/social/graph");
+        let configuration = Configuration::default(retweets, social_graph);
+
         // The Retweet processing rate should also be updated (if number of Retweets is given).
-        let statistics = Statistics::new(Algorithm::GlobalActivations)
+        let statistics = Statistics::new(configuration.clone())
             .number_of_retweets(3)
             .time_to_process_retweets(2_000_000_000);
-        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
+        assert_eq!(statistics.configuration, configuration);
         assert_eq!(statistics.number_of_friendships, 0);
         assert_eq!(statistics.number_of_retweets, 3);
-        assert_eq!(statistics.batch_size, 0);
         assert_eq!(statistics.time_to_setup, 0);
         assert_eq!(statistics.time_to_process_social_graph, 0);
         assert_eq!(statistics.time_to_load_retweets, 0);
@@ -279,12 +272,15 @@ mod tests {
 
     #[test]
     fn total_time() {
-        let statistics = Statistics::new(Algorithm::GlobalActivations)
+        let retweets = String::from("path/to/retweets.json");
+        let social_graph = String::from("path/to/social/graph");
+        let configuration = Configuration::default(retweets, social_graph);
+
+        let statistics = Statistics::new(configuration.clone())
             .total_time(42);
-        assert_eq!(statistics.algorithm, Algorithm::GlobalActivations);
+        assert_eq!(statistics.configuration, configuration);
         assert_eq!(statistics.number_of_friendships, 0);
         assert_eq!(statistics.number_of_retweets, 0);
-        assert_eq!(statistics.batch_size, 0);
         assert_eq!(statistics.time_to_setup, 0);
         assert_eq!(statistics.time_to_process_social_graph, 0);
         assert_eq!(statistics.time_to_load_retweets, 0);
@@ -296,7 +292,11 @@ mod tests {
 
     #[test]
     fn retweet_processing_rate() {
-        let mut statistics = Statistics::new(Algorithm::GlobalActivations);
+        let retweets = String::from("path/to/retweets.json");
+        let social_graph = String::from("path/to/social/graph");
+        let configuration = Configuration::default(retweets, social_graph);
+
+        let mut statistics = Statistics::new(configuration.clone());
         statistics.number_of_retweets = 3;
         statistics.time_to_process_retweets = 2_000_000_000;
         statistics.calculate_retweet_processing_rate();

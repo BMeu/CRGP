@@ -483,10 +483,9 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
          **********/
 
         stopwatch.stop();
-        let statistics = Statistics::new(configuration.algorithm)
+        let statistics = Statistics::new(configuration.clone())
             .number_of_friendships(total_number_of_friendships_given)
             .number_of_retweets(number_of_retweets)
-            .batch_size(batch_size)
             .time_to_setup(time_to_setup)
             .time_to_process_social_graph(time_to_process_social_network)
             .time_to_load_retweets(time_to_load_retweets)

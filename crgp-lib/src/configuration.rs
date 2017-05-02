@@ -48,7 +48,7 @@ use timely_extensions::operators::OutputTarget;
 /// assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
 /// assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
 /// ```
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Configuration {
     /// The algorithm used for reconstruction.
     pub algorithm: Algorithm,
@@ -66,6 +66,7 @@ pub struct Configuration {
     pub number_of_workers: usize,
 
     /// Target for writing results.
+    #[serde(skip_serializing)]
     pub output_target: OutputTarget,
 
     /// If the given friend list for each user is only a subset of their friends, create as many dummy users as needed
@@ -91,6 +92,7 @@ pub struct Configuration {
     ///
     /// All other fields should be public for easy access without getter functions. However, adding more fields later
     /// could break code if the `Configuration` were manually initialized.
+    #[serde(skip_serializing)]
     _prevent_outside_initialization: bool,
 }
 
