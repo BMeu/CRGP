@@ -153,7 +153,7 @@ fn main() {
     let workers: usize = arguments.value_of("workers").unwrap().parse().unwrap();
     let report_connection_progess: bool = arguments.is_present("report-connection-progress");
     let pad_with_dummy_users: bool = arguments.is_present("pad-users");
-    let algorithm: Algorithm = if arguments.is_present("fpi-algirhtm") {
+    let algorithm: Algorithm = if arguments.is_present("fpi-algorithm") {
         Algorithm::FPI
     } else {
         Algorithm::GlobalActivations
