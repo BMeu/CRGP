@@ -20,4 +20,4 @@ clap = "2.21"
 crgp_lib = { path = "crgp-lib" }
 flexi_logger = "0.5"
 time = "0.1"
-toml = "0.4"
+toml = { git = "https://github.com/alexcrichton/toml-rs" }
