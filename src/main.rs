@@ -246,28 +246,25 @@ fn main() {
                 // Only save to file if output is requested.
                 if let OutputTarget::Directory(directory) = output_target_statistics {
                     // Parse the statistics to TOML.
-                    match toml::to_string(&results) {
-                        Ok(results) => {
-                            // Create the file name from the program name and the current time.
-                            let current_time: Tm = time::now();
-                            // The unwrap is save, since the format string is known to be correct.
-                            let time_formatted: TmFmt = current_time.strftime("%Y-%m-%d_%H-%M-%S").unwrap();
-                            let filename = format!("{program}_{time}.toml", program = PROGRAM_NAME, time = time_formatted);
-                            let path: PathBuf = directory.join(filename);
-                            let path_c: PathBuf = path.clone();
+                    if let Ok(results) = toml::to_string(&results) {
+                        // Create the file name from the program name and the current time.
+                        let current_time: Tm = time::now();
+                        // The unwrap is save, since the format string is known to be correct.
+                        let time_formatted: TmFmt = current_time.strftime("%Y-%m-%d_%H-%M-%S").unwrap();
+                        let filename = format!("{program}_{time}.toml", program = PROGRAM_NAME, time = time_formatted);
+                        let path: PathBuf = directory.join(filename);
+                        let path_c: PathBuf = path.clone();
 
-                            // Create the file and save the results.
-                            if let Ok(file) = File::create(path) {
-                                let mut writer: BufWriter<File> = BufWriter::new(file);
-                                if let Ok(_) = write!(writer, "{}", results) {
-                                    if let Ok(_) = writer.flush() {
-                                        println!("Statistics saved to {path:?}", path = path_c);
-                                        exit::succeed();
-                                    }
+                        // Create the file and save the results.
+                        if let Ok(file) = File::create(path) {
+                            let mut writer: BufWriter<File> = BufWriter::new(file);
+                            if let Ok(_) = write!(writer, "{}", results) {
+                                if let Ok(_) = writer.flush() {
+                                    println!("Statistics saved to {path:?}", path = path_c);
+                                    exit::succeed();
                                 }
                             }
-                        },
-                        Err(message) => println!("{}", message)
+                        }
                     }
 
                     // Some error occurred along the way.
