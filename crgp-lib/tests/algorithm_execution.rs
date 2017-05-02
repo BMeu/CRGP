@@ -51,7 +51,6 @@ fn algorithm_execution_leaf() {
         let influences: Vec<&str> = output.split('\n')
             .filter(|line| !line.is_empty())
             .collect();
-        assert_eq!(influences.len(), 7);
         let expected_lines: Vec<&str> = vec![
             "1;3;2;0;1;-1",
             "1;4;1;0;2;-1",
@@ -67,6 +66,7 @@ fn algorithm_execution_leaf() {
         for expected_line in &expected_lines {
             assert!(influences.contains(expected_line), "Missing influence: {}", expected_line);
         }
+        assert_eq!(influences.len(), 7);
     }
         else {
             let result: Result<Statistics> = algorithm::execute(configuration);
@@ -97,7 +97,6 @@ fn algorithm_execution_leaf_with_dummy_users() {
         let influences: Vec<&str> = output.split('\n')
             .filter(|line| !line.is_empty())
             .collect();
-        assert_eq!(influences.len(), 7);
         let expected_lines: Vec<&str> = vec![
             "1;3;2;0;1;-1",
             "1;4;1;0;2;-1",
@@ -113,6 +112,7 @@ fn algorithm_execution_leaf_with_dummy_users() {
         for expected_line in &expected_lines {
             assert!(influences.contains(expected_line), "Missing influence: {}", expected_line);
         }
+        assert_eq!(influences.len(), 7);
     }
         else {
             let result: Result<Statistics> = algorithm::execute(configuration);
@@ -141,7 +141,6 @@ fn algorithm_execution_gale() {
         let influences: Vec<&str> = output.split('\n')
             .filter(|line| !line.is_empty())
             .collect();
-        assert_eq!(influences.len(), 7);
         let expected_lines: Vec<&str> = vec![
             "1;3;2;0;1;-1",
             "1;4;1;0;2;-1",
@@ -157,6 +156,7 @@ fn algorithm_execution_gale() {
         for expected_line in &expected_lines {
             assert!(influences.contains(expected_line), "Missing influence: {}", expected_line);
         }
+        assert_eq!(influences.len(), 7);
     }
     else {
         let result: Result<Statistics> = algorithm::execute(configuration);
@@ -186,7 +186,6 @@ fn algorithm_execution_gale_with_dummy_users() {
         let influences: Vec<&str> = output.split('\n')
             .filter(|line| !line.is_empty())
             .collect();
-        assert_eq!(influences.len(), 7);
         let expected_lines: Vec<&str> = vec![
             "1;3;2;0;1;-1",
             "1;4;1;0;2;-1",
@@ -202,6 +201,7 @@ fn algorithm_execution_gale_with_dummy_users() {
         for expected_line in &expected_lines {
             assert!(influences.contains(expected_line), "Missing influence: {}", expected_line);
         }
+        assert_eq!(influences.len(), 7);
     }
     else {
         let result: Result<Statistics> = algorithm::execute(configuration);
