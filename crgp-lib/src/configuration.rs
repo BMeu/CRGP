@@ -35,7 +35,7 @@ use timely_extensions::operators::OutputTarget;
 ///     .pad_with_dummy_users(true)
 ///     .workers(2);
 ///
-/// assert_eq!(configuration.algorithm, Algorithm::GlobalActivations);
+/// assert_eq!(configuration.algorithm, Algorithm::GALE);
 /// assert_eq!(configuration.batch_size, 500);
 /// assert_eq!(configuration.hosts, None);
 /// assert_eq!(configuration.number_of_processes, 1);
