@@ -35,24 +35,29 @@ pub struct InfluenceEdge<T>
 
     /// The ID of the Retweet cascade for which this influence is valid.
     pub cascade_id: u64,
+
+    /// The user who posted the original tweet.
+    pub original_user: T,
 }
 
 impl<T> InfluenceEdge<T>
     where T: Abomonation {
     /// Construct a new influence edge from ``influencer`` to ``influencee`` for the cascade ``cascade_id``, where the
     /// ``influencee`` was influenced at time ``timestamp``.
-    pub fn new(influencer: T, influencee: T, timestamp: u64, retweet_id: u64, cascade_id: u64) -> InfluenceEdge<T> {
+    pub fn new(influencer: T, influencee: T, timestamp: u64, retweet_id: u64, cascade_id: u64, original_user: T)
+        -> InfluenceEdge<T> {
         InfluenceEdge {
             influencer: influencer,
             influencee: influencee,
             timestamp: timestamp,
             retweet_id: retweet_id,
             cascade_id: cascade_id,
+            original_user: original_user,
         }
     }
 }
 
-unsafe_abomonate!(InfluenceEdge<UserID> : influencer, influencee, timestamp, cascade_id);
+unsafe_abomonate!(InfluenceEdge<UserID> : influencer, influencee, timestamp, cascade_id, original_user);
 
 #[cfg(test)]
 mod tests {
@@ -60,11 +65,12 @@ mod tests {
 
     #[test]
     fn new() {
-        let edge: InfluenceEdge<f64> = InfluenceEdge::new(42.0, 13.37, 123, 456, 789);
+        let edge: InfluenceEdge<f64> = InfluenceEdge::new(42.0, 13.37, 123, 456, 789, 0.42);
         assert_eq!(edge.influencer, 42.0);
         assert_eq!(edge.influencee, 13.37);
         assert_eq!(edge.timestamp, 123);
         assert_eq!(edge.retweet_id, 456);
         assert_eq!(edge.cascade_id, 789);
+        assert_eq!(edge.original_user, 0.42);
     }
 }
