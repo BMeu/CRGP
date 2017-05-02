@@ -32,6 +32,42 @@ three Retweets) on a tiny social graph:
 $ cargo run --release -- data/social_graph data/retweets.json
 ```
 
+## Algorithms
+
+`CRGP` provides two algorithms for reconstruction: `GALE` and `LEAF`.
+
+### GALE
+
+`GALE` stands for **G**lobal **A**ctivations, **L**ocal **E**dges:
+
+1. Send all friendship egdes (`(u1, u2)`, `u1` follows `u2`) to the worker destined to store `u1`.
+2. Broadcast the current Retweet `r*` to all workers.
+3. Each worker marks the retweeting user `u*` as active for the Retweet's cascade, and, if this is the first Retweet in
+   the cascade, the original user.
+4. The worker storing `u*`'s friends produces the influence edges:
+    1. If `u*` has more friends than there are activated users for this cascade, iterate over the cascade's activations.
+       Otherwise, iterate over `u*`'s friends.
+    2. For the current user `u` in the iteration, produce an influence edge if:
+        1. Only for activation iteration: `u` is a friend of `u*`; and
+        2. (The Retweet occurred after the activation of `u`, or
+        3. `u` is the poster of the original Tweet).
+
+This algorithm is the default algorithm since it is the fastest.
+
+### LEAF
+
+`LEAF` stands for **L**ocal **E**dges, **A**ctivations, and **F**iltering:
+
+1. Send all friendship egdes (`(u1, u2)`, `u1` follows `u2`) to the worker destined to store `u1`.
+2. Send the current Retweet `r*` made by user `u*` to the worker `w*` storing `u*`'s friendships.
+3. On `w*`:
+    1. Mark `u*` as active for this cascade.
+    2. For all friends `u'` of `u*`, create possible influences from `u'` to `u*` for this cascade.
+    3. Send each possible influence to the worker `w'` storing `u'` friendships.
+4. On `w'`: produce an actual influence from the possible influence if:
+    1. `u'` has been activated before the Retweet occurred, or
+    2. `u'` is the poster of the original Tweet.
+
 ## Distributed Computation
 
 The social graph might quickly get too large to fit into a single computer's main memory. This problem can be
