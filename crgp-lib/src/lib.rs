@@ -26,16 +26,16 @@ extern crate tar;
 extern crate timely;
 extern crate timely_communication;
 
-pub use algorithm::SimplifyResult;
-pub use algorithm::UserID;
 pub use configuration::Algorithm;
 pub use configuration::Configuration;
 pub use error::Error;
 pub use error::Result;
+pub use execution::SimplifyResult;
+pub use execution::UserID;
 pub use statistics::Statistics;
 
-pub mod algorithm;
 pub mod configuration;
+pub mod execution;
 mod error;
 pub mod social_graph;
 mod statistics;

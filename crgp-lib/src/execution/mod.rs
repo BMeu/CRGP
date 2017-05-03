@@ -74,7 +74,7 @@ lazy_static! {
 }
 
 /// Execute the algorithm.
-pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
+pub fn run(mut configuration: Configuration) -> Result<Statistics> {
 
     let timely_configuration: TimelyConfiguration = configuration.get_timely_configuration()?;
     let result: WorkerGuards<Result<Statistics>> = timely_execute(timely_configuration, move |computation| -> Result<Statistics> {
