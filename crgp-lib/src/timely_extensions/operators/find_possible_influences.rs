@@ -48,7 +48,7 @@ impl<G: Scope> FindPossibleInfluences<G> for Stream<G, (UserID, Vec<UserID>)>
             move |friendships, retweets, output| {
                 // Input 1: Capture all friends for each user.
                 friendships.for_each(|_time, friendship_data| {
-                    for ref friendship in friendship_data.iter() {
+                    for friendship in friendship_data.iter() {
                         edges.entry(friendship.0)
                             .or_insert_with(HashSet::new)
                             .extend(friendship.1.iter().cloned());
@@ -57,7 +57,7 @@ impl<G: Scope> FindPossibleInfluences<G> for Stream<G, (UserID, Vec<UserID>)>
 
                 // Input 2: Process the retweets.
                 retweets.for_each(|time, retweet_data| {
-                    for ref retweet in retweet_data.iter() {
+                    for retweet in retweet_data.iter() {
                         // Skip all tweets that are not retweets.
                         let original_tweet: &Tweet = match retweet.retweeted_status {
                             Some(ref t) => t,
