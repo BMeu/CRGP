@@ -46,6 +46,8 @@ use timely_extensions::operators::Reconstruct;
 use timely_extensions::operators::Write;
 use twitter::Tweet;
 
+pub mod algorithms;
+
 /// An alias for user IDs to improve code legibility.
 ///
 /// If the stored value is negative, the ID belongs to a dummy user who was created to pad the social graph.

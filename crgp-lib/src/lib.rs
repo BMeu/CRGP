@@ -30,7 +30,6 @@ pub use configuration::Algorithm;
 pub use configuration::Configuration;
 pub use error::Error;
 pub use error::Result;
-pub use execution::SimplifyResult;
 pub use execution::UserID;
 pub use statistics::Statistics;
 
