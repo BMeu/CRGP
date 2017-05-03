@@ -7,6 +7,8 @@
 //! Collection of validator functions for the command-line arguments.
 
 /// Ensure `value` is parsable to `usize`.
+#[allow(unknown_lints)]
+#[allow(needless_pass_by_value)]
 pub fn usize(value: String) -> Result<(), String> {
     match value.parse::<usize>() {
         Ok(_) => Ok(()),
@@ -15,6 +17,8 @@ pub fn usize(value: String) -> Result<(), String> {
 }
 
 /// Ensure `value` is parsable to `usize` with a value greater than `0`.
+#[allow(unknown_lints)]
+#[allow(needless_pass_by_value)]
 pub fn positive_usize(value: String) -> Result<(), String> {
     match value.parse::<usize>() {
         Ok(value) if value > 0 => Ok(()),
