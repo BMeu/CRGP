@@ -33,6 +33,7 @@ use timely::dataflow::scopes::Scope;
 use timely_communication::initialize::Configuration as TimelyConfiguration;
 use timely_communication::initialize::WorkerGuards;
 
+use Algorithm;
 use Configuration;
 use Error;
 use Result;
@@ -49,21 +50,6 @@ use twitter::Tweet;
 ///
 /// If the stored value is negative, the ID belongs to a dummy user who was created to pad the social graph.
 pub type UserID = i64;
-
-/// Available algorithms for reconstruction.
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum Algorithm {
-    /// Activate user and produce possible influences on worker storing the user's friends, filter possible influences
-    /// on worker storing influencer's friends.
-    ///
-    /// `LEAF` = Local Edges, Activations, and Filtering
-    LEAF,
-
-    /// Activate retweeting users on all workers, produce influence edges on the worker storing the user's friends.
-    ///
-    /// `GALE` = Global Activations, Local Edges
-    GALE,
-}
 
 lazy_static! {
     /// A regular expression to validate directory names. The name must consist of exactly three digits.

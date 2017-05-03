@@ -8,10 +8,24 @@
 
 use timely_communication::initialize::Configuration as TimelyConfiguration;
 
-use Algorithm;
 use Error;
 use Result;
 use timely_extensions::operators::OutputTarget;
+
+/// Available algorithms for reconstruction.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum Algorithm {
+    /// Activate user and produce possible influences on worker storing the user's friends, filter possible influences
+    /// on worker storing influencer's friends.
+    ///
+    /// `LEAF` = Local Edges, Activations, and Filtering
+    LEAF,
+
+    /// Activate retweeting users on all workers, produce influence edges on the worker storing the user's friends.
+    ///
+    /// `GALE` = Global Activations, Local Edges
+    GALE,
+}
 
 /// Configuration for the `CRGP` algorithm.
 ///
