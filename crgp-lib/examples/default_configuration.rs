@@ -16,7 +16,6 @@ extern crate crgp_lib;
 use crgp_lib::Configuration;
 use crgp_lib::Result;
 use crgp_lib::Statistics;
-use crgp_lib::execution;
 
 /// Execute the program.
 fn main() {
@@ -26,7 +25,7 @@ fn main() {
     let configuration = Configuration::default(retweet_path, social_graph_path);
 
     // Execute the algorithm.
-    let result: Result<Statistics> = execution::run(configuration);
+    let result: Result<Statistics> = crgp_lib::run(configuration);
 
     // Print the results (or an error message).
     match result {

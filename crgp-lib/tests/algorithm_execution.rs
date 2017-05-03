@@ -22,7 +22,6 @@ use crgp_lib::Algorithm;
 use crgp_lib::Configuration;
 use crgp_lib::Result;
 use crgp_lib::Statistics;
-use crgp_lib::execution;
 
 #[cfg(unix)]
 lazy_static! {
@@ -42,7 +41,7 @@ fn algorithm_execution_leaf() {
     if cfg!(unix) {
         let _lock = STDOUT_MUTEX.lock().unwrap();
         let mut buffer = BufferRedirect::stdout().unwrap();
-        let result: Result<Statistics> = execution::run(configuration);
+        let result: Result<Statistics> = crgp_lib::run(configuration);
         let mut output = String::new();
         buffer.read_to_string(&mut output).unwrap();
         drop(buffer);
@@ -69,7 +68,7 @@ fn algorithm_execution_leaf() {
         assert_eq!(influences.len(), 7);
     }
         else {
-            let result: Result<Statistics> = execution::run(configuration);
+            let result: Result<Statistics> = crgp_lib::run(configuration);
             assert!(result.is_ok());
         }
 }
@@ -88,7 +87,7 @@ fn algorithm_execution_leaf_with_dummy_users() {
     if cfg!(unix) {
         let _lock = STDOUT_MUTEX.lock().unwrap();
         let mut buffer = BufferRedirect::stdout().unwrap();
-        let result: Result<Statistics> = execution::run(configuration);
+        let result: Result<Statistics> = crgp_lib::run(configuration);
         let mut output = String::new();
         buffer.read_to_string(&mut output).unwrap();
         drop(buffer);
@@ -115,7 +114,7 @@ fn algorithm_execution_leaf_with_dummy_users() {
         assert_eq!(influences.len(), 7);
     }
         else {
-            let result: Result<Statistics> = execution::run(configuration);
+            let result: Result<Statistics> = crgp_lib::run(configuration);
             assert!(result.is_ok());
         }
 }
@@ -132,7 +131,7 @@ fn algorithm_execution_gale() {
     if cfg!(unix) {
         let _lock = STDOUT_MUTEX.lock().unwrap();
         let mut buffer = BufferRedirect::stdout().unwrap();
-        let result: Result<Statistics> = execution::run(configuration);
+        let result: Result<Statistics> = crgp_lib::run(configuration);
         let mut output = String::new();
         buffer.read_to_string(&mut output).unwrap();
         drop(buffer);
@@ -159,7 +158,7 @@ fn algorithm_execution_gale() {
         assert_eq!(influences.len(), 7);
     }
     else {
-        let result: Result<Statistics> = execution::run(configuration);
+        let result: Result<Statistics> = crgp_lib::run(configuration);
         assert!(result.is_ok());
     }
 }
@@ -177,7 +176,7 @@ fn algorithm_execution_gale_with_dummy_users() {
     if cfg!(unix) {
         let _lock = STDOUT_MUTEX.lock().unwrap();
         let mut buffer = BufferRedirect::stdout().unwrap();
-        let result: Result<Statistics> = execution::run(configuration);
+        let result: Result<Statistics> = crgp_lib::run(configuration);
         let mut output = String::new();
         buffer.read_to_string(&mut output).unwrap();
         drop(buffer);
@@ -204,7 +203,7 @@ fn algorithm_execution_gale_with_dummy_users() {
         assert_eq!(influences.len(), 7);
     }
     else {
-        let result: Result<Statistics> = execution::run(configuration);
+        let result: Result<Statistics> = crgp_lib::run(configuration);
         assert!(result.is_ok());
     }
 }

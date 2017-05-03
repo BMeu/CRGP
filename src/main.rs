@@ -42,7 +42,6 @@ use clap::ArgMatches;
 use crgp_lib::Algorithm;
 use crgp_lib::Configuration;
 use crgp_lib::Error;
-use crgp_lib::execution;
 use crgp_lib::timely_extensions::operators::OutputTarget;
 use flexi_logger::with_thread;
 use flexi_logger::LogOptions;
@@ -241,7 +240,7 @@ fn main() {
         .workers(workers);
 
     // Execute the algorithm.
-    let results = execution::run(configuration);
+    let results = crgp_lib::run(configuration);
 
     // Write the statistics.
     match results {
