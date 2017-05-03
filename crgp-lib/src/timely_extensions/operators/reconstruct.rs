@@ -58,13 +58,13 @@ where G::Timestamp: Hash {
                         };
 
                         // Mark this user as active for this cascade.
-                        let ref mut cascade_activations: HashMap<UserID, u64> = *activations.entry(original_tweet.id)
+                        let cascade_activations: &mut HashMap<UserID, u64> = &mut (*activations.entry(original_tweet.id)
                             .or_insert_with(|| {
                                 // Create a new map for the activations of this cascade and insert the original tweeter.
                                 let mut cascade_activations = HashMap::new();
                                 let _ = cascade_activations.insert(original_tweet.user.id, original_tweet.created_at);
                                 cascade_activations
-                            });
+                            }));
                         let _ = cascade_activations.entry(retweet.user.id)
                             .or_insert(retweet.created_at);
 
