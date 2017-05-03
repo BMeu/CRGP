@@ -36,11 +36,11 @@ fn main() {
             println!(" #Friendships: {}", results.number_of_friendships);
             println!(" #Retweets: {}", results.number_of_retweets);
             println!();
-            println!(" Time to set up the computation: {:.2}ns", results.time_to_setup);
-            println!(" Time to load and process the social network: {:.2}ns", results.time_to_process_social_graph);
-            println!(" Time to load the retweets: {:.2}ns", results.time_to_load_retweets);
-            println!(" Time to process the retweets: {:.2}ns", results.time_to_process_retweets);
-            println!(" Total time: {:.2}ns", results.total_time);
+            println!(" Time to set up the computation: {}ns", results.time_to_setup);
+            println!(" Time to load and process the social network: {}ns", results.time_to_process_social_graph);
+            println!(" Time to load the retweets: {}ns", results.time_to_load_retweets);
+            println!(" Time to process the retweets: {}ns", results.time_to_process_retweets);
+            println!(" Total time: {}ns", results.total_time);
             println!();
             println!(" Retweet Processing Rate: {} RT/s", results.retweet_processing_rate);
         },
