@@ -88,7 +88,6 @@ lazy_static! {
 }
 
 /// Execute the algorithm.
-#[allow(unused_qualifications)]
 pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
 
     let timely_configuration: TimelyConfiguration = configuration.get_timely_configuration()?;
@@ -513,40 +512,51 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
         Ok(statistics)
     })?;
 
-    // The result returned from the computation is several layers of nested Result types. Flatten them to the expected
-    // return type. Return the statistics from the first worker, but only if no worker returned an error.
-    let worker_results: Vec<(usize, Result<Statistics>)> = result.join()
-        .into_iter()
-        .map(|worker_result: StdResult<Result<Statistics>, String>| {  // Flatten the nested result types.
-            match worker_result {
-                Ok(result) => {
-                    match result {
-                        Ok(statistics) => Ok(statistics),
-                        Err(error) => Err(error)
-                    }
-                },
-                Err(message) => Err(Error::from(message))
-            }
-        })
-        .enumerate()
-        .rev()
-        .collect();
+    result.simplify()
+}
 
-    // The worker results have been enumerated with their worker's index, and this list has been reversed, i.e. the
-    // first worker is now at the end. For all workers but the first one, immediately return their failure as this
-    // function's return value if they failed. If none of these workers failed return the result of the first worker.
-    for (index, worker_result) in worker_results {
-        if index == 0 {
-            return worker_result
-        }
-        else {
-            match worker_result {
-                Ok(_) => continue,
-                Err(_) => return worker_result
+/// The result returned from the computation is several layers of nested Result types.
+pub trait SimplifyResult {
+    /// The `result` returned from the computation is several layers of nested Result types. Flatten them to the
+    /// expected return type. Return the statistics from the first worker, but only if no worker returned an error.
+    fn simplify(self) -> Result<Statistics>;
+}
+
+impl SimplifyResult for WorkerGuards<Result<Statistics>> {
+    fn simplify(self) -> Result<Statistics> {
+        let worker_results: Vec<(usize, Result<Statistics>)> = self.join()
+            .into_iter()
+            .map(|worker_result: StdResult<Result<Statistics>, String>| {
+                // Flatten the nested result types.
+                match worker_result {
+                    Ok(result) => {
+                        match result {
+                            Ok(statistics) => Ok(statistics),
+                            Err(error) => Err(error)
+                        }
+                    },
+                    Err(message) => Err(Error::from(message))
+                }
+            })
+            .enumerate()
+            .rev()
+            .collect();
+
+        // The worker results have been enumerated with their worker's index, and this list has been reversed, i.e. the
+        // first worker is now at the end. For all workers but the first one, immediately return their failure as this
+        // function's return value if they failed. If none of these workers failed return the result of the first worker.
+        for (index, worker_result) in worker_results {
+            if index == 0 {
+                return worker_result
+            } else {
+                match worker_result {
+                    Ok(_) => continue,
+                    Err(_) => return worker_result
+                }
             }
         }
+
+        // This could only happen if there were no workers at all.
+        Err(Error::from("No workers".to_string()))
     }
-
-    // This could only happen if there were no workers at all.
-    Err(Error::from("No workers".to_string()))
 }
