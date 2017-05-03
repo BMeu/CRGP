@@ -11,8 +11,3 @@ pub use execution::run::run;
 pub mod algorithms;
 mod run;
 mod simplify_result;
-
-/// An alias for user IDs to improve code legibility.
-///
-/// If the stored value is negative, the ID belongs to a dummy user who was created to pad the social graph.
-pub type UserID = i64;

@@ -30,8 +30,8 @@ pub use configuration::Algorithm;
 pub use configuration::Configuration;
 pub use error::Error;
 pub use error::Result;
-pub use execution::UserID;
 pub use statistics::Statistics;
+pub use twitter::UserID;
 
 pub mod configuration;
 pub mod execution;

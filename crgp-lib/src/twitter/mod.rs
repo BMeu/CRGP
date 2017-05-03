@@ -12,3 +12,8 @@ pub use self::user::User;
 pub mod get;
 pub mod tweet;
 pub mod user;
+
+/// An alias for user IDs to improve code legibility.
+///
+/// If the stored value is negative, the ID belongs to a dummy user who was created to pad the social graph.
+pub type UserID = i64;
