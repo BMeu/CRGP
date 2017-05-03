@@ -10,10 +10,10 @@ use abomonation::Abomonation;
 
 use UserID;
 
-/// A directed edge between nodes of type ``T`` representing influence in a Retweet cascade.
+/// A directed edge between nodes of type `T` representing influence in a Retweet cascade.
 ///
-/// The influence flows from the ``influencer`` to the ``influencee`` and is valid only for the cascade given by
-/// ``cascade_id``. The influence occurs at time ``timestamp``.
+/// The influence flows from the `influencer` to the `influencee` and is valid only for the cascade given by
+/// `cascade_id`. The influence occurs at time `timestamp`.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct InfluenceEdge<T>
     where T: Abomonation {
@@ -42,8 +42,8 @@ pub struct InfluenceEdge<T>
 
 impl<T> InfluenceEdge<T>
     where T: Abomonation {
-    /// Construct a new influence edge from ``influencer`` to ``influencee`` for the cascade ``cascade_id``, where the
-    /// ``influencee`` was influenced at time ``timestamp``.
+    /// Construct a new influence edge from `influencer` to `influencee` for the cascade `cascade_id`, where the
+    /// `influencee` was influenced at time `timestamp`.
     pub fn new(influencer: T, influencee: T, timestamp: u64, retweet_id: u64, cascade_id: u64, original_user: T)
         -> InfluenceEdge<T> {
         InfluenceEdge {

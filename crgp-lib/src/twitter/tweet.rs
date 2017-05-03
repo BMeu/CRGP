@@ -31,7 +31,7 @@ pub struct Tweet {
 
     /// Representation of the original Tweet that was retweeted.
     ///
-    /// Retweets can be distinguished from typical tweets by a non-``None`` value of this field.
+    /// Retweets can be distinguished from typical tweets by a non-`None` value of this field.
     pub retweeted_status: Option<Box<Tweet>>,
 
     /// The actual UTF-8 text of the status update.

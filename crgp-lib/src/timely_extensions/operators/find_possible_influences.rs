@@ -26,7 +26,7 @@ pub trait FindPossibleInfluences<G: Scope> {
     /// Find all possible influence edges within a social graph, distinguishing between cascades.
     ///
     /// For a social graph, determine all possible influences for a retweet within that specific
-    /// retweet cascade. The ``Stream`` of retweets may contain multiple retweet cascades.
+    /// retweet cascade. The `Stream` of retweets may contain multiple retweet cascades.
     fn find_possible_influences(&self, retweets: Stream<G, Tweet>,
                                 activated_users: Rc<RefCell<HashMap<u64, HashMap<UserID, u64>>>>)
                                 -> Stream<G, InfluenceEdge<UserID>>;

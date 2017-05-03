@@ -4,10 +4,10 @@
 // MIT license <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your option. This file may not be copied,
 // modified, or distributed except according to those terms.
 
-//! Extension traits for ``Stream`` implementing various custom ``timely`` operators.
+//! Extension traits for `Stream` implementing various custom `timely` operators.
 //!
-//! A collection of functions taking typed ``Stream`` objects from ``timely`` as input and producing new ``Stream``
-//! objects as output. These custom operators are specialized for the use in ``CRGP``.
+//! A collection of functions taking typed `Stream` objects from `timely` as input and producing new `Stream`
+//! objects as output. These custom operators are specialized for the use in `CRGP`.
 
 pub use self::find_possible_influences::FindPossibleInfluences;
 pub use self::reconstruct::Reconstruct;

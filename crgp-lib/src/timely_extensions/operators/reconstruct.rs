@@ -25,7 +25,7 @@ pub trait Reconstruct<G: Scope> {
     /// Reconstruct retweet cascades, that is, find all influences edges within a social graph, distinguishing between
     /// cascades.
     ///
-    /// For a social graph, determine all influences for a retweet within that specific retweet cascade. The ``Stream``
+    /// For a social graph, determine all influences for a retweet within that specific retweet cascade. The `Stream`
     /// of retweets may contain multiple retweet cascades. Each retweet in the retweet stream is expected to be
     /// broadcast to all workers before calling this operator.
     fn reconstruct(&self, graph: Stream<G, (UserID, Vec<UserID>)>) -> Stream<G, InfluenceEdge<UserID>>;

@@ -4,7 +4,7 @@
 // MIT license <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your option. This file may not be copied,
 // modified, or distributed except according to those terms.
 
-//! A collection of extension traits for ``timely``.
+//! A collection of extension traits for `timely`.
 //!
 //! # See Also
 //! http://www.frankmcsherry.org/timely-dataflow/timely/index.html
