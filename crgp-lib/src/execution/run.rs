@@ -17,7 +17,6 @@ use std::path::PathBuf;
 use std::rc::Rc;
 
 use fine_grained::Stopwatch;
-use regex::Regex;
 use tar::Archive;
 use timely::dataflow::operators::Broadcast;
 use timely::dataflow::operators::Filter;
@@ -37,34 +36,13 @@ use Statistics;
 use UserID;
 use execution::simplify_result::SimplifyResult;
 use social_graph::InfluenceEdge;
+use social_graph::source::tar;
 use timely_extensions::Sync;
 use timely_extensions::operators::FindPossibleInfluences;
 use timely_extensions::operators::Reconstruct;
 use timely_extensions::operators::Write;
 use twitter;
 use twitter::Tweet;
-
-lazy_static! {
-    /// A regular expression to validate directory names. The name must consist of exactly three digits.
-    // The initialization of the Regex will fail if the expression is invalid. Since the expression is known to be
-    // correct, it is safe to simply unwrap the result.
-    #[derive(Debug)]
-    pub static ref DIRECTORY_NAME_TEMPLATE: Regex = Regex::new(r"^\d{3}$").unwrap();
-
-    /// A regular expression to validate TAR file names. The name must consist of exactly two digits followed by the
-    /// extension `.tar`.
-    // The initialization of the Regex will fail if the expression is invalid. Since the expression is known to be
-    // correct, it is safe to simply unwrap the result.
-    #[derive(Debug)]
-    pub static ref TAR_NAME_TEMPLATE: Regex = Regex::new(r"^\d{2}\.tar$").unwrap();
-
-    /// A regular expression to validate file names. The name must be of the form `friends[ID].csv` where `[ID]`
-    /// consists of one or more digits.
-    // The initialization of the Regex will fail if the expression is invalid. Since the expression is known to be
-    // correct, it is safe to simply unwrap the result.
-    #[derive(Debug)]
-    pub static ref FILENAME_TEMPLATE: Regex = Regex::new(r"^\d{3}/\d{3}/friends\d+\.csv$").unwrap();
-}
 
 /// Execute the algorithm.
 pub fn run(mut configuration: Configuration) -> Result<Statistics> {
@@ -196,7 +174,7 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
                 };
 
                 // Validate the name.
-                if !DIRECTORY_NAME_TEMPLATE.is_match(directory) {
+                if !tar::DIRECTORY_NAME_TEMPLATE.is_match(directory) {
                     trace!("Invalid directory name: {name:?}", name = path);
                     continue;
                 }
@@ -226,7 +204,7 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
                     };
 
                     // Validate the name.
-                    if !TAR_NAME_TEMPLATE.is_match(filename) {
+                    if !tar::TAR_NAME_TEMPLATE.is_match(filename) {
                         trace!("Invalid filename: {name:?}", name = path);
                         continue;
                     }
@@ -267,7 +245,7 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
                         // Validate the filename.
                         match path.to_str() {
                             Some(path) => {
-                                if !FILENAME_TEMPLATE.is_match(path) {
+                                if !tar::FILENAME_TEMPLATE.is_match(path) {
                                     trace!("Invalid filename: {name:?}", name = path);
                                     continue;
                                 }
