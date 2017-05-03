@@ -4,6 +4,9 @@
 // MIT license <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your option. This file may not be copied,
 // modified, or distributed except according to those terms.
 
+// TODO: Delete the next line.
+#![allow(missing_docs, unused_imports)]
+
 //! The actual algorithms performing the reconstruction.
 
 use timely::dataflow::operators::input::Handle as InputHandle;
