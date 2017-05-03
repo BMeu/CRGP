@@ -483,14 +483,14 @@ pub fn execute(mut configuration: Configuration) -> Result<Statistics> {
 
 /// Load the retweets from the given path.
 fn load_retweets(retweet_dataset: &PathBuf) -> Result<Vec<Tweet>> {
+    info!("Loading Retweets");
+
     let retweet_dataset_c: PathBuf = retweet_dataset.clone();
 
     if !retweet_dataset.is_file() {
         error!("Retweet data set is a not a file");
         return Err(Error::from(IOError::new(IOErrorKind::InvalidInput, "Retweet data set is not a file")));
     }
-
-    info!("Loading Retweets");
     let retweet_file = match File::open(retweet_dataset) {
         Ok(file) => file,
         Err(error) => {
