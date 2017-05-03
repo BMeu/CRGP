@@ -11,8 +11,6 @@ use std::collections::HashMap;
 use std::fs::read_dir;
 use std::fs::File;
 use std::io::BufReader;
-use std::io::Error as IOError;
-use std::io::ErrorKind as IOErrorKind;
 use std::io::Result as IOResult;
 use std::io::prelude::*;
 use std::path::PathBuf;
@@ -21,7 +19,6 @@ use std::result::Result as StdResult;
 
 use fine_grained::Stopwatch;
 use regex::Regex;
-use serde_json;
 use tar::Archive;
 use timely::dataflow::operators::Broadcast;
 use timely::dataflow::operators::Filter;
@@ -44,6 +41,7 @@ use timely_extensions::operators::FindPossibleInfluences;
 use timely_extensions::operators::OutputTarget;
 use timely_extensions::operators::Reconstruct;
 use timely_extensions::operators::Write;
+use twitter;
 use twitter::Tweet;
 
 pub mod algorithms;
@@ -418,7 +416,7 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
         // Load the retweets (on the first worker).
         let retweets: Vec<Tweet> = if index == 0 {
             let path = PathBuf::from(&configuration.retweets);
-            load_retweets(&path)?
+            twitter::get::from_file(&path)?
         } else {
             Vec::new()
         };
@@ -467,49 +465,6 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
     })?;
 
     result.simplify()
-}
-
-/// Load the retweets from the given path.
-fn load_retweets(retweet_dataset: &PathBuf) -> Result<Vec<Tweet>> {
-    info!("Loading Retweets");
-
-    let retweet_dataset_c: PathBuf = retweet_dataset.clone();
-
-    if !retweet_dataset.is_file() {
-        error!("Retweet data set is a not a file");
-        return Err(Error::from(IOError::new(IOErrorKind::InvalidInput, "Retweet data set is not a file")));
-    }
-    let retweet_file = match File::open(retweet_dataset) {
-        Ok(file) => file,
-        Err(error) => {
-            error!("Could not open Retweet data set: {error}", error = error);
-            return Err(Error::from(error));
-        }
-    };
-    let retweet_file = BufReader::new(retweet_file);
-
-    // Parse the lines while discarding those that are invalid.
-    let retweets: Vec<Tweet> = retweet_file.lines()
-        .filter_map(|line: IOResult<String>| -> Option<Tweet> {
-            match line {
-                Ok(line) => {
-                    match serde_json::from_str::<Tweet>(&line) {
-                        Ok(tweet) => Some(tweet),
-                        Err(message) => {
-                            warn!("Failed to parse Tweet: {error}", error = message);
-                            None
-                        }
-                    }
-                },
-                Err(message) => {
-                    warn!("Invalid line in file {file:?}: {error}",
-                    file = retweet_dataset_c, error = message);
-                    None
-                }
-            }
-        })
-        .collect();
-    Ok(retweets)
 }
 
 /// The result returned from the computation is several layers of nested Result types.
