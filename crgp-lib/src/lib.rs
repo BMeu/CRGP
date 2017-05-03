@@ -33,12 +33,12 @@ pub use error::Error;
 pub use error::Result;
 pub use execution::run;
 pub use statistics::Statistics;
-pub use twitter::UserID;
+use twitter::UserID;
 
 pub mod configuration;
-pub mod execution;
+mod execution;
 mod error;
-pub mod social_graph;
+mod social_graph;
 mod statistics;
-pub mod timely_extensions;
-pub mod twitter;
+mod timely_extensions;
+mod twitter;

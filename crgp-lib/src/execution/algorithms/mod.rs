@@ -5,7 +5,7 @@
 // modified, or distributed except according to those terms.
 
 // TODO: Delete the next line.
-#![allow(missing_docs, unused_imports)]
+#![allow(dead_code, missing_docs, unused_imports)]
 
 //! The actual algorithms performing the reconstruction.
 
