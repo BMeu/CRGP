@@ -31,6 +31,7 @@ use timely_communication::initialize::WorkerGuards;
 
 use Algorithm;
 use Configuration;
+use OutputTarget;
 use Result;
 use Statistics;
 use UserID;
@@ -38,7 +39,6 @@ use execution::simplify_result::SimplifyResult;
 use social_graph::InfluenceEdge;
 use timely_extensions::Sync;
 use timely_extensions::operators::FindPossibleInfluences;
-use timely_extensions::operators::OutputTarget;
 use timely_extensions::operators::Reconstruct;
 use timely_extensions::operators::Write;
 use twitter;

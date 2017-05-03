@@ -28,6 +28,7 @@ extern crate timely_communication;
 
 pub use configuration::Algorithm;
 pub use configuration::Configuration;
+pub use configuration::OutputTarget;
 pub use error::Error;
 pub use error::Result;
 pub use execution::run;

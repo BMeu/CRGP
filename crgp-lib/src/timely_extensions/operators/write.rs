@@ -19,21 +19,9 @@ use timely::dataflow::Scope;
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::operators::unary::Unary;
 
+use OutputTarget;
 use UserID;
 use social_graph::InfluenceEdge;
-
-/// Specify where the result will be written to.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum OutputTarget {
-    /// Write the result to a file in the specified directory.
-    Directory(PathBuf),
-
-    /// Write the result to `STDOUT`.
-    StdOut,
-
-    /// Do not write the result at all.
-    None,
-}
 
 /// Write a stream to a file, passing on all seen messages.
 pub trait Write<G: Scope> {

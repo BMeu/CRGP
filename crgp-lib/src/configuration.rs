@@ -6,11 +6,12 @@
 
 //! Algorithm configuration.
 
+use std::path::PathBuf;
+
 use timely_communication::initialize::Configuration as TimelyConfiguration;
 
 use Error;
 use Result;
-use timely_extensions::operators::OutputTarget;
 
 /// Available algorithms for reconstruction.
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -27,6 +28,19 @@ pub enum Algorithm {
     GALE,
 }
 
+/// Specify where the result will be written to.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum OutputTarget {
+    /// Write the result to a file in the specified directory.
+    Directory(PathBuf),
+
+    /// Write the result to `STDOUT`.
+    StdOut,
+
+    /// Do not write the result at all.
+    None,
+}
+
 /// Configuration for the `CRGP` algorithm.
 ///
 /// # Example
@@ -38,7 +52,7 @@ pub enum Algorithm {
 ///
 /// use crgp_lib::Algorithm;
 /// use crgp_lib::Configuration;
-/// use crgp_lib::timely_extensions::operators::OutputTarget;
+/// use crgp_lib::OutputTarget;
 ///
 /// let retweets = String::from("path/to/retweets.json");
 /// let social_graph = String::from("path/to/social/graph");
@@ -253,10 +267,10 @@ impl Configuration {
 #[cfg(test)]
 mod tests {
     use Algorithm;
+    use OutputTarget;
     use std::error::Error;
     use std::path::PathBuf;
     use timely_communication::initialize::Configuration as TimelyConfiguration;
-    use timely_extensions::operators::OutputTarget;
 
     use super::*;
 
