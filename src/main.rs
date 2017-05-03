@@ -262,11 +262,14 @@ fn main() {
                         // Create the file and save the results.
                         if let Ok(file) = File::create(path) {
                             let mut writer: BufWriter<File> = BufWriter::new(file);
-                            if let Ok(_) = write!(writer, "{}", results) {
-                                if let Ok(_) = writer.flush() {
-                                    println!("Statistics saved to {path:?}", path = path_c);
-                                    exit::succeed();
-                                }
+
+                            // Write and flush the result.
+                            let write_result = write!(writer, "{toml}", toml = results);
+                            let flush_result = writer.flush();
+
+                            if write_result.is_ok() && flush_result.is_ok() {
+                                println!("Statistics saved to {path:?}", path = path_c);
+                                exit::succeed();
                             }
                         }
                     }
