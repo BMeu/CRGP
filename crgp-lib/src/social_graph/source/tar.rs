@@ -285,3 +285,124 @@ fn parse_friend_file<R: Read>(reader: BufReader<R>, file_path: &PathBuf, user: U
 
     (expected_number_of_friends, found_friendships)
 }
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+    use UserID;
+
+    #[test]
+    fn create_dummy_friends() {
+        let dummy_friends: Vec<UserID> = super::create_dummy_friends(0);
+        assert_eq!(dummy_friends.len(), 0);
+
+        let dummy_friends: Vec<UserID> = super::create_dummy_friends(10);
+        assert_eq!(dummy_friends.len(), 10);
+        assert_eq!(dummy_friends[0], -1);
+        assert_eq!(dummy_friends[1], -2);
+        assert_eq!(dummy_friends[2], -3);
+        assert_eq!(dummy_friends[3], -4);
+        assert_eq!(dummy_friends[4], -5);
+        assert_eq!(dummy_friends[5], -6);
+        assert_eq!(dummy_friends[6], -7);
+        assert_eq!(dummy_friends[7], -8);
+        assert_eq!(dummy_friends[8], -9);
+        assert_eq!(dummy_friends[9], -10);
+    }
+
+    #[test]
+    fn get_user_id() {
+        let valid = PathBuf::from(String::from("000/111/friends123.csv"));
+        assert_eq!(super::get_user_id(&valid), Some(123));
+
+        let valid = PathBuf::from(String::from("friends123.csv"));
+        assert_eq!(super::get_user_id(&valid), Some(123));
+
+        let invalid = PathBuf::from(String::from("000/111/friendsa.csv"));
+        assert_eq!(super::get_user_id(&invalid), None);
+
+        let invalid = PathBuf::from(String::from("friendsa.csv"));
+        assert_eq!(super::get_user_id(&invalid), None);
+
+        let invalid = PathBuf::from(String::from("000/111/friends.csv"));
+        assert_eq!(super::get_user_id(&invalid), None);
+
+        let invalid = PathBuf::from(String::from("friends.csv"));
+        assert_eq!(super::get_user_id(&invalid), None);
+
+        let invalid = PathBuf::from(String::from("000/111/friends"));
+        assert_eq!(super::get_user_id(&invalid), None);
+
+        let invalid = PathBuf::from(String::from("friends"));
+        assert_eq!(super::get_user_id(&invalid), None);
+    }
+
+    #[test]
+    fn is_valid_directory() {
+        let valid = PathBuf::from(String::from("../data/social_graph/000"));
+        assert!(super::is_valid_directory(&valid));
+
+        let valid = PathBuf::from(String::from("../data/social_graph/001"));
+        assert!(super::is_valid_directory(&valid));
+
+        let invalid = PathBuf::from(String::from("../data/social_graph"));
+        assert!(!super::is_valid_directory(&invalid));
+
+        let invalid = PathBuf::from(String::from("../data/social_graph/000/00.tar"));
+        assert!(!super::is_valid_directory(&invalid));
+    }
+
+    #[test]
+    fn is_valid_friend_file() {
+        let valid = PathBuf::from(String::from("000/111/friends123.csv"));
+        assert!(super::is_valid_friend_file(&valid));
+
+        let invalid = PathBuf::from(String::from("000"));
+        assert!(!super::is_valid_friend_file(&invalid));
+
+        let invalid = PathBuf::from(String::from("000/111"));
+        assert!(!super::is_valid_friend_file(&invalid));
+
+        let invalid = PathBuf::from(String::from("00/111/friends123.csv"));
+        assert!(!super::is_valid_friend_file(&invalid));
+
+        let invalid = PathBuf::from(String::from("a/111/friends123.csv"));
+        assert!(!super::is_valid_friend_file(&invalid));
+
+        let invalid = PathBuf::from(String::from("000/11/friends123.csv"));
+        assert!(!super::is_valid_friend_file(&invalid));
+
+        let invalid = PathBuf::from(String::from("000/a/friends123.csv"));
+        assert!(!super::is_valid_friend_file(&invalid));
+
+        let invalid = PathBuf::from(String::from("000/111/friend123.csv"));
+        assert!(!super::is_valid_friend_file(&invalid));
+
+        let invalid = PathBuf::from(String::from("000/111/friends.csv"));
+        assert!(!super::is_valid_friend_file(&invalid));
+
+        let invalid = PathBuf::from(String::from("000/111/friendsa.csv"));
+        assert!(!super::is_valid_friend_file(&invalid));
+
+        let invalid = PathBuf::from(String::from("000/111/friends123"));
+        assert!(!super::is_valid_friend_file(&invalid));
+    }
+
+    #[test]
+    fn is_valid_tar_archive() {
+        let valid = PathBuf::from(String::from("../data/social_graph/000/00.tar"));
+        assert!(super::is_valid_tar_archive(&valid));
+
+        let valid = PathBuf::from(String::from("../data/social_graph/001/00.tar"));
+        assert!(super::is_valid_tar_archive(&valid));
+
+        let valid = PathBuf::from(String::from("../data/social_graph/001/01.tar"));
+        assert!(super::is_valid_tar_archive(&valid));
+
+        let invalid = PathBuf::from(String::from("../data/social_graph/001/invalid.tar"));
+        assert!(!super::is_valid_tar_archive(&invalid));
+
+        let invalid = PathBuf::from(String::from("../data/social_graph/000"));
+        assert!(!super::is_valid_tar_archive(&invalid));
+    }
+}
