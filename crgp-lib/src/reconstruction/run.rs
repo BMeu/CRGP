@@ -6,17 +6,9 @@
 
 //! Run the reconstruction.
 
-use std::cell::RefCell;
-use std::collections::HashMap;
 use std::path::PathBuf;
-use std::rc::Rc;
 
 use fine_grained::Stopwatch;
-use timely::dataflow::operators::Broadcast;
-use timely::dataflow::operators::Filter;
-use timely::dataflow::operators::Input;
-use timely::dataflow::operators::Probe;
-use timely::dataflow::operators::exchange::Exchange;
 use timely::execute::execute as timely_execute;
 use timely::dataflow::scopes::Scope;
 use timely_communication::initialize::Configuration as TimelyConfiguration;
@@ -27,14 +19,11 @@ use Configuration;
 use OutputTarget;
 use Result;
 use Statistics;
-use UserID;
+use reconstruction::algorithms::gale;
+use reconstruction::algorithms::leaf;
 use reconstruction::simplify_result::SimplifyResult;
-use social_graph::InfluenceEdge;
 use social_graph::source::tar;
 use timely_extensions::Sync;
-use timely_extensions::operators::FindPossibleInfluences;
-use timely_extensions::operators::Reconstruct;
-use timely_extensions::operators::Write;
 use twitter;
 use twitter::Tweet;
 
@@ -61,53 +50,8 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
         // Reconstruct the cascade.
         let (mut graph_input, mut retweet_input, probe) = computation.scoped::<u64, _, _>(move |scope| {
             match algorithm {
-                Algorithm::LEAF => {
-                    // Create the inputs.
-                    let (graph_input, graph_stream) = scope.new_input();
-                    let (retweet_input, retweet_stream) = scope.new_input();
-
-                    // For each cascade, given by its ID, a set of activated users, given by their ID, i.e.
-                    // those users who have retweeted within this cascade before, per worker. Since this map
-                    // is required within two closures, dynamic borrow checks are required.
-                    let activations_influences: Rc<RefCell<HashMap<u64, HashMap<UserID, u64>>>> =
-                        Rc::new(RefCell::new(HashMap::new()));
-                    let activations_possible_influences = activations_influences.clone();
-
-                    let probe = graph_stream
-                        .find_possible_influences(retweet_stream, activations_possible_influences)
-                        .exchange(|influence: &InfluenceEdge<UserID>| influence.influencer as u64)
-                        .filter(move |influence: &InfluenceEdge<UserID>| {
-                            let is_influencer_activated: bool = match activations_influences.borrow()
-                                .get(&influence.cascade_id)
-                                {
-                                    Some(users) => match users.get(&influence.influencer) {
-                                        Some(activation_timestamp) => &influence.timestamp > activation_timestamp,
-                                        None => false
-                                    },
-                                    None => false
-                                };
-                            let is_influencer_original_user: bool = influence.influencer == influence.original_user;
-
-                            is_influencer_activated || is_influencer_original_user
-                        })
-                        .write(output_target)
-                        .probe().0;
-
-                    (graph_input, retweet_input, probe)
-                },
-                Algorithm::GALE => {
-                    // Create the inputs.
-                    let (graph_input, graph_stream) = scope.new_input();
-                    let (retweet_input, retweet_stream) = scope.new_input();
-
-                    let probe = retweet_stream
-                        .broadcast()
-                        .reconstruct(graph_stream)
-                        .write(output_target)
-                        .probe().0;
-
-                    (graph_input, retweet_input, probe)
-                }
+                Algorithm::GALE => gale::computation(scope, output_target),
+                Algorithm::LEAF => leaf::computation(scope, output_target)
             }
         });
         let time_to_setup: u64 = stopwatch.lap();

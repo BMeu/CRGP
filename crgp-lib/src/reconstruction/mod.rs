@@ -8,6 +8,6 @@
 
 pub use self::run::run;
 
-pub mod algorithms;
+mod algorithms;
 mod run;
 mod simplify_result;
