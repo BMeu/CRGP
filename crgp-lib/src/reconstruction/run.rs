@@ -54,21 +54,14 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
          * DATAFLOW GRAPH *
          ******************/
 
-        // Clone the variable so we can use it in the next closure.
+        // Clone parts of the configuration so we can use them in the next closure.
+        let algorithm = configuration.algorithm.clone();
         let output_target: OutputTarget = configuration.output_target.clone();
 
         // Reconstruct the cascade.
-        let (mut graph_input, mut retweet_input, probe) = match configuration.algorithm {
-            Algorithm::LEAF => {
-                // Algorithm:
-                // 1. Send all friendship edges (u1 -> u2, u1 follows u2) to respective workers (based on u1).
-                // 2. Send a retweet made by u* to the worker storing u*'s friendships.
-                // 3. On this worker: mark u* and the original user u as active for this cascade.
-                // 4. On this worker: for all friends of u*, create (possible) influence edges (PIE) for this
-                //    cascade, from the friend u' to u*, with timestamp of u*'s retweet.
-                // 5. Send each PIE to the worker storing u'.
-                // 6. On this worker: filter all PIEs, output only those where u' has been activated before.
-                computation.scoped::<u64, _, _>(move |scope| {
+        let (mut graph_input, mut retweet_input, probe) = computation.scoped::<u64, _, _>(move |scope| {
+            match algorithm {
+                Algorithm::LEAF => {
                     // Create the inputs.
                     let (graph_input, graph_stream) = scope.new_input();
                     let (retweet_input, retweet_stream) = scope.new_input();
@@ -101,21 +94,8 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
                         .probe().0;
 
                     (graph_input, retweet_input, probe)
-                })
-            },
-            Algorithm::GALE => {
-                // Algorithm:
-                // 1. Send all friendship edges (u1 -> u2, u1 follows u2) to respective workers (based on u1).
-                // 2. Broadcast the current retweet r* to all workers.
-                // 3. Each worker marks the user u* of r* as activated for the retweet's cascade.
-                // 4. The worker storing u*'s friends produces the influence edges:
-                //    a. If u* has more friends than there are activated users for this cascade, iterate over the
-                //       cascade's activations. Otherwise, iterate over u*'s friends.
-                //    b. For the current user u in the iteration, produce an influence edge if:
-                //       i.   For activation iteration: u is a friend of u*, and
-                //       ii.  (The retweet occurred after the activation of u, or
-                //       iii. u is the poster of the original tweet).
-                computation.scoped::<u64, _, _>(move |scope| {
+                },
+                Algorithm::GALE => {
                     // Create the inputs.
                     let (graph_input, graph_stream) = scope.new_input();
                     let (retweet_input, retweet_stream) = scope.new_input();
@@ -127,9 +107,9 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
                         .probe().0;
 
                     (graph_input, retweet_input, probe)
-                })
+                }
             }
-        };
+        });
         let time_to_setup: u64 = stopwatch.lap();
 
 
