@@ -44,7 +44,7 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
          ******************/
 
         // Clone parts of the configuration so we can use them in the next closure.
-        let algorithm = configuration.algorithm.clone();
+        let algorithm = configuration.algorithm;
         let output_target: OutputTarget = configuration.output_target.clone();
 
         // Reconstruct the cascade.
