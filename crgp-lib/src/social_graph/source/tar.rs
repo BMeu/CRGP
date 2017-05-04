@@ -118,8 +118,7 @@ pub fn load(path: &PathBuf,
             let archive_file = match File::open(path) {
                 Ok(file) => file,
                 Err(message) => {
-                    error!("Could not open archive {archive:?}: {error}",
-                    archive = path_c, error = message);
+                    error!("Could not open archive {archive:?}: {error}", archive = path_c, error = message);
                     continue;
                 }
             };
@@ -127,8 +126,8 @@ pub fn load(path: &PathBuf,
             let archive_entries = match archive.entries() {
                 Ok(entries) => entries,
                 Err(message) => {
-                    error!("Could not read contents of archive {archive:?}: {error}",
-                    archive = path_c, error = message);
+                    error!("Could not read contents of archive {archive:?}: {error}", archive = path_c,
+                           error = message);
                     continue;
                 }
             };
@@ -137,8 +136,8 @@ pub fn load(path: &PathBuf,
                 let file = match file {
                     Ok(file) => file,
                     Err(message) => {
-                        error!("Could not read archived file in archive {archive:?}: {error}",
-                        archive = path_c, error = message);
+                        error!("Could not read archived file in archive {archive:?}: {error}", archive = path_c,
+                               error = message);
                         continue;
                     }
                 };
@@ -168,8 +167,8 @@ pub fn load(path: &PathBuf,
                                 match stem[7..].parse::<UserID>() {
                                     Ok(id) => id,
                                     Err(message) => {
-                                        warn!("Could not parse user ID '{id}': {error}",
-                                        id = &stem[7..], error = message);
+                                        warn!("Could not parse user ID '{id}': {error}", id = &stem[7..],
+                                              error = message);
                                         continue;
                                     }
                                 }
@@ -217,8 +216,8 @@ pub fn load(path: &PathBuf,
                                     }
                                 }
 
-                                warn!("Could not parse friend ID '{friend}' of user {user}: {error}",
-                                friend = line, user = user, error = message);
+                                warn!("Could not parse friend ID '{friend}' of user {user}: {error}", friend = line,
+                                      user = user, error = message);
                                 None
                             }
                         }
@@ -227,11 +226,11 @@ pub fn load(path: &PathBuf,
 
                 let given_number_of_friends: u64 = friendships.len() as u64;
                 trace!("User {user}: {given} of {actual} friends found", user = user,
-                given = given_number_of_friends, actual = actual_number_of_friends);
+                       given = given_number_of_friends, actual = actual_number_of_friends);
 
                 if given_number_of_friends > actual_number_of_friends {
                     warn!("User {user} has more friends ({given}) than claimed ({claim})", user = user,
-                    given = given_number_of_friends, claim = actual_number_of_friends);
+                          given = given_number_of_friends, claim = actual_number_of_friends);
                 }
 
                 // Introduce dummy friends if required.
@@ -244,7 +243,7 @@ pub fn load(path: &PathBuf,
                         friendships.push(-(dummy_id as i64));
                     }
                     trace!("User {user}: created {number} dummy friends", user = user,
-                    number = number_of_missing_friends);
+                           number = number_of_missing_friends);
                 }
 
                 // If the user still has no friends, continue.

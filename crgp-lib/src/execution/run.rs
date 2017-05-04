@@ -42,7 +42,8 @@ use twitter::Tweet;
 pub fn run(mut configuration: Configuration) -> Result<Statistics> {
 
     let timely_configuration: TimelyConfiguration = configuration.get_timely_configuration()?;
-    let result: WorkerGuards<Result<Statistics>> = timely_execute(timely_configuration, move |computation| -> Result<Statistics> {
+    let result: WorkerGuards<Result<Statistics>> = timely_execute(timely_configuration,
+                                                                  move |computation| -> Result<Statistics> {
         let index = computation.index();
         let mut stopwatch = Stopwatch::start_new();
 
@@ -180,10 +181,10 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
         } else {
             Vec::new()
         };
-        let number_of_retweets: u64 = retweets.len() as u64;
         let time_to_load_retweets: u64 = stopwatch.lap();
-        info!("Finished loading Retweets in {time:.2}ms",
-        time = time_to_load_retweets as f64 / 1_000_000.0f64);
+
+        let number_of_retweets: u64 = retweets.len() as u64;
+        info!("Finished loading Retweets in {time}ns", time = time_to_load_retweets);
 
         // Process the retweets.
         info!("Processing Retweets");
@@ -191,6 +192,7 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
         for (round, retweet) in retweets.iter().enumerate() {
             retweet_input.send(retweet.clone());
 
+            // Sync the computation after each batch.
             let is_batch_complete: bool = round % batch_size == (batch_size - 1);
             if is_batch_complete {
                 trace!("Processed {amount} of {total} Retweets...", amount = round + 1, total = number_of_retweets);
@@ -199,8 +201,9 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
         }
         computation.sync(&probe, &mut retweet_input, &mut graph_input);
         let time_to_process_retweets: u64 = stopwatch.lap();
-        info!("Finished processing {amount} Retweets in {time:.2}ms", amount = number_of_retweets,
-        time = time_to_process_retweets as f64 / 1_000_000.0f64);
+
+        info!("Finished processing {amount} Retweets in {time}ns", amount = number_of_retweets,
+              time = time_to_process_retweets);
 
 
 
