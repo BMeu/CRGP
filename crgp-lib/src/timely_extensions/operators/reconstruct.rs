@@ -45,7 +45,7 @@ where G::Timestamp: Hash {
         self.binary_stream(
             &graph,
             Pipeline,
-            Exchange::new(|friendships: &(UserID, Vec<UserID>)| friendships.0.abs() as u64),
+            Exchange::new(|friendships: &(UserID, Vec<UserID>)| friendships.0 as u64),
             "Reconstruct",
             move |retweets, friendships, output| {
                 // Input 1: Process the retweets.

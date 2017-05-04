@@ -42,7 +42,7 @@ impl<G: Scope> FindPossibleInfluences<G> for Stream<G, (UserID, Vec<UserID>)>
 
         self.binary_stream(
             &retweets,
-            Exchange::new(|edge: &(UserID, Vec<UserID>)| edge.0.abs() as u64),
+            Exchange::new(|edge: &(UserID, Vec<UserID>)| edge.0 as u64),
             Exchange::new(|retweet: &Tweet| retweet.user.id as u64),
             "FindPossibleInfluences",
             move |friendships, retweets, output| {
