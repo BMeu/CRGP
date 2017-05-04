@@ -28,7 +28,7 @@ use OutputTarget;
 use Result;
 use Statistics;
 use UserID;
-use execution::simplify_result::SimplifyResult;
+use reconstruction::simplify_result::SimplifyResult;
 use social_graph::InfluenceEdge;
 use social_graph::source::tar;
 use timely_extensions::Sync;

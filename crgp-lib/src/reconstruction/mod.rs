@@ -4,13 +4,10 @@
 // MIT license <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your option. This file may not be copied,
 // modified, or distributed except according to those terms.
 
-//! The `LEAF` algorithm.
+//! Execute the reconstruction.
 
-use execution::algorithms::GraphHandle;
-use execution::algorithms::ProbeHandle;
-use execution::algorithms::RetweetHandle;
-use execution::algorithms::Subgraph;
+pub use self::run::run;
 
-pub fn computation() -> (GraphHandle, RetweetHandle, ProbeHandle) {
-    unimplemented!()
-}
+pub mod algorithms;
+mod run;
+mod simplify_result;
