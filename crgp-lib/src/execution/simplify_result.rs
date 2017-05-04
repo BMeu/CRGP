@@ -12,25 +12,24 @@ use timely_communication::initialize::WorkerGuards;
 
 use Error;
 use Result;
-use Statistics;
 
 /// The result returned from the computation is several layers of nested Result types.
-pub trait SimplifyResult {
-    /// The `result` returned from the computation is several layers of nested Result types. Flatten them to the
-    /// expected return type. Return the statistics from the first worker, but only if no worker returned an error.
-    fn simplify(self) -> Result<Statistics>;
+pub trait SimplifyResult<R: Send> {
+    /// The `result` returned from the computation is several layers of nested `Result` types. Flatten them to the
+    /// expected return type. Return the actual result from the first worker, but only if no worker returned an error.
+    fn simplify(self) -> Result<R>;
 }
 
-impl SimplifyResult for WorkerGuards<Result<Statistics>> {
-    fn simplify(self) -> Result<Statistics> {
-        let worker_results: Vec<(usize, Result<Statistics>)> = self.join()
+impl<R: Send> SimplifyResult<R> for WorkerGuards<Result<R>> {
+    fn simplify(self) -> Result<R> {
+        let worker_results: Vec<(usize, Result<R>)> = self.join()
             .into_iter()
-            .map(|worker_result: StdResult<Result<Statistics>, String>| {
+            .map(|worker_result: StdResult<Result<R>, String>| {
                 // Flatten the nested result types.
                 match worker_result {
                     Ok(result) => {
                         match result {
-                            Ok(statistics) => Ok(statistics),
+                            Ok(inner) => Ok(inner),
                             Err(error) => Err(error)
                         }
                     },
