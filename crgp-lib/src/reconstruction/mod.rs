@@ -7,6 +7,7 @@
 //! Execute the reconstruction.
 
 pub use self::run::run;
+use self::simplify_result::SimplifyResult;
 
 mod algorithms;
 mod run;

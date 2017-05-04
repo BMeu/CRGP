@@ -50,8 +50,8 @@ use time::TmFmt;
 
 pub use exit::ExitCode;
 
-pub mod validation;
-pub mod exit;
+mod validation;
+mod exit;
 
 // TODO: Get from crate?
 const PROGRAM_NAME: &str = "crgp";

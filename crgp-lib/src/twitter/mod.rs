@@ -10,8 +10,8 @@ pub use self::tweet::Tweet;
 pub use self::user::User;
 
 pub mod get;
-pub mod tweet;
-pub mod user;
+mod tweet;
+mod user;
 
 /// An alias for user IDs to improve code legibility.
 ///

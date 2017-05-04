@@ -10,5 +10,5 @@
 
 pub use self::influence_edge::InfluenceEdge;
 
-pub mod influence_edge;
+mod influence_edge;
 pub mod source;
