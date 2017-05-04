@@ -20,17 +20,18 @@ use Error;
 use Result;
 use twitter::Tweet;
 
-/// Load the retweets from the given path.
-pub fn from_file(retweet_dataset: &PathBuf) -> Result<Vec<Tweet>> {
+/// Load the retweets from the given `path`.
+pub fn from_file(path: &PathBuf) -> Result<Vec<Tweet>> {
     info!("Loading Retweets");
+    let path_c: PathBuf = path.clone();
 
-    let retweet_dataset_c: PathBuf = retweet_dataset.clone();
-
-    if !retweet_dataset.is_file() {
+    if !path.is_file() {
         error!("Retweet data set is a not a file");
         return Err(Error::from(IOError::new(IOErrorKind::InvalidInput, "Retweet data set is not a file")));
     }
-    let retweet_file = match File::open(retweet_dataset) {
+
+    // Open the file.
+    let retweet_file = match File::open(path) {
         Ok(file) => file,
         Err(error) => {
             error!("Could not open Retweet data set: {error}", error = error);
@@ -54,7 +55,7 @@ pub fn from_file(retweet_dataset: &PathBuf) -> Result<Vec<Tweet>> {
                 },
                 Err(message) => {
                     warn!("Invalid line in file {file:?}: {error}",
-                    file = retweet_dataset_c, error = message);
+                    file = path_c, error = message);
                     None
                 }
             }
@@ -80,6 +81,14 @@ mod tests {
         let path = PathBuf::from(String::from("../data/retweets.json"));
         let retweets: Result<Vec<Tweet>> = super::from_file(&path);
         assert!(retweets.is_ok());
-        assert_eq!(retweets.unwrap().len(), 6);
+        let retweets: Vec<Tweet> = retweets.unwrap();
+        assert_eq!(retweets.len(), 6);
+
+        // The Tweets must be sorted on their timestamp.
+        let mut previous_timestamp: u64 = 0;
+        for retweet in retweets {
+            assert!(retweet.created_at >= previous_timestamp);
+            previous_timestamp = retweet.created_at;
+        }
     }
 }
