@@ -38,7 +38,7 @@ use timely_extensions::operators::Write;
 use twitter;
 use twitter::Tweet;
 
-/// Execute the algorithm.
+/// Execute the reconstruction.
 pub fn run(mut configuration: Configuration) -> Result<Statistics> {
 
     let timely_configuration: TimelyConfiguration = configuration.get_timely_configuration()?;
@@ -146,27 +146,31 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
         } else {
             (0, 0, 0)
         };
-        let (number_of_users, mut number_of_explicit_friendships, total_number_of_friendships) = counts;
+        let (number_of_users, number_of_given_friendships, number_of_expected_friendships) = counts;
 
         // Process the entire social graph before continuing.
         computation.sync(&probe, &mut graph_input, &mut retweet_input);
         let time_to_process_social_network: u64 = stopwatch.lap();
 
         // Log loading information (only on the first worker).
-        if index == 0 {
+        let friendships_in_social_graph: u64 = if index == 0 {
             info!("Finished loading the social graph in {time}ns", time = time_to_process_social_network);
             info!("Found {given} of {actual} friendships in the data set for {users} users",
-                  given = number_of_explicit_friendships, actual = total_number_of_friendships,
+                  given = number_of_given_friendships, actual = number_of_expected_friendships,
                   users = number_of_users);
 
+            let mut friendships_in_social_graph: u64 = number_of_given_friendships;
             if configuration.pad_with_dummy_users {
-                let number_of_dummy_users: u64 = total_number_of_friendships - number_of_explicit_friendships;
+                let number_of_dummy_users: u64 = number_of_expected_friendships - number_of_given_friendships;
                 info!("Created {number} dummy friends", number = number_of_dummy_users);
 
                 // For the statistics, add the dummy friends to the size of the social graph.
-                number_of_explicit_friendships += number_of_dummy_users;
+                friendships_in_social_graph += number_of_dummy_users;
             }
-        }
+            friendships_in_social_graph
+        } else {
+            0
+        };
 
 
 
@@ -213,7 +217,7 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
 
         stopwatch.stop();
         let statistics = Statistics::new(configuration.clone())
-            .number_of_friendships(number_of_explicit_friendships)
+            .number_of_friendships(friendships_in_social_graph)
             .number_of_retweets(number_of_retweets)
             .time_to_setup(time_to_setup)
             .time_to_process_social_graph(time_to_process_social_network)
