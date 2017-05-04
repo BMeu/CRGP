@@ -8,16 +8,10 @@
 
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::fs::read_dir;
-use std::fs::File;
-use std::io::BufReader;
-use std::io::Result as IOResult;
-use std::io::prelude::*;
 use std::path::PathBuf;
 use std::rc::Rc;
 
 use fine_grained::Stopwatch;
-use tar::Archive;
 use timely::dataflow::operators::Broadcast;
 use timely::dataflow::operators::Filter;
 use timely::dataflow::operators::Input;
@@ -144,237 +138,32 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
          ****************/
 
         // Load the social graph into the computation (only on the first worker).
-        let mut total_number_of_actual_friendships: u64 = 0;
-        let mut total_number_of_friendships_given: u64 = 0;
-        let mut number_of_users: u64 = 0;
-        if index == 0 {
+        let counts: (u64, u64, u64) = if index == 0 {
             info!("Loading social graph...");
-            // Top level.
-            for root_entry in read_dir(&configuration.social_graph)? {
-                let path: PathBuf = match root_entry {
-                    Ok(entry) => entry.path(),
-                    Err(_) => continue
-                };
-
-                // The entry must be a directory.
-                if !path.is_dir() {
-                    continue;
-                }
-
-                // Get the last part of the path (e.g. `ZZZ` from `/xxx/yyy/ZZZ`).
-                let path_c: PathBuf = path.clone();
-                let directory: &str = match path_c.file_stem() {
-                    Some(directory) => {
-                        match directory.to_str() {
-                            Some(directory) => directory,
-                            None => continue
-                        }
-                    },
-                    None => continue
-                };
-
-                // Validate the name.
-                if !tar::DIRECTORY_NAME_TEMPLATE.is_match(directory) {
-                    trace!("Invalid directory name: {name:?}", name = path);
-                    continue;
-                }
-
-                // TAR archives.
-                for archive_entry in read_dir(path)? {
-                    let path: PathBuf = match archive_entry {
-                        Ok(entry) => entry.path(),
-                        Err(_) => continue
-                    };
-
-                    // The entry must be a file.
-                    if !path.is_file() {
-                        continue;
-                    }
-
-                    // Get the file name.
-                    let path_c: PathBuf = path.clone();
-                    let filename: &str = match path_c.file_name() {
-                        Some(filename) => {
-                            match filename.to_str() {
-                                Some(filename) => filename,
-                                None => continue
-                            }
-                        },
-                        None => continue
-                    };
-
-                    // Validate the name.
-                    if !tar::TAR_NAME_TEMPLATE.is_match(filename) {
-                        trace!("Invalid filename: {name:?}", name = path);
-                        continue;
-                    }
-
-                    // Open the archive.
-                    let archive_file = match File::open(path) {
-                        Ok(file) => file,
-                        Err(message) => {
-                            error!("Could not open archive {archive:?}: {error}",
-                            archive = path_c, error = message);
-                            continue;
-                        }
-                    };
-                    let mut archive = Archive::new(archive_file);
-                    let archive_entries = match archive.entries() {
-                        Ok(entries) => entries,
-                        Err(message) => {
-                            error!("Could not read contents of archive {archive:?}: {error}",
-                            archive = path_c, error = message);
-                            continue;
-                        }
-                    };
-                    for file in archive_entries {
-                        // Ensure correct reading.
-                        let file = match file {
-                            Ok(file) => file,
-                            Err(message) => {
-                                error!("Could not read archived file in archive {archive:?}: {error}",
-                                archive = path_c, error = message);
-                                continue;
-                            }
-                        };
-
-                        let path: PathBuf = match file.path() {
-                            Ok(path) => path.to_path_buf(),
-                            Err(_) => continue
-                        };
-                        // Validate the filename.
-                        match path.to_str() {
-                            Some(path) => {
-                                if !tar::FILENAME_TEMPLATE.is_match(path) {
-                                    trace!("Invalid filename: {name:?}", name = path);
-                                    continue;
-                                }
-                            },
-                            None => continue
-                        }
-
-                        // Get the user ID.
-                        let user: UserID = match path.file_stem() {
-                            Some(stem) => {
-                                match stem.to_str() {
-                                    Some(stem) => {
-                                        // `stem` is now `friends[ID]`. Only parse `[ID]`, i.e. skip the first seven
-                                        // characters.
-                                        match stem[7..].parse::<UserID>() {
-                                            Ok(id) => id,
-                                            Err(message) => {
-                                                warn!("Could not parse user ID '{id}': {error}",
-                                                id = &stem[7..], error = message);
-                                                continue;
-                                            }
-                                        }
-                                    },
-                                    None => continue
-                                }
-                            },
-                            None => continue
-                        };
-
-                        // Parse the file.
-                        let reader = BufReader::new(file);
-                        let mut is_first_line: bool = true;
-                        let mut actual_number_of_friends: u64 = 0;
-                        let mut friendships: Vec<UserID> = reader.lines()
-                            .filter_map(|line: IOResult<String>| -> Option<String> {
-                                // Ensure correct encoding.
-                                match line {
-                                    Ok(line) => Some(line),
-                                    Err(message) => {
-                                        warn!("Invalid line in file {file:?}: {error}", file = path, error = message);
-                                        None
-                                    }
-                                }
-                            })
-                            .filter_map(|line: String| -> Option<UserID> {
-                                // Parse the friend ID.
-                                match line.parse::<UserID>() {
-                                    Ok(id) => Some(id),
-                                    Err(message) => {
-                                        // If this is the first line in the file, it may contain meta data.
-                                        let meta_data: Vec<&str> = if is_first_line {
-                                            is_first_line = false;
-                                            line.split(';')
-                                                .collect()
-                                        } else {
-                                            Vec::new()
-                                        };
-
-                                        // Index 3 contains the actual number of friendships.
-                                        if meta_data.len() == 5 {
-                                            if let Ok(amount) = meta_data[3].parse() {
-                                                actual_number_of_friends = amount;
-                                                return None;
-                                            }
-                                        }
-
-                                        warn!("Could not parse friend ID '{friend}' of user {user}: {error}",
-                                        friend = line, user = user, error = message);
-                                        None
-                                    }
-                                }
-                            })
-                            .collect();
-
-                        let given_number_of_friends: u64 = friendships.len() as u64;
-                        trace!("User {user}: {given} of {actual} friends found", user = user,
-                        given = given_number_of_friends, actual = actual_number_of_friends);
-
-                        if given_number_of_friends > actual_number_of_friends {
-                            warn!("User {user} has more friends ({given}) than claimed ({claim})", user = user,
-                            given = given_number_of_friends, claim = actual_number_of_friends);
-                        }
-
-                        // Introduce dummy friends if required.
-                        let user_has_missing_friends: bool = given_number_of_friends < actual_number_of_friends;
-                        if configuration.pad_with_dummy_users && user_has_missing_friends {
-                            // At this point, the given number of friends is guaranteed to be smaller than the actual
-                            // number of friends.
-                            let number_of_missing_friends: u64 = actual_number_of_friends - given_number_of_friends;
-                            for dummy_id in 1..(number_of_missing_friends + 1) {
-                                friendships.push(-(dummy_id as i64));
-                            }
-                            trace!("User {user}: created {number} dummy friends", user = user,
-                            number = number_of_missing_friends);
-                        }
-
-                        // If the user still has no friends, continue.
-                        if friendships.is_empty() {
-                            warn!("User {user} does not have any friends", user = user);
-                            continue;
-                        }
-
-                        // Update social graph statistics.
-                        total_number_of_friendships_given += given_number_of_friends;
-                        total_number_of_actual_friendships += actual_number_of_friends;
-                        number_of_users += 1;
-
-                        graph_input.send((user, friendships));
-                    }
-                }
-            }
-        }
+            let path = PathBuf::from(configuration.social_graph.clone());
+            tar::load(&path, configuration.pad_with_dummy_users, &mut graph_input)?
+        } else {
+            (0, 0, 0)
+        };
+        let (number_of_users, mut number_of_explicit_friendships, total_number_of_friendships) = counts;
 
         // Process the entire social graph before continuing.
         computation.sync(&probe, &mut graph_input, &mut retweet_input);
         let time_to_process_social_network: u64 = stopwatch.lap();
 
-        // Log loading information only on the first worker.
+        // Log loading information (only on the first worker).
         if index == 0 {
-            info!("Finished loading the social graph in {time:.2}ms",
-            time = time_to_process_social_network as f64 / 1_000_000.0f64);
+            info!("Finished loading the social graph in {time}ns", time = time_to_process_social_network);
             info!("Found {given} of {actual} friendships in the data set for {users} users",
-            given = total_number_of_friendships_given, actual = total_number_of_actual_friendships,
-            users = number_of_users);
+                  given = number_of_explicit_friendships, actual = total_number_of_friendships,
+                  users = number_of_users);
+
             if configuration.pad_with_dummy_users {
-                let number_of_dummy_users: u64 = total_number_of_actual_friendships - total_number_of_friendships_given;
-                info!("Created {number} dummy friends", number = number_of_users);
+                let number_of_dummy_users: u64 = total_number_of_friendships - number_of_explicit_friendships;
+                info!("Created {number} dummy friends", number = number_of_dummy_users);
+
                 // For the statistics, add the dummy friends to the size of the social graph.
-                total_number_of_friendships_given += number_of_dummy_users;
+                number_of_explicit_friendships += number_of_dummy_users;
             }
         }
 
@@ -421,7 +210,7 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
 
         stopwatch.stop();
         let statistics = Statistics::new(configuration.clone())
-            .number_of_friendships(total_number_of_friendships_given)
+            .number_of_friendships(number_of_explicit_friendships)
             .number_of_retweets(number_of_retweets)
             .time_to_setup(time_to_setup)
             .time_to_process_social_graph(time_to_process_social_network)
