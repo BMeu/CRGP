@@ -8,11 +8,11 @@ For details and benchmarks, see [the Wiki](https://bitbucket.org/BMeu/crgp/wiki/
 
 ## Requirements
 
-`CRGP` requires Rust in version 1.17 or greater.
+`CRGP` requires [Rust](https://www.rustup.rs) in version 1.17 or greater.
 
 ## Usage
 
-Using [Rust's package manager `Cargo`](https://www.rustup.rs/), executing `CRGP` is really simple:
+Using Rust's package manager [`Cargo`](http://doc.crates.io/guide.html), executing `CRGP` is really simple:
 
 ```bash
 $ cargo run --release -- [FRIENDS] [RETWEETS] 
