@@ -23,15 +23,14 @@ use twitter::Tweet;
 /// Load the retweets from the given `path`.
 pub fn from_file(path: &PathBuf) -> Result<Vec<Tweet>> {
     info!("Loading Retweets");
-    let path_c: PathBuf = path.clone();
-
     if !path.is_file() {
-        error!("Retweet data set is a not a file");
-        return Err(Error::from(IOError::new(IOErrorKind::InvalidInput, "Retweet data set is not a file")));
+        error!("Retweet data set is a not a file: {path}", path = path.display());
+        return Err(Error::from(IOError::new(IOErrorKind::InvalidInput,
+                                            format!("Retweet data set is not a file: {path}", path = path.display()))));
     }
 
     // Open the file.
-    let retweet_file = match File::open(path) {
+    let retweet_file = match File::open(path.clone()) {
         Ok(file) => file,
         Err(error) => {
             error!("Could not open Retweet data set: {error}", error = error);
@@ -54,8 +53,7 @@ pub fn from_file(path: &PathBuf) -> Result<Vec<Tweet>> {
                     }
                 },
                 Err(message) => {
-                    warn!("Invalid line in file {file:?}: {error}",
-                    file = path_c, error = message);
+                    warn!("Invalid line in file {file}: {error}", file = path.display(), error = message);
                     None
                 }
             }

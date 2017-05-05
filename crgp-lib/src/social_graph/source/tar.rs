@@ -24,23 +24,24 @@ use UserID;
 lazy_static! {
     /// A regular expression to validate directory names. The name must consist of exactly three digits.
     // The initialization of the Regex will fail if the expression is invalid. Since the expression is known to be
-    // correct, it is safe to simply unwrap the result.
+    // correct, it is safe to simply expect a valid result.
     #[derive(Debug)]
-    static ref DIRECTORY_NAME_TEMPLATE: Regex = Regex::new(r"^\d{3}$").unwrap();
+    static ref DIRECTORY_NAME_TEMPLATE: Regex = Regex::new(r"^\d{3}$").expect("Failed to compile the REGEX.");
 
     /// A regular expression to validate TAR file names. The name must consist of exactly two digits followed by the
     /// extension `.tar`.
     // The initialization of the Regex will fail if the expression is invalid. Since the expression is known to be
-    // correct, it is safe to simply unwrap the result.
+    // correct, it is safe to simply expect a valid result.
     #[derive(Debug)]
-    static ref TAR_NAME_TEMPLATE: Regex = Regex::new(r"^\d{2}\.tar$").unwrap();
+    static ref TAR_NAME_TEMPLATE: Regex = Regex::new(r"^\d{2}\.tar$").expect("Failed to compile the REGEX.");
 
     /// A regular expression to validate file names. The name must be of the form `friends[ID].csv` where `[ID]`
     /// consists of one or more digits.
     // The initialization of the Regex will fail if the expression is invalid. Since the expression is known to be
-    // correct, it is safe to simply unwrap the result.
+    // correct, it is safe to simply expect a valid result.
     #[derive(Debug)]
-    static ref FILENAME_TEMPLATE: Regex = Regex::new(r"^\d{3}/\d{3}/friends\d+\.csv$").unwrap();
+    static ref FILENAME_TEMPLATE: Regex = Regex::new(r"^\d{3}/\d{3}/friends\d+\.csv$")
+        .expect("Failed to compile the REGEX.");
 }
 
 /// Load the social graph from the given `path` into the computation using the `graph_input`. If required, dummy users
@@ -81,15 +82,15 @@ pub fn load(path: &PathBuf,
             let mut archive: Archive<File> = match File::open(tar_path.clone()) {
                 Ok(file) => Archive::new(file),
                 Err(message) => {
-                    error!("Could not open archive {archive:?}: {error}", archive = tar_path, error = message);
+                    error!("Could not open archive {archive}: {error}", archive = tar_path.display(), error = message);
                     continue;
                 }
             };
             let archive_entries = match archive.entries() {
                 Ok(entries) => entries,
                 Err(message) => {
-                    error!("Could not read contents of archive {archive:?}: {error}",
-                           archive = tar_path, error = message);
+                    error!("Could not read contents of archive {archive}: {error}",
+                           archive = tar_path.display(), error = message);
                     continue;
                 }
             };
@@ -100,8 +101,8 @@ pub fn load(path: &PathBuf,
                 let file = match file {
                     Ok(file) => file,
                     Err(message) => {
-                        error!("Could not read archived file in archive {archive:?}: {error}",
-                               archive = tar_path, error = message);
+                        error!("Could not read archived file in archive {archive}: {error}",
+                               archive = tar_path.display(), error = message);
                         continue;
                     }
                 };
@@ -202,7 +203,7 @@ fn is_valid_directory(path: &PathBuf) -> bool {
             if DIRECTORY_NAME_TEMPLATE.is_match(directory) {
                 return true;
             }
-            trace!("Invalid directory name: {name:?}", name = path);
+            trace!("Invalid directory name: {name}", name = path.display());
         }
     }
 
@@ -215,7 +216,7 @@ fn is_valid_friend_file(path: &PathBuf) -> bool {
         if FILENAME_TEMPLATE.is_match(filename) {
             return true;
         }
-        trace!("Invalid filename: {name:?}", name = path);
+        trace!("Invalid filename: {name}", name = path.display());
     }
 
     false
@@ -232,7 +233,7 @@ fn is_valid_tar_archive(path: &PathBuf) -> bool {
             if TAR_NAME_TEMPLATE.is_match(filename) {
                 return true;
             }
-            trace!("Invalid filename: {name:?}", name = path);
+            trace!("Invalid filename: {name}", name = path.display());
         }
     }
 
@@ -252,7 +253,7 @@ fn parse_friend_file<R: Read>(reader: BufReader<R>, file_path: &PathBuf, user: U
             match line {
                 Ok(line) => Some(line),
                 Err(message) => {
-                    warn!("Invalid line in file {file:?}: {error}", file = file_path, error = message);
+                    warn!("Invalid line in file {file}: {error}", file = file_path.display(), error = message);
                     None
                 }
             }

@@ -35,6 +35,7 @@ pub trait Write<G: Scope> {
 
 impl<G: Scope> Write<G> for Stream<G, InfluenceEdge<UserID>>
 where G::Timestamp: Hash {
+    #[cfg_attr(feature = "cargo-clippy", allow(print_stdout))]
     fn write(&self, output_target: OutputTarget) -> Stream<G, InfluenceEdge<UserID>> {
         // If the output target is None, return an operator that simply passes the input on.
         if let OutputTarget::None = output_target {
@@ -96,26 +97,24 @@ where G::Timestamp: Hash {
                                     if !has_writer {
                                         let filename: String = format!("cascs-{id}.csv", id = influence.cascade_id);
                                         let path: PathBuf = directory.join(filename);
-                                        let path_c: PathBuf = path.clone();
-                                        let file = match File::create(path) {
+                                        let file = match File::create(path.clone()) {
                                             Ok(file) => file,
                                             Err(message) => {
-                                                error!("Could not create {file:?}: {error}",
-                                                       file = path_c, error = message);
+                                                error!("Could not create {file}: {error}",
+                                                       file = path.display(), error = message);
                                                 continue;
                                             }
                                         };
-                                        trace!("Created result file {file:?}", file = path_c);
+                                        trace!("Created result file {file}", file = path.display());
                                         let _ = cascade_writers.insert(influence.cascade_id, BufWriter::new(file));
                                     }
                                     let cascade_writer = cascade_writers.get_mut(&influence.cascade_id);
-                                    let cascade_writer: &mut BufWriter<File> = match cascade_writer {
-                                        Some(writer) => writer,
-                                        None => {
-                                            // This should not be possible since the above code will insert a new writer
-                                            // if there is none yet.
-                                            continue;
-                                        }
+                                    let cascade_writer: &mut BufWriter<File> = if let Some(writer) = cascade_writer {
+                                        writer
+                                    } else {
+                                        // This should not be possible since the above code will insert a new writer
+                                        // if there is none yet.
+                                        continue;
                                     };
 
                                     // Write the edge into the writer's buffer.
