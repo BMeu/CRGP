@@ -13,7 +13,7 @@ dependencies = [
  "serde_derive 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "tar 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
- "timely 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)",
+ "timely 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "timely_communication 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -448,7 +448,7 @@ dependencies = [
 
 [[package]]
 name = "timely"
-version = "0.1.15"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "abomonation 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -596,7 +596,7 @@ dependencies = [
 "checksum thread_local 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)" = "8576dbbfcaef9641452d5cf0df9b0e7eeab7694956dd33bb61515fb8f18cfdd5"
 "checksum thread_local 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "c85048c6260d17cf486ceae3282d9fb6b90be220bf5b28c400f5485ffc29f0c7"
 "checksum time 0.1.37 (registry+https://github.com/rust-lang/crates.io-index)" = "ffd7ccbf969a892bf83f1e441126968a07a3941c24ff522a26af9f9f4585d1a3"
-"checksum timely 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)" = "02315390557862535edb028563cc8e8d67eb9d95aa3c018a4b87b3a61dab4847"
+"checksum timely 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "db1f433d9759b2726ab03dd910bb05ba7a1c54ab574318807b654739f16c15f4"
 "checksum timely_communication 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "ec1517e15c261d83e681a58e2786907ab3b55dcd401b769f69e2696a0623c10d"
 "checksum timely_sort 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "f6e4b497ab85f6e09ea309d696342d198e444e93a4a55500bf3b0c3c53bdd4b3"
 "checksum toml 0.4.0 (git+https://github.com/alexcrichton/toml-rs)" = "<none>"

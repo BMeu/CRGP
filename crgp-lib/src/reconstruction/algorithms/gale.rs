@@ -41,7 +41,7 @@ pub fn computation<'a>(scope: &mut Scope<'a>, output: OutputTarget) -> (GraphHan
         .broadcast()
         .reconstruct(graph_stream)
         .write(output)
-        .probe().0;
+        .probe();
 
     (graph_input, retweet_input, probe)
 }

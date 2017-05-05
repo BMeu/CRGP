@@ -67,7 +67,7 @@ where G::Timestamp: Hash {
                 influences.for_each(|time, influence_data| {
                     notificator.notify_at(time.clone());
 
-                    let mut influences_now = influences_at_time.entry(time.time())
+                    let mut influences_now = influences_at_time.entry(time.time().clone())
                         .or_insert_with(HashSet::new);
 
                     for influence in influence_data.iter() {

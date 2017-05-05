@@ -67,7 +67,7 @@ pub fn computation<'a>(scope: &mut Scope<'a>, output: OutputTarget) -> (GraphHan
             is_influencer_activated || is_influencer_original_user
         })
         .write(output)
-        .probe().0;
+        .probe();
 
     (graph_input, retweet_input, probe)
 }

@@ -34,7 +34,7 @@ impl<A: Allocate, D1: Data, D2: Data> Sync<D1, D2> for Root<A> {
         input1.advance_to(input1_next);
         input2.advance_to(input2_next);
 
-        while probe.lt(input1.time()) {
+        while probe.less_than(input1.time()) {
             self.step();
         }
     }

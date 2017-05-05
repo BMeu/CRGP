@@ -10,7 +10,6 @@ use std::path::PathBuf;
 
 use fine_grained::Stopwatch;
 use timely::execute::execute as timely_execute;
-use timely::dataflow::scopes::Scope;
 use timely_communication::initialize::Configuration as TimelyConfiguration;
 use timely_communication::initialize::WorkerGuards;
 
@@ -48,7 +47,7 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
         let output_target: OutputTarget = configuration.output_target.clone();
 
         // Reconstruct the cascade.
-        let (mut graph_input, mut retweet_input, probe) = computation.scoped::<u64, _, _>(move |scope| {
+        let (mut graph_input, mut retweet_input, probe) = computation.dataflow::<u64, _, _>(move |scope| {
             match algorithm {
                 Algorithm::GALE => gale::computation(scope, output_target),
                 Algorithm::LEAF => leaf::computation(scope, output_target)
