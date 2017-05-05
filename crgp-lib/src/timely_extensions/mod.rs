@@ -11,5 +11,5 @@
 
 pub use self::sync::Sync;
 
-pub mod sync;
+mod sync;
 pub mod operators;

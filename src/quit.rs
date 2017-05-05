@@ -4,7 +4,7 @@
 // MIT license <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your option. This file may not be copied,
 // modified, or distributed except according to those terms.
 
-//! Exit the program execution with standardized exit codes.
+//! Quit the program with standardized exit codes.
 
 use std::error::Error as StdError;
 use std::process;

@@ -11,9 +11,8 @@
 
 pub use self::find_possible_influences::FindPossibleInfluences;
 pub use self::reconstruct::Reconstruct;
-pub use self::write::OutputTarget;
 pub use self::write::Write;
 
-pub mod find_possible_influences;
-pub mod reconstruct;
-pub mod write;
+mod find_possible_influences;
+mod reconstruct;
+mod write;

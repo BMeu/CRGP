@@ -19,6 +19,11 @@
         missing_debug_implementations, missing_copy_implementations,
         trivial_casts, trivial_numeric_casts,
         unused_extern_crates, unused_import_braces, unused_qualifications, unused_results)]
+#![cfg_attr(feature = "cargo-clippy", warn(empty_enum, enum_glob_use, if_not_else, items_after_statements,
+                                           missing_docs_in_private_items, nonminimal_bool,
+                                           pub_enum_variant_names, similar_names, single_match_else,
+                                           stutter, used_underscore_binding, use_debug, wrong_self_convention,
+                                           wrong_pub_self_convention))]
 
 #[macro_use]
 extern crate clap;
@@ -42,23 +47,21 @@ use clap::ArgMatches;
 use crgp_lib::Algorithm;
 use crgp_lib::Configuration;
 use crgp_lib::Error;
-use crgp_lib::algorithm;
-use crgp_lib::timely_extensions::operators::OutputTarget;
+use crgp_lib::OutputTarget;
 use flexi_logger::with_thread;
 use flexi_logger::LogOptions;
 use time::Tm;
 use time::TmFmt;
 
-pub use exit::ExitCode;
+pub use quit::ExitCode;
 
-pub mod validation;
-pub mod exit;
-
-// TODO: Get from crate?
-const PROGRAM_NAME: &str = "crgp";
+mod validation;
+mod quit;
 
 /// Execute the program.
 fn main() {
+    let program_name: &str = option_env!("CARGO_PKG_NAME").unwrap_or("crgp");
+
     // Define the usage.
     let arguments: ArgMatches = app_from_crate!()
         .arg(Arg::with_name("algorithm")
@@ -172,7 +175,7 @@ fn main() {
             None => match current_dir() {
                 Ok(directory) => OutputTarget::Directory(directory),
                 Err(error) => {
-                    exit::fail_from_error(Error::from(error));
+                    quit::fail_from_error(Error::from(error));
                 }
             },
         }
@@ -185,14 +188,14 @@ fn main() {
             let file = match File::open(file) {
                 Ok(file) => file,
                 Err(error) => {
-                    exit::fail_from_error(Error::from(error));
+                    quit::fail_from_error(Error::from(error));
                 }
             };
             let reader = BufReader::new(file);
             match reader.lines().collect::<Result<Vec<String>, IOError>>() {
                 Ok(hosts) => Some(hosts),
                 Err(error) => {
-                    exit::fail_from_error(Error::from(error));
+                    quit::fail_from_error(Error::from(error));
                 }
             }
         },
@@ -223,7 +226,7 @@ fn main() {
         match logger_initialization {
             Ok(_) => {},
             Err(error) => {
-                exit::fail_with_message(ExitCode::LoggerFailure, error.description());
+                quit::fail_with_message(ExitCode::LoggerFailure, error.description());
             }
         }
     }
@@ -241,7 +244,7 @@ fn main() {
         .workers(workers);
 
     // Execute the algorithm.
-    let results = algorithm::execute(configuration);
+    let results = crgp_lib::run(configuration);
 
     // Write the statistics.
     match results {
@@ -255,12 +258,11 @@ fn main() {
                         let current_time: Tm = time::now();
                         // The unwrap is save, since the format string is known to be correct.
                         let time_formatted: TmFmt = current_time.strftime("%Y-%m-%d_%H-%M-%S").unwrap();
-                        let filename = format!("{program}_{time}.toml", program = PROGRAM_NAME, time = time_formatted);
+                        let filename = format!("{program}_{time}.toml", program = program_name, time = time_formatted);
                         let path: PathBuf = directory.join(filename);
-                        let path_c: PathBuf = path.clone();
 
                         // Create the file and save the results.
-                        if let Ok(file) = File::create(path) {
+                        if let Ok(file) = File::create(path.clone()) {
                             let mut writer: BufWriter<File> = BufWriter::new(file);
 
                             // Write and flush the result.
@@ -268,8 +270,8 @@ fn main() {
                             let flush_result = writer.flush();
 
                             if write_result.is_ok() && flush_result.is_ok() {
-                                println!("Statistics saved to {path:?}", path = path_c);
-                                exit::succeed();
+                                println!("Statistics saved to {path}", path = path.display());
+                                quit::succeed();
                             }
                         }
                     }
@@ -293,10 +295,10 @@ fn main() {
                 println!(" Retweet Processing Rate: {} RT/s", results.retweet_processing_rate);
             }
 
-            exit::succeed();
+            quit::succeed();
         },
         Err(error) => {
-            exit::fail_from_error(error);
+            quit::fail_from_error(error);
         }
     };
 }

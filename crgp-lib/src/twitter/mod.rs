@@ -9,5 +9,11 @@
 pub use self::tweet::Tweet;
 pub use self::user::User;
 
-pub mod tweet;
-pub mod user;
+pub mod get;
+mod tweet;
+mod user;
+
+/// An alias for user IDs to improve code legibility.
+///
+/// If the stored value is negative, the ID belongs to a dummy user who was created to pad the social graph.
+pub type UserID = i64;
