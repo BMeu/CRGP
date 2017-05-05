@@ -6,6 +6,7 @@
 
 //! Algorithm configuration.
 
+use std::fmt;
 use std::path::PathBuf;
 
 use timely_communication::initialize::Configuration as TimelyConfiguration;
@@ -16,16 +17,26 @@ use Result;
 /// Available algorithms for reconstruction.
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Algorithm {
+    /// Activate retweeting users on all workers, produce influence edges on the worker storing the user's friends.
+    ///
+    /// `GALE` = Global Activations, Local Edges
+    GALE,
+
     /// Activate user and produce possible influences on worker storing the user's friends, filter possible influences
     /// on worker storing influencer's friends.
     ///
     /// `LEAF` = Local Edges, Activations, and Filtering
     LEAF,
+}
 
-    /// Activate retweeting users on all workers, produce influence edges on the worker storing the user's friends.
-    ///
-    /// `GALE` = Global Activations, Local Edges
-    GALE,
+impl fmt::Display for Algorithm {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        let algorithm_name: &str = match *self {
+            Algorithm::GALE => "GALE",
+            Algorithm::LEAF => "LEAF",
+        };
+        write!(formatter, "{algorithm}", algorithm = algorithm_name)
+    }
 }
 
 /// Specify where the result will be written to.
@@ -39,6 +50,17 @@ pub enum OutputTarget {
 
     /// Do not write the result at all.
     None,
+}
+
+impl fmt::Display for OutputTarget {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        let target: &str = match *self {
+            OutputTarget::Directory(ref path) => return write!(formatter, "\"{path}\"", path = path.display()),
+            OutputTarget::StdOut => "STDOUT",
+            OutputTarget::None => "[disabled]",
+        };
+        write!(formatter, "{output}", output = target)
+    }
 }
 
 /// Configuration for the `CRGP` algorithm.
@@ -240,8 +262,7 @@ impl Configuration {
                                                                 processes = self.number_of_processes))));
                 }
                 host_addresses = hosts.clone();
-            }
-            else {
+            } else {
                 for index in 0..self.number_of_processes {
                     host_addresses.push(format!("localhost:{port}", port = 2101 + index));
                 }
@@ -251,18 +272,41 @@ impl Configuration {
 
             Ok(TimelyConfiguration::Cluster(self.number_of_workers, self.process_id, host_addresses,
                                             self.report_connection_progress))
-        }
-        else if self.number_of_workers > 1 {
+        } else if self.number_of_workers > 1 {
             // One process, multiple workers.
             Ok(TimelyConfiguration::Process(self.number_of_workers))
-        }
-        else {
+        } else {
             // Single process, single thread.
             Ok(TimelyConfiguration::Thread)
         }
     }
 }
 
+impl fmt::Display for Configuration {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        let hosts: String = match self.hosts {
+            Some(ref hosts) => {
+                let mut hosts_list = String::from("[");
+                for host in hosts {
+                    hosts_list += host;
+                }
+                hosts_list += "]";
+                hosts_list
+            }
+            None => String::from("[]")
+        };
+
+        write!(formatter,
+               "(Algorithm: {algorithm}, Batch Size: {batch}, Hosts: {hosts}, Number of Processes: {processes}, \
+                Number of Workers: {workers}, Output Target: {output}, Insert Dummy Users: {dummies}, \
+                Process ID: {id}, Report Connection Progress: {progress}, Retweet Data Set: {retweets}, \
+                Social Graph: {graph})",
+               algorithm = self.algorithm, batch = self.batch_size, hosts = hosts,
+               processes = self.number_of_processes, workers = self.number_of_workers, output = self.output_target,
+               dummies = self.pad_with_dummy_users, id = self.process_id, progress = self.report_connection_progress,
+               retweets = self.retweets, graph = self.social_graph)
+    }
+}
 
 #[cfg(test)]
 mod tests {

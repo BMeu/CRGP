@@ -6,6 +6,8 @@
 
 //! Collection of statistics about the execution of the algorithm.
 
+use std::fmt;
+
 use Configuration;
 
 /// Collection of statistics about the execution of the algorithm.
@@ -126,6 +128,20 @@ impl Statistics {
         } else {
             (self.number_of_retweets * 1_000_000_000) / self.time_to_process_retweets
         };
+    }
+}
+
+impl fmt::Display for Statistics {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(formatter,
+               "(Number of Friendships: {friendships}, Number of Retweets: {retweets}, Time to Set Up: {setup}ns, \
+                Time to Process Social Graph: {graph}ns, Time to Load Retweets: {retweet_loading}ns, \
+                Time to Process Retweets: {retweet_processing}ns, Total Time: {total}ns, \
+                Retweet Processing Rate: {rate}RT/s, Configuration: {configuration})",
+               friendships = self.number_of_friendships, retweets = self.number_of_retweets, setup = self.time_to_setup,
+               graph = self.time_to_process_social_graph, retweet_loading = self.time_to_load_retweets,
+               retweet_processing = self.time_to_process_retweets, total = self.total_time,
+               rate = self.retweet_processing_rate, configuration = self.configuration)
     }
 }
 

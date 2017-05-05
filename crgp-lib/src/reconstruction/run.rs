@@ -37,7 +37,7 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
         let mut stopwatch = Stopwatch::start_new();
 
         // Log the algorithm configuration.
-        info!("{:?}", configuration);
+        info!("Configuration: {}", configuration);
 
         /******************
          * DATAFLOW GRAPH *
@@ -150,7 +150,7 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
             .total_time(stopwatch.total_time());
 
         // Log the statistics.
-        info!("{:?}", statistics);
+        info!("Statistics: {}", statistics);
 
         Ok(statistics)
     })?;
