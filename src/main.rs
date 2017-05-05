@@ -58,12 +58,10 @@ pub use quit::ExitCode;
 mod validation;
 mod quit;
 
-// TODO: Get from crate?
-/// The name of the program, used for file names.
-const PROGRAM_NAME: &str = "crgp";
-
 /// Execute the program.
 fn main() {
+    let program_name: &str = option_env!("CARGO_PKG_NAME").unwrap_or("crgp");
+
     // Define the usage.
     let arguments: ArgMatches = app_from_crate!()
         .arg(Arg::with_name("algorithm")
@@ -260,7 +258,7 @@ fn main() {
                         let current_time: Tm = time::now();
                         // The unwrap is save, since the format string is known to be correct.
                         let time_formatted: TmFmt = current_time.strftime("%Y-%m-%d_%H-%M-%S").unwrap();
-                        let filename = format!("{program}_{time}.toml", program = PROGRAM_NAME, time = time_formatted);
+                        let filename = format!("{program}_{time}.toml", program = program_name, time = time_formatted);
                         let path: PathBuf = directory.join(filename);
 
                         // Create the file and save the results.
