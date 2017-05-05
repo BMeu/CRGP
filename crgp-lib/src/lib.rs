@@ -26,6 +26,10 @@ extern crate tar;
 extern crate timely;
 extern crate timely_communication;
 
+#[cfg(test)]
+#[macro_use]
+extern crate quickcheck;
+
 pub use configuration::Algorithm;
 pub use configuration::Configuration;
 pub use configuration::OutputTarget;

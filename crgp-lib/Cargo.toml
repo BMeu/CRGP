@@ -22,5 +22,8 @@ tar = "0.4"
 timely = "0.1"
 timely_communication = "0.1"
 
+[dev-dependencies]
+quickcheck = "0.4"
+
 [target.'cfg(unix)'.dev-dependencies]
 gag = "0.1"

@@ -118,15 +118,20 @@ impl Statistics {
     }
 
     /// Set the average Retweet processing rate in Retweets per seconds (RT/s).
+    ///
+    /// If the time it took to process the retweets is 0, the rate will be set to 0 as well.
     fn calculate_retweet_processing_rate(&mut self) {
-        self.retweet_processing_rate = (self.number_of_retweets as f64 /
-                                        (self.time_to_process_retweets as f64 / 1_000_000_000.0f64)
-                                       ) as u64
+        self.retweet_processing_rate = if self.time_to_process_retweets == 0 {
+            0
+        } else {
+            (self.number_of_retweets * 1_000_000_000) / self.time_to_process_retweets
+        };
     }
 }
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     #[test]
@@ -302,5 +307,38 @@ mod tests {
         statistics.calculate_retweet_processing_rate();
         // 1.5 RT/s => 1 RT/s.
         assert_eq!(statistics.retweet_processing_rate, 1);
+    }
+
+    /// Old way of computing the Retweet processing rate.
+    fn retweet_processing_rate_using_float(number_of_retweets: u64, time_to_process_retweets: u64) -> u64 {
+        if time_to_process_retweets == 0 {
+            return 0;
+        }
+
+        (number_of_retweets as f64 / (time_to_process_retweets as f64 / 1_000_000_000.0f64)) as u64
+    }
+
+    quickcheck! {
+        /// The difference between the old and the new rate should not be greater than 1. A difference of 1 is within
+        /// measurement inaccuracies.
+        #[allow(trivial_casts)]
+        fn compare_retweet_processing_rate_calcs(number_of_retweets: u64, time_to_process_retweets: u64) -> bool {
+            let retweets = String::from("path/to/retweets.json");
+            let social_graph = String::from("path/to/social/graph");
+            let configuration = Configuration::default(retweets, social_graph);
+            let statistics = Statistics::new(configuration)
+                .number_of_retweets(number_of_retweets)
+                .time_to_process_retweets(time_to_process_retweets);
+
+            let old_rate = retweet_processing_rate_using_float(number_of_retweets, time_to_process_retweets);
+            let new_rate = statistics.retweet_processing_rate;
+
+            let difference = if new_rate > old_rate {
+                new_rate - old_rate
+            } else {
+                old_rate - new_rate
+            };
+            difference <= 1
+        }
     }
 }
