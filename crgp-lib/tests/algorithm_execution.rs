@@ -29,6 +29,95 @@ lazy_static! {
 }
 
 #[test]
+fn algorithm_execution_gale() {
+    let friendship_dataset = String::from("../data/social_graph");
+    let retweet_dataset = String::from("../data/retweets.json");
+
+    let configuration = Configuration::default(retweet_dataset, friendship_dataset)
+        .batch_size(1);
+
+    // Capturing STDOUT currently only works on Unix systems.
+    if cfg!(unix) {
+        let _lock = STDOUT_MUTEX.lock().unwrap();
+        let mut buffer = BufferRedirect::stdout().unwrap();
+        let result: Result<Statistics> = crgp_lib::run(configuration);
+        let mut output = String::new();
+        buffer.read_to_string(&mut output).unwrap();
+        drop(buffer);
+
+        assert!(result.is_ok());
+        let influences: Vec<&str> = output.split('\n')
+            .filter(|line| !line.is_empty())
+            .collect();
+        let expected_lines: Vec<&str> = vec![
+            "1;3;2;0;1;-1",
+            "1;4;1;0;2;-1",
+            "1;4;1;2;2;-1",
+            "1;6;3;2;3;-1",
+            "2;5;0;1;3;-1",
+            "2;7;2;0;4;-1",
+            "2;8;3;2;5;-1",
+        ];
+        for influence in &influences {
+            assert!(expected_lines.contains(influence), "Unexpected influence: {}", influence);
+        }
+        for expected_line in &expected_lines {
+            assert!(influences.contains(expected_line), "Missing influence: {}", expected_line);
+        }
+        assert_eq!(influences.len(), 7);
+    }
+        else {
+            let result: Result<Statistics> = crgp_lib::run(configuration);
+            assert!(result.is_ok());
+        }
+}
+
+#[test]
+fn algorithm_execution_gale_with_dummy_users() {
+    let friendship_dataset = String::from("../data/social_graph");
+    let retweet_dataset = String::from("../data/retweets.json");
+
+    let configuration = Configuration::default(retweet_dataset, friendship_dataset)
+        .batch_size(1)
+        .pad_with_dummy_users(true);
+
+    // Capturing STDOUT currently only works on Unix systems.
+    if cfg!(unix) {
+        let _lock = STDOUT_MUTEX.lock().unwrap();
+        let mut buffer = BufferRedirect::stdout().unwrap();
+        let result: Result<Statistics> = crgp_lib::run(configuration);
+        let mut output = String::new();
+        buffer.read_to_string(&mut output).unwrap();
+        drop(buffer);
+
+        assert!(result.is_ok());
+        let influences: Vec<&str> = output.split('\n')
+            .filter(|line| !line.is_empty())
+            .collect();
+        let expected_lines: Vec<&str> = vec![
+            "1;3;2;0;1;-1",
+            "1;4;1;0;2;-1",
+            "1;4;1;2;2;-1",
+            "1;6;3;2;3;-1",
+            "2;5;0;1;3;-1",
+            "2;7;2;0;4;-1",
+            "2;8;3;2;5;-1",
+        ];
+        for influence in &influences {
+            assert!(expected_lines.contains(influence), "Unexpected influence: {}", influence);
+        }
+        for expected_line in &expected_lines {
+            assert!(influences.contains(expected_line), "Missing influence: {}", expected_line);
+        }
+        assert_eq!(influences.len(), 7);
+    }
+        else {
+            let result: Result<Statistics> = crgp_lib::run(configuration);
+            assert!(result.is_ok());
+        }
+}
+
+#[test]
 fn algorithm_execution_leaf() {
     let friendship_dataset = String::from("../data/social_graph");
     let retweet_dataset = String::from("../data/retweets.json");
@@ -117,93 +206,4 @@ fn algorithm_execution_leaf_with_dummy_users() {
             let result: Result<Statistics> = crgp_lib::run(configuration);
             assert!(result.is_ok());
         }
-}
-
-#[test]
-fn algorithm_execution_gale() {
-    let friendship_dataset = String::from("../data/social_graph");
-    let retweet_dataset = String::from("../data/retweets.json");
-
-    let configuration = Configuration::default(retweet_dataset, friendship_dataset)
-        .batch_size(1);
-
-    // Capturing STDOUT currently only works on Unix systems.
-    if cfg!(unix) {
-        let _lock = STDOUT_MUTEX.lock().unwrap();
-        let mut buffer = BufferRedirect::stdout().unwrap();
-        let result: Result<Statistics> = crgp_lib::run(configuration);
-        let mut output = String::new();
-        buffer.read_to_string(&mut output).unwrap();
-        drop(buffer);
-
-        assert!(result.is_ok());
-        let influences: Vec<&str> = output.split('\n')
-            .filter(|line| !line.is_empty())
-            .collect();
-        let expected_lines: Vec<&str> = vec![
-            "1;3;2;0;1;-1",
-            "1;4;1;0;2;-1",
-            "1;4;1;2;2;-1",
-            "1;6;3;2;3;-1",
-            "2;5;0;1;3;-1",
-            "2;7;2;0;4;-1",
-            "2;8;3;2;5;-1",
-        ];
-        for influence in &influences {
-            assert!(expected_lines.contains(influence), "Unexpected influence: {}", influence);
-        }
-        for expected_line in &expected_lines {
-            assert!(influences.contains(expected_line), "Missing influence: {}", expected_line);
-        }
-        assert_eq!(influences.len(), 7);
-    }
-    else {
-        let result: Result<Statistics> = crgp_lib::run(configuration);
-        assert!(result.is_ok());
-    }
-}
-
-#[test]
-fn algorithm_execution_gale_with_dummy_users() {
-    let friendship_dataset = String::from("../data/social_graph");
-    let retweet_dataset = String::from("../data/retweets.json");
-
-    let configuration = Configuration::default(retweet_dataset, friendship_dataset)
-        .batch_size(1)
-        .pad_with_dummy_users(true);
-
-    // Capturing STDOUT currently only works on Unix systems.
-    if cfg!(unix) {
-        let _lock = STDOUT_MUTEX.lock().unwrap();
-        let mut buffer = BufferRedirect::stdout().unwrap();
-        let result: Result<Statistics> = crgp_lib::run(configuration);
-        let mut output = String::new();
-        buffer.read_to_string(&mut output).unwrap();
-        drop(buffer);
-
-        assert!(result.is_ok());
-        let influences: Vec<&str> = output.split('\n')
-            .filter(|line| !line.is_empty())
-            .collect();
-        let expected_lines: Vec<&str> = vec![
-            "1;3;2;0;1;-1",
-            "1;4;1;0;2;-1",
-            "1;4;1;2;2;-1",
-            "1;6;3;2;3;-1",
-            "2;5;0;1;3;-1",
-            "2;7;2;0;4;-1",
-            "2;8;3;2;5;-1",
-        ];
-        for influence in &influences {
-            assert!(expected_lines.contains(influence), "Unexpected influence: {}", influence);
-        }
-        for expected_line in &expected_lines {
-            assert!(influences.contains(expected_line), "Missing influence: {}", expected_line);
-        }
-        assert_eq!(influences.len(), 7);
-    }
-    else {
-        let result: Result<Statistics> = crgp_lib::run(configuration);
-        assert!(result.is_ok());
-    }
 }
