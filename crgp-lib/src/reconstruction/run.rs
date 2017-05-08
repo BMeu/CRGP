@@ -65,7 +65,8 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
         let counts: (u64, u64, u64) = if index == 0 {
             info!("Loading social graph...");
             let path = PathBuf::from(configuration.social_graph.clone());
-            tar::load(&path, configuration.pad_with_dummy_users, &mut graph_input)?
+            let selected_users: Option<PathBuf> = configuration.selected_users.clone();
+            tar::load(&path, configuration.pad_with_dummy_users, selected_users, &mut graph_input)?
         } else {
             (0, 0, 0)
         };

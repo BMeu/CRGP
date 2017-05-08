@@ -124,6 +124,11 @@ fn main() {
         .arg(Arg::with_name("report-connection-progress")
             .long("report-connection-progress")
             .help("Print connection progress to STDOUT when using multiple processes."))
+        .arg(Arg::with_name("selected-users")
+            .long("selected-users")
+            .value_name("FILE")
+            .help("Load only the given users (one per line) from the social graph.")
+            .takes_value(true))
         .arg(Arg::with_name("verbosity")
             .short("v")
             .multiple(true)
@@ -180,7 +185,6 @@ fn main() {
             },
         }
     };
-    let output_target_statistics: OutputTarget = output_target.clone();
 
     // Get the hosts.
     let hosts: Option<Vec<String>> = match arguments.value_of("hostfile") {
@@ -201,6 +205,9 @@ fn main() {
         },
         None => None,
     };
+
+    // Determine if only selected users will be loaded.
+    let selected_users: Option<PathBuf> = arguments.value_of("selected-users").map(PathBuf::from);
 
     // Get the logger arguments.
     let (log_to_file, log_directory): (bool, Option<String>) = match arguments.value_of("log") {
@@ -236,11 +243,12 @@ fn main() {
         .algorithm(algorithm)
         .batch_size(batch_size)
         .hosts(hosts)
-        .output_target(output_target)
+        .output_target(output_target.clone())
         .pad_with_dummy_users(pad_with_dummy_users)
         .process_id(process_id)
         .processes(processes)
         .report_connection_progress(report_connection_progess)
+        .selected_users(selected_users)
         .workers(workers);
 
     // Execute the algorithm.
@@ -251,7 +259,7 @@ fn main() {
         Ok(results) => {
             if process_id == 0 {
                 // Only save to file if output is requested.
-                if let OutputTarget::Directory(directory) = output_target_statistics {
+                if let OutputTarget::Directory(directory) = output_target {
                     // Parse the statistics to TOML.
                     if let Ok(results) = toml::to_string(&results) {
                         // Create the file name from the program name and the current time.

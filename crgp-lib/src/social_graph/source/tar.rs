@@ -6,6 +6,7 @@
 
 //! Load the social graph from TAR files.
 
+use std::collections::HashSet;
 use std::fs::read_dir;
 use std::fs::File;
 use std::io::BufRead;
@@ -49,9 +50,20 @@ lazy_static! {
 /// where loaded, the total number of explicitly given friendships, and the total number of all friendships.
 pub fn load(path: &PathBuf,
             pad_with_dummy_users: bool,
+            selected_users_file: Option<PathBuf>,
             graph_input: &mut Handle<u64, (UserID, Vec<UserID>)>
     ) -> Result<(u64, u64, u64)>
 {
+    // Get a set of selected users to load from the social graph. If `None`, the entire social graph will be loaded.
+    let selected_users: Option<HashSet<UserID>> = match selected_users_file {
+        Some(file) => {
+            let mut selected_users: HashSet<UserID> = HashSet::new();
+            get_selected_friends(&file, &mut selected_users)?;
+            Some(selected_users)
+        },
+        None => None
+    };
+
     let mut total_expected_friendships: u64 = 0;
     let mut total_given_friendships: u64 = 0;
     let mut users: u64 = 0;
@@ -122,6 +134,13 @@ pub fn load(path: &PathBuf,
                     None => continue
                 };
 
+                // If only selected users are requested: skip this users if they are not on the VIP list.
+                if let Some(ref selected_users) = selected_users {
+                    if !selected_users.contains(&user) {
+                        continue;
+                    }
+                }
+
                 // Parse the file.
                 let reader = BufReader::new(file);
                 let (expected_friendships, mut friendships) = parse_friend_file(reader, &friends_path, user);
@@ -173,6 +192,35 @@ fn create_dummy_friends(amount: u64) -> Vec<UserID> {
         dummies.push(-(dummy_id as UserID))
     }
     dummies
+}
+
+/// Load the given file `path` and insert all user IDs into the `out` set of friends to load. Errors on any I/O error.
+fn get_selected_friends(path: &PathBuf, out: &mut HashSet<UserID>) -> Result<()> {
+    let file = File::open(path)?;
+    let reader = BufReader::new(file);
+
+    for line in reader.lines() {
+        let id: String = match line {
+            Ok(line) => line,
+            Err(message) => {
+                warn!("Invalid line in file {file}: {error}", file = path.display(), error = message);
+                continue;
+            }
+        };
+
+        match id.parse::<UserID>() {
+            Ok(id) => {
+                let _ = out.insert(id);
+            },
+            Err(message) => {
+                warn!("Could not parse user ID '{user}' in file {file}: {error}",
+                      user = id, file = path.display(), error = message);
+                continue;
+            }
+        }
+    }
+
+    Ok(())
 }
 
 /// Get the user ID encoded in the file `path`. Return `None` if any error occurred.

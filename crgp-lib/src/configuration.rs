@@ -96,6 +96,7 @@ impl fmt::Display for OutputTarget {
 /// assert_eq!(configuration.process_id, 0);
 /// assert_eq!(configuration.report_connection_progress, false);
 /// assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+/// assert_eq!(configuration.selected_users, None);
 /// assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
 /// ```
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -135,6 +136,10 @@ pub struct Configuration {
     /// Path to the file containing the Retweets.
     pub retweets: String,
 
+    /// Path to a file containing the user IDs (one per line) that will be loaded from the social graph. Other users in
+    /// the graph will be skipped. If `None`, all users will be loaded.
+    pub selected_users: Option<PathBuf>,
+
     /// Path to the data set containing the social graph.
     pub social_graph: String,
 
@@ -160,6 +165,7 @@ impl Configuration {
     ///  * `pad_with_dummy_users`: `false`
     ///  * `process_id`: `0`
     ///  * `report_connection_progress`: `false`
+    ///  * `selected_users`: `None`
     pub fn default(retweets: String, social_graph: String) -> Configuration {
         Configuration {
             algorithm: Algorithm::GALE,
@@ -172,6 +178,7 @@ impl Configuration {
             process_id: 0,
             report_connection_progress: false,
             retweets: retweets,
+            selected_users: None,
             social_graph: social_graph,
             _prevent_outside_initialization: true,
         }
@@ -230,6 +237,14 @@ impl Configuration {
     #[inline]
     pub fn report_connection_progress(mut self, report: bool) -> Configuration {
         self.report_connection_progress = report;
+        self
+    }
+
+    /// Set the path to a file containing the user IDs (one per line) that will be loaded from the social graph. Other
+    /// users in the graph will be skipped. If `None`, all users will be loaded.
+    #[inline]
+    pub fn selected_users(mut self, users: Option<PathBuf>) -> Configuration {
+        self.selected_users = users;
         self
     }
 
@@ -335,6 +350,7 @@ mod tests {
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.selected_users, None);
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
@@ -357,6 +373,7 @@ mod tests {
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.selected_users, None);
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
@@ -379,6 +396,7 @@ mod tests {
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.selected_users, None);
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
@@ -410,6 +428,7 @@ mod tests {
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.selected_users, None);
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
@@ -434,6 +453,7 @@ mod tests {
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.selected_users, None);
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
@@ -456,6 +476,7 @@ mod tests {
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.selected_users, None);
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
@@ -478,6 +499,7 @@ mod tests {
         assert_eq!(configuration.process_id, 42);
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.selected_users, None);
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
@@ -500,6 +522,7 @@ mod tests {
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.selected_users, None);
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
@@ -522,6 +545,31 @@ mod tests {
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, true);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.selected_users, None);
+        assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert!(configuration._prevent_outside_initialization);
+    }
+
+    #[test]
+    fn selected_users() {
+        let retweets = String::from("path/to/retweets.json");
+        let selected_users = PathBuf::from("path/to/selected/users.txt");
+        let social_graph = String::from("path/to/social/graph");
+
+        let configuration = Configuration::default(retweets, social_graph)
+            .selected_users(Some(selected_users));
+
+        assert_eq!(configuration.algorithm, Algorithm::GALE);
+        assert_eq!(configuration.batch_size, 500);
+        assert_eq!(configuration.hosts, None);
+        assert_eq!(configuration.number_of_processes, 1);
+        assert_eq!(configuration.number_of_workers, 1);
+        assert_eq!(configuration.output_target, OutputTarget::StdOut);
+        assert_eq!(configuration.pad_with_dummy_users, false);
+        assert_eq!(configuration.process_id, 0);
+        assert_eq!(configuration.report_connection_progress, false);
+        assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.selected_users, Some(PathBuf::from("path/to/selected/users.txt")));
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
@@ -544,6 +592,7 @@ mod tests {
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
         assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.selected_users, None);
         assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
