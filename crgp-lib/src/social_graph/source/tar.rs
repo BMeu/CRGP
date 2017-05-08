@@ -134,7 +134,7 @@ pub fn load(path: &PathBuf,
                     None => continue
                 };
 
-                // If only selected users are requested: skip this users if they are not on the VIP list.
+                // If only selected users are requested: skip this user if they are not on the VIP list.
                 if let Some(ref selected_users) = selected_users {
                     if !selected_users.contains(&user) {
                         continue;
