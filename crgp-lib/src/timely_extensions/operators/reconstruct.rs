@@ -117,10 +117,13 @@ where G::Timestamp: Hash {
                 // Input 2: Capture all friends for each user.
                 friendships.for_each(|_time, friendship_data| {
                     for friendship in friendship_data.take().iter() {
-                        edges.entry(friendship.0)
-                            .or_insert_with(HashSet::new)
-                            .extend(friendship.1.iter());
+                        let friendship_set: &mut HashSet<UserID> = edges.entry(friendship.0)
+                            .or_insert_with(|| HashSet::with_capacity(friendship.1.len()));
+                        friendship_set.extend(friendship.1.iter());
+                        friendship_set.shrink_to_fit();
                     };
+
+                    edges.shrink_to_fit();
                 });
             }
         )
