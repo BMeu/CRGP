@@ -19,6 +19,7 @@ use timely::dataflow::operators::binary::Binary;
 
 use UserID;
 use social_graph::InfluenceEdge;
+use social_graph::SocialGraph;
 use twitter::Tweet;
 
 /// Find possible influence edges within social graphs.
@@ -38,7 +39,7 @@ impl<G: Scope> FindPossibleInfluences<G> for Stream<G, (UserID, Vec<UserID>)>
                                 activated_users: Rc<RefCell<HashMap<u64, HashMap<UserID, u64>>>>)
                                 -> Stream<G, InfluenceEdge<UserID>> {
         // For each user, given by their ID, the set of their friends, given by their ID.
-        let mut edges: HashMap<UserID, HashSet<UserID>> = HashMap::new();
+        let mut edges = SocialGraph::new();
 
         self.binary_stream(
             &retweets,
