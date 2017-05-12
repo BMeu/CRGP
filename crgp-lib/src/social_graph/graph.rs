@@ -7,7 +7,6 @@
 //! A social graph structure with methods similar to Rust's container methods.
 
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::collections::hash_map::Entry;
 
 use UserID;
@@ -19,7 +18,7 @@ pub struct SocialGraph {
     /// The actual container storing the social graph.
     ///
     /// For each user, a set of their friends.
-    graph: HashMap<UserID, HashSet<UserID>>,
+    graph: HashMap<UserID, Vec<UserID>>,
 }
 
 impl SocialGraph {
@@ -36,12 +35,12 @@ impl SocialGraph {
     }
 
     /// Get the given key's corresponding entry in the map for in-place manipulation.
-    pub fn entry(&mut self, key: UserID) -> Entry<UserID, HashSet<UserID>> {
+    pub fn entry(&mut self, key: UserID) -> Entry<UserID, Vec<UserID>> {
         self.graph.entry(key)
     }
 
     /// Return a reference to the value corresponding to the key.
-    pub fn get(&self, key: &UserID) -> Option<&HashSet<UserID>> {
+    pub fn get(&self, key: &UserID) -> Option<&Vec<UserID>> {
         self.graph.get(key)
     }
 }

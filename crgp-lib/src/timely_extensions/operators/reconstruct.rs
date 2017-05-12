@@ -7,7 +7,6 @@
 //! Reconstruct retweet cascades.
 
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::hash::Hash;
 
 use timely::dataflow::Stream;
@@ -71,7 +70,7 @@ where G::Timestamp: Hash {
 
                         // If this is the worker storing the retweeting user's friends, find
                         // all influences. Otherwise, move on.
-                        let friends: &HashSet<UserID> = match edges.get(&retweet.user.id) {
+                        let friends: &Vec<UserID> = match edges.get(&retweet.user.id) {
                             Some(friends) => friends,
                             None => continue
                         };
@@ -97,9 +96,10 @@ where G::Timestamp: Hash {
                             // Iterate over the activations.
                             for (user_id, activation_timestamp) in cascade_activations {
                                 // If the current activation is not a friend, move on.
-                                let friend: UserID = match friends.get(user_id) {
-                                    Some(friend) => *friend,
-                                    None => continue
+                                let friend: UserID = if friends.contains(user_id) {
+                                    *user_id
+                                } else {
+                                    continue;
                                 };
 
                                 // Ensure the influence is possible.
@@ -118,10 +118,11 @@ where G::Timestamp: Hash {
                 // Input 2: Capture all friends for each user.
                 friendships.for_each(|_time, friendship_data| {
                     for friendship in friendship_data.take().iter() {
-                        let friendship_set: &mut HashSet<UserID> = edges.entry(friendship.0)
-                            .or_insert_with(|| HashSet::with_capacity(friendship.1.len()));
+                        let friendship_set: &mut Vec<UserID> = edges.entry(friendship.0)
+                            .or_insert_with(|| Vec::with_capacity(friendship.1.len()));
                         friendship_set.extend(friendship.1.iter());
                         friendship_set.shrink_to_fit();
+                        friendship_set.sort();
                     };
 
                     edges.shrink_to_fit();
