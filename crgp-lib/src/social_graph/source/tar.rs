@@ -144,23 +144,13 @@ pub fn load(path: &PathBuf,
                 // Parse the file.
                 let reader = BufReader::new(file);
                 let (expected_friendships, mut friendships) = parse_friend_file(reader, &friends_path, user);
-
-                // Log how many friends were found.
-                let given_frienships: u64 = friendships.len() as u64;
-                trace!("User {user}: {given} of {expected} friends found",
-                       user = user, given = given_frienships, expected = expected_friendships);
-
-                // The data might be inconsistent and contain more friendships than expected.
-                if given_frienships > expected_friendships {
-                    warn!("User {user} has more friends ({given}) than claimed ({claim})",
-                          user = user, given = given_frienships, claim = expected_friendships);
-                }
+                let given_friendships: u64 = friendships.len() as u64;
 
                 // Introduce dummy friends if required. To avoid any overflows, we must first ensure that there are less
                 // given friends than expected ones.
-                let user_has_missing_friends: bool = given_frienships < expected_friendships;
+                let user_has_missing_friends: bool = given_friendships < expected_friendships;
                 if pad_with_dummy_users && user_has_missing_friends {
-                    let number_of_missing_friends: u64 = expected_friendships - given_frienships;
+                    let number_of_missing_friends: u64 = expected_friendships - given_friendships;
                     friendships.extend(create_dummy_friends(number_of_missing_friends));
                     trace!("User {user}: created {number} dummy friends",
                            user = user, number = number_of_missing_friends);
@@ -173,7 +163,7 @@ pub fn load(path: &PathBuf,
                 }
 
                 // Update social graph statistics.
-                total_given_friendships += given_frienships;
+                total_given_friendships += given_friendships;
                 total_expected_friendships += expected_friendships;
                 users += 1;
 
@@ -331,6 +321,17 @@ fn parse_friend_file<R: Read>(reader: BufReader<R>, file_path: &PathBuf, user: U
             }
         })
         .collect();
+
+    // Log how many friends were found.
+    let given_friendships: u64 = found_friendships.len() as u64;
+    trace!("User {user}: {given} of {expected} friends found",
+           user = user, given = given_friendships, expected = expected_number_of_friends);
+
+    // The data might be inconsistent and contain more friendships than expected.
+    if given_friendships > expected_number_of_friends {
+        warn!("User {user} has more friends ({given}) than claimed ({claim})",
+              user = user, given = given_friendships, claim = expected_number_of_friends);
+    }
 
     (expected_number_of_friends, found_friendships)
 }
