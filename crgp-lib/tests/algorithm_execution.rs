@@ -39,11 +39,11 @@ fn algorithm_execution_gale() {
 
     // Capturing STDOUT currently only works on Unix systems.
     if cfg!(unix) {
-        let _lock = STDOUT_MUTEX.lock().unwrap();
-        let mut buffer = BufferRedirect::stdout().unwrap();
+        let _lock = STDOUT_MUTEX.lock().expect("Could not lock STDOUT");
+        let mut buffer = BufferRedirect::stdout().expect("Could not redirect STDOUT");
         let result: Result<Statistics> = crgp_lib::run(configuration);
         let mut output = String::new();
-        buffer.read_to_string(&mut output).unwrap();
+        buffer.read_to_string(&mut output).expect("Could not read STDOUT buffer");
         drop(buffer);
 
         assert!(result.is_ok());
@@ -85,11 +85,11 @@ fn algorithm_execution_gale_with_selected_users() {
 
     // Capturing STDOUT currently only works on Unix systems.
     if cfg!(unix) {
-        let _lock = STDOUT_MUTEX.lock().unwrap();
-        let mut buffer = BufferRedirect::stdout().unwrap();
+        let _lock = STDOUT_MUTEX.lock().expect("Could not lock STDOUT");
+        let mut buffer = BufferRedirect::stdout().expect("Could not redirect STDOUT");
         let result: Result<Statistics> = crgp_lib::run(configuration);
         let mut output = String::new();
-        buffer.read_to_string(&mut output).unwrap();
+        buffer.read_to_string(&mut output).expect("Could not read STDOUT buffer");
         drop(buffer);
 
         assert!(result.is_ok());
@@ -130,11 +130,11 @@ fn algorithm_execution_gale_with_dummy_users() {
 
     // Capturing STDOUT currently only works on Unix systems.
     if cfg!(unix) {
-        let _lock = STDOUT_MUTEX.lock().unwrap();
-        let mut buffer = BufferRedirect::stdout().unwrap();
+        let _lock = STDOUT_MUTEX.lock().expect("Could not lock STDOUT");
+        let mut buffer = BufferRedirect::stdout().expect("Could not redirect STDOUT");
         let result: Result<Statistics> = crgp_lib::run(configuration);
         let mut output = String::new();
-        buffer.read_to_string(&mut output).unwrap();
+        buffer.read_to_string(&mut output).expect("Could not read STDOUT buffer");
         drop(buffer);
 
         assert!(result.is_ok());
@@ -177,11 +177,11 @@ fn algorithm_execution_gale_with_selected_users_and_dummy_friends() {
 
     // Capturing STDOUT currently only works on Unix systems.
     if cfg!(unix) {
-        let _lock = STDOUT_MUTEX.lock().unwrap();
-        let mut buffer = BufferRedirect::stdout().unwrap();
+        let _lock = STDOUT_MUTEX.lock().expect("Could not lock STDOUT");
+        let mut buffer = BufferRedirect::stdout().expect("Could not redirect STDOUT");
         let result: Result<Statistics> = crgp_lib::run(configuration);
         let mut output = String::new();
-        buffer.read_to_string(&mut output).unwrap();
+        buffer.read_to_string(&mut output).expect("Could not read STDOUT buffer");
         drop(buffer);
 
         assert!(result.is_ok());
@@ -222,11 +222,11 @@ fn algorithm_execution_leaf() {
 
     // Capturing STDOUT currently only works on Unix systems.
     if cfg!(unix) {
-        let _lock = STDOUT_MUTEX.lock().unwrap();
-        let mut buffer = BufferRedirect::stdout().unwrap();
+        let _lock = STDOUT_MUTEX.lock().expect("Could not lock STDOUT");
+        let mut buffer = BufferRedirect::stdout().expect("Could not redirect STDOUT");
         let result: Result<Statistics> = crgp_lib::run(configuration);
         let mut output = String::new();
-        buffer.read_to_string(&mut output).unwrap();
+        buffer.read_to_string(&mut output).expect("Could not read STDOUT buffer");
         drop(buffer);
 
         assert!(result.is_ok());
@@ -269,11 +269,11 @@ fn algorithm_execution_leaf_with_selected_users() {
 
     // Capturing STDOUT currently only works on Unix systems.
     if cfg!(unix) {
-        let _lock = STDOUT_MUTEX.lock().unwrap();
-        let mut buffer = BufferRedirect::stdout().unwrap();
+        let _lock = STDOUT_MUTEX.lock().expect("Could not lock STDOUT");
+        let mut buffer = BufferRedirect::stdout().expect("Could not redirect STDOUT");
         let result: Result<Statistics> = crgp_lib::run(configuration);
         let mut output = String::new();
-        buffer.read_to_string(&mut output).unwrap();
+        buffer.read_to_string(&mut output).expect("Could not read STDOUT buffer");
         drop(buffer);
 
         assert!(result.is_ok());
@@ -315,11 +315,11 @@ fn algorithm_execution_leaf_with_dummy_users() {
 
     // Capturing STDOUT currently only works on Unix systems.
     if cfg!(unix) {
-        let _lock = STDOUT_MUTEX.lock().unwrap();
-        let mut buffer = BufferRedirect::stdout().unwrap();
+        let _lock = STDOUT_MUTEX.lock().expect("Could not lock STDOUT");
+        let mut buffer = BufferRedirect::stdout().expect("Could not redirect STDOUT");
         let result: Result<Statistics> = crgp_lib::run(configuration);
         let mut output = String::new();
-        buffer.read_to_string(&mut output).unwrap();
+        buffer.read_to_string(&mut output).expect("Could not read STDOUT buffer");
         drop(buffer);
 
         assert!(result.is_ok());
@@ -363,11 +363,11 @@ fn algorithm_execution_leaf_with_selected_users_and_dummy_friends() {
 
     // Capturing STDOUT currently only works on Unix systems.
     if cfg!(unix) {
-        let _lock = STDOUT_MUTEX.lock().unwrap();
-        let mut buffer = BufferRedirect::stdout().unwrap();
+        let _lock = STDOUT_MUTEX.lock().expect("Could not lock STDOUT");
+        let mut buffer = BufferRedirect::stdout().expect("Could not redirect STDOUT");
         let result: Result<Statistics> = crgp_lib::run(configuration);
         let mut output = String::new();
-        buffer.read_to_string(&mut output).unwrap();
+        buffer.read_to_string(&mut output).expect("Could not read STDOUT buffer");
         drop(buffer);
 
         assert!(result.is_ok());

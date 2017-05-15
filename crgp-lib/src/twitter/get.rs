@@ -79,7 +79,7 @@ mod tests {
         let path = PathBuf::from(String::from("../data/retweets.json"));
         let retweets: Result<Vec<Tweet>> = super::from_file(&path);
         assert!(retweets.is_ok());
-        let retweets: Vec<Tweet> = retweets.unwrap();
+        let retweets: Vec<Tweet> = retweets.expect("Retweet parsing failed, but previous assertion told otherwise.");
         assert_eq!(retweets.len(), 6);
 
         // The Tweets must be sorted on their timestamp.

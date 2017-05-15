@@ -30,45 +30,45 @@ mod tests {
     fn usize() {
         let result: Result<(), String> = super::usize(String::from(""));
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), String::from("The value must be an integer."));
+        assert_eq!(result.expect_err("Result is not error"), String::from("The value must be an integer."));
 
         let result: Result<(), String> = super::usize(String::from("a"));
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), String::from("The value must be an integer."));
+        assert_eq!(result.expect_err("Result is not error"), String::from("The value must be an integer."));
 
         let result: Result<(), String> = super::usize(String::from("-1"));
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), String::from("The value must be an integer."));
+        assert_eq!(result.expect_err("Result is not error"), String::from("The value must be an integer."));
 
         let result: Result<(), String> = super::usize(String::from("0"));
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), ());
+        assert_eq!(result.expect("Result is not ok"), ());
 
         let result: Result<(), String> = super::usize(String::from("1"));
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), ());
+        assert_eq!(result.expect("Result is not ok"), ());
     }
     
     #[test]
     fn positive_usize() {
         let result: Result<(), String> = super::positive_usize(String::from(""));
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), String::from("The value must be a positive integer."));
+        assert_eq!(result.expect_err("Result is not error"), String::from("The value must be a positive integer."));
 
         let result: Result<(), String> = super::positive_usize(String::from("a"));
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), String::from("The value must be a positive integer."));
+        assert_eq!(result.expect_err("Result is not error"), String::from("The value must be a positive integer."));
 
         let result: Result<(), String> = super::positive_usize(String::from("-1"));
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), String::from("The value must be a positive integer."));
+        assert_eq!(result.expect_err("Result is not error"), String::from("The value must be a positive integer."));
 
         let result: Result<(), String> = super::positive_usize(String::from("0"));
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), String::from("The value must be a positive integer."));
+        assert_eq!(result.expect_err("Result is not error"), String::from("The value must be a positive integer."));
 
         let result: Result<(), String> = super::positive_usize(String::from("1"));
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), ());
+        assert_eq!(result.expect("Result is not ok"), ());
     }
 }

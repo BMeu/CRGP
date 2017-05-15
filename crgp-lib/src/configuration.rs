@@ -606,7 +606,7 @@ mod tests {
         let mut configuration = Configuration::default(retweets.clone(), social_graph.clone());
         let timely_config = configuration.get_timely_configuration();
         assert!(timely_config.is_ok());
-        match timely_config.unwrap() {
+        match timely_config.expect("Failed to get the Timely configuration") {
             TimelyConfiguration::Thread => {
                 assert!(true)
             },
@@ -618,7 +618,7 @@ mod tests {
             .workers(13);
         let timely_config = configuration.get_timely_configuration();
         assert!(timely_config.is_ok());
-        match timely_config.unwrap() {
+        match timely_config.expect("Failed to get the Timely configuration") {
             TimelyConfiguration::Process(workers) => {
                 assert_eq!(workers, 13);
             },
@@ -632,8 +632,10 @@ mod tests {
             .process_id(43);
         let timely_config = configuration.get_timely_configuration();
         assert!(timely_config.is_err());
-        // Since `TimelyConfiguration` does not implement `Debug`, we have to get rid of it before calling `unwrap_err`.
-        assert_eq!(timely_config.map(|_| ()).unwrap_err().description(),
+        // Since `TimelyConfiguration` does not implement `Debug`, we have to get rid of it before calling `expect_err`.
+        assert_eq!(timely_config.map(|_| ())
+                    .expect_err("unexpectedly succeeded getting the Timely configuration")
+                    .description(),
                    "the process ID is not in range of all processes");
 
         // Multiple processes, with hosts, wrong number of addresses.
@@ -648,8 +650,10 @@ mod tests {
             ]));
         let timely_config = configuration.get_timely_configuration();
         assert!(timely_config.is_err());
-        // Since `TimelyConfiguration` does not implement `Debug`, we have to get rid of it before calling `unwrap_err`.
-        assert_eq!(timely_config.map(|_| ()).unwrap_err().description(),
+        // Since `TimelyConfiguration` does not implement `Debug`, we have to get rid of it before calling `expect_err`.
+        assert_eq!(timely_config.map(|_| ())
+                    .expect_err("unexpectedly succeeded getting the Timely configuration")
+                    .description(),
                    "3 hosts given, but expected 42");
 
         // Multiple processes, with hosts.
@@ -664,7 +668,7 @@ mod tests {
             ]));
         let timely_config = configuration.get_timely_configuration();
         assert!(timely_config.is_ok());
-        match timely_config.unwrap() {
+        match timely_config.expect("Failed to get the Timely configuration") {
             TimelyConfiguration::Cluster(workers, id, hosts, report) => {
                 assert_eq!(workers, 13);
                 assert_eq!(id, 2);
@@ -691,7 +695,7 @@ mod tests {
             .process_id(2);
         let timely_config = configuration.get_timely_configuration();
         assert!(timely_config.is_ok());
-        match timely_config.unwrap() {
+        match timely_config.expect("Failed to get the Timely configuration") {
             TimelyConfiguration::Cluster(workers, id, hosts, report) => {
                 assert_eq!(workers, 13);
                 assert_eq!(id, 2);
