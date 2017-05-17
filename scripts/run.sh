@@ -18,9 +18,10 @@ for exe in ${execs[*]}
 do
     for w in `seq 1 ${workers}`
     do
+        path="results/${exe}-${w}"
+        mkdir ${path}
         for r in `seq 1 ${runs}`
         do
-            path="results/${exe}-${w}"
             command="./${exe} -w ${w} -o ${path} ~/socialgraph/friends-tar ~/cascades/6-100\n"
             eval ${command}
         done
