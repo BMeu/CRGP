@@ -76,40 +76,16 @@ where G::Timestamp: Hash {
                             None => continue
                         };
 
-                        // If the number of friends is smaller than the number of activations for
-                        // this cascade, iterate over the friends, otherwise iterate over the
-                        // activations.
-                        if friends.len() <= cascade_activations.len() {
-                            // Iterate over the friends.
-                            for &friend in friends {
-                                let is_influencer_activated: bool = match cascade_activations.get(&friend) {
-                                    Some(activation_timestamp) => &retweet.created_at > activation_timestamp,
-                                    None => false
-                                };
-                                if is_influencer_activated {
-                                    let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at,
-                                                                       retweet.id, original_tweet.id,
-                                                                       original_tweet.user.id);
-                                    output.session(&time).give(influence);
-                                }
-                            }
-                        } else {
-                            // Iterate over the activations.
-                            for (user_id, activation_timestamp) in cascade_activations {
-                                // If the current activation is not a friend, move on.
-                                let friend: UserID = match friends.get(user_id) {
-                                    Some(friend) => *friend,
-                                    None => continue
-                                };
-
-                                // Ensure the influence is possible.
-                                let is_influencer_activated: bool = &retweet.created_at > activation_timestamp;
-                                if is_influencer_activated {
-                                    let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at,
-                                                                       retweet.id, original_tweet.id,
-                                                                       original_tweet.user.id);
-                                    output.session(&time).give(influence);
-                                }
+                        for &friend in friends {
+                            let is_influencer_activated: bool = match cascade_activations.get(&friend) {
+                                Some(activation_timestamp) => &retweet.created_at > activation_timestamp,
+                                None => false
+                            };
+                            if is_influencer_activated {
+                                let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at,
+                                                                   retweet.id, original_tweet.id,
+                                                                   original_tweet.user.id);
+                                output.session(&time).give(influence);
                             }
                         }
                     };
