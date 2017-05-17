@@ -96,7 +96,7 @@ where G::Timestamp: Hash {
                             // Iterate over the activations.
                             for (user_id, activation_timestamp) in cascade_activations {
                                 // If the current activation is not a friend, move on.
-                                let friend: UserID = if friends.binary_search(user_id).is_ok() {
+                                let friend: UserID = if friends.contains(user_id) {
                                     *user_id
                                 } else {
                                     continue;
@@ -122,7 +122,6 @@ where G::Timestamp: Hash {
                             .or_insert_with(|| Vec::with_capacity(friendship.1.len()));
                         friendship_set.extend(friendship.1.iter());
                         friendship_set.shrink_to_fit();
-                        friendship_set.sort();
                     };
 
                     edges.shrink_to_fit();
