@@ -22,15 +22,15 @@ do
     mv target/release/crgp ${executable}
 done
 
-for executable in ${executables[*]}
+for run in `seq 1 ${runs}`
 do
     for worker in `seq 1 ${workers}`
     do
-        output="results/${executable}-${worker}"
-        mkdir ${output}
-        for run in `seq 1 ${runs}`
+        for executable in ${executables[*]}
         do
-            command="./${executable} -w ${worker} -o ${output} ~/socialgraph/friends-tar ~/cascades/6-100.json"
+            output="results/${executable}-${worker}"
+            mkdir -p ${output}
+            command="./${executable} -w ${worker} -o ${output} ~/socialgraph/friends-tar ~/cascades/medium.json"
             eval ${command}
         done
     done
