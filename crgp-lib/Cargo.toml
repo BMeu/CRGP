@@ -24,6 +24,7 @@ timely_communication = "0.1"
 
 [dev-dependencies]
 quickcheck = "0.4"
+rand = "0.3"
 
 [target.'cfg(unix)'.dev-dependencies]
 gag = "0.1"
