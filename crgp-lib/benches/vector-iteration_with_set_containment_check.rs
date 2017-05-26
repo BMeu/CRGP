@@ -268,6 +268,231 @@ fn vec_iter_100000_unsorted_empty_set(bencher: &mut Bencher) {
 }
 
 #[bench]
+fn vec_iter_10_sorted_set_size_1(bencher: &mut Bencher) {
+    let mut list: Vec<i64> = get_unsorted_list_of_size(10);
+    list.sort();
+    let set: HashSet<i64> = get_set(10, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_10_unsorted_set_size_1(bencher: &mut Bencher) {
+    let list: Vec<i64> = get_unsorted_list_of_size(10);
+    let set: HashSet<i64> = get_set(10, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_50_sorted_set_size_1(bencher: &mut Bencher) {
+    let mut list: Vec<i64> = get_unsorted_list_of_size(50);
+    list.sort();
+    let set: HashSet<i64> = get_set(50, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_50_unsorted_set_size_1(bencher: &mut Bencher) {
+    let list: Vec<i64> = get_unsorted_list_of_size(50);
+    let set: HashSet<i64> = get_set(50, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_100_sorted_set_size_1(bencher: &mut Bencher) {
+    let mut list: Vec<i64> = get_unsorted_list_of_size(100);
+    list.sort();
+    let set: HashSet<i64> = get_set(100, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_100_unsorted_set_size_1(bencher: &mut Bencher) {
+    let list: Vec<i64> = get_unsorted_list_of_size(100);
+    let set: HashSet<i64> = get_set(100, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_500_sorted_set_size_1(bencher: &mut Bencher) {
+    let mut list: Vec<i64> = get_unsorted_list_of_size(500);
+    list.sort();
+    let set: HashSet<i64> = get_set(500, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_500_unsorted_set_size_1(bencher: &mut Bencher) {
+    let list: Vec<i64> = get_unsorted_list_of_size(500);
+    let set: HashSet<i64> = get_set(500, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_1000_sorted_set_size_1(bencher: &mut Bencher) {
+    let mut list: Vec<i64> = get_unsorted_list_of_size(1_000);
+    list.sort();
+    let set: HashSet<i64> = get_set(1_000, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_1000_unsorted_set_size_1(bencher: &mut Bencher) {
+    let list: Vec<i64> = get_unsorted_list_of_size(1_000);
+    let set: HashSet<i64> = get_set(1_000, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_5000_sorted_set_size_1(bencher: &mut Bencher) {
+    let mut list: Vec<i64> = get_unsorted_list_of_size(5_000);
+    list.sort();
+    let set: HashSet<i64> = get_set(5_000, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_5000_unsorted_set_size_1(bencher: &mut Bencher) {
+    let list: Vec<i64> = get_unsorted_list_of_size(5_000);
+    let set: HashSet<i64> = get_set(5_000, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_10000_sorted_set_size_1(bencher: &mut Bencher) {
+    let mut list: Vec<i64> = get_unsorted_list_of_size(10_000);
+    list.sort();
+    let set: HashSet<i64> = get_set(10_000, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_10000_unsorted_set_size_1(bencher: &mut Bencher) {
+    let list: Vec<i64> = get_unsorted_list_of_size(10_000);
+    let set: HashSet<i64> = get_set(10_000, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_50000_sorted_set_size_1(bencher: &mut Bencher) {
+    let mut list: Vec<i64> = get_unsorted_list_of_size(50_000);
+    list.sort();
+    let set: HashSet<i64> = get_set(50_000, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_50000_unsorted_set_size_1(bencher: &mut Bencher) {
+    let list: Vec<i64> = get_unsorted_list_of_size(50_000);
+    let set: HashSet<i64> = get_set(50_000, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_100000_sorted_set_size_1(bencher: &mut Bencher) {
+    let mut list: Vec<i64> = get_unsorted_list_of_size(100_000);
+    list.sort();
+    let set: HashSet<i64> = get_set(100_000, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
+fn vec_iter_100000_unsorted_set_size_1(bencher: &mut Bencher) {
+    let list: Vec<i64> = get_unsorted_list_of_size(100_000);
+    let set: HashSet<i64> = get_set(100_000, 1);
+
+    bencher.iter(|| {
+        for item in list.iter() {
+            black_box(set.contains(item));
+        }
+    });
+}
+
+#[bench]
 fn vec_iter_10_sorted_set_size_100(bencher: &mut Bencher) {
     let mut list: Vec<i64> = get_unsorted_list_of_size(10);
     list.sort();
