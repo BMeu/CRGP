@@ -39,8 +39,7 @@ mod hashset {
     /// Get an unsorted list of the given `size`, turn it into a hash set, and return it.
     fn get_hashset_of_size(size: i64) -> HashSet<i64> {
         let list: Vec<i64> = get_unsorted_list_of_size(size);
-        let set: HashSet<i64> = HashSet::from_iter(list);
-        set
+        HashSet::from_iter(list)
     }
 
     #[bench]
