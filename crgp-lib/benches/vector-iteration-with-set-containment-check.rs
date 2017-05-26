@@ -50,7 +50,7 @@ fn vec_iter_10_sorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -62,7 +62,7 @@ fn vec_iter_10_unsorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -75,7 +75,7 @@ fn vec_iter_50_sorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -87,7 +87,7 @@ fn vec_iter_50_unsorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -100,7 +100,7 @@ fn vec_iter_100_sorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -112,7 +112,7 @@ fn vec_iter_100_unsorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -125,7 +125,7 @@ fn vec_iter_500_sorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -136,7 +136,7 @@ fn vec_iter_500_unsorted_empty_set(bencher: &mut Bencher) {
     let list: Vec<i64> = get_unsorted_list_of_size(500);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -149,7 +149,7 @@ fn vec_iter_1000_sorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -161,7 +161,7 @@ fn vec_iter_1000_unsorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -174,7 +174,7 @@ fn vec_iter_5000_sorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -186,7 +186,7 @@ fn vec_iter_5000_unsorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -199,7 +199,7 @@ fn vec_iter_10000_sorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -211,7 +211,7 @@ fn vec_iter_10000_unsorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -224,7 +224,7 @@ fn vec_iter_50000_sorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -236,7 +236,7 @@ fn vec_iter_50000_unsorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -249,7 +249,7 @@ fn vec_iter_100000_sorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -261,7 +261,7 @@ fn vec_iter_100000_unsorted_empty_set(bencher: &mut Bencher) {
     let set: HashSet<i64> = HashSet::new();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -274,7 +274,7 @@ fn vec_iter_10_sorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(10, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -286,7 +286,7 @@ fn vec_iter_10_unsorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(10, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -299,7 +299,7 @@ fn vec_iter_50_sorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(50, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -311,7 +311,7 @@ fn vec_iter_50_unsorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(50, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -324,7 +324,7 @@ fn vec_iter_100_sorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(100, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -336,7 +336,7 @@ fn vec_iter_100_unsorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(100, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -349,7 +349,7 @@ fn vec_iter_500_sorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(500, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -361,7 +361,7 @@ fn vec_iter_500_unsorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(500, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -374,7 +374,7 @@ fn vec_iter_1000_sorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(1_000, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -386,7 +386,7 @@ fn vec_iter_1000_unsorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(1_000, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -399,7 +399,7 @@ fn vec_iter_5000_sorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(5_000, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -411,7 +411,7 @@ fn vec_iter_5000_unsorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(5_000, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -424,7 +424,7 @@ fn vec_iter_10000_sorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(10_000, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -436,7 +436,7 @@ fn vec_iter_10000_unsorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(10_000, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -449,7 +449,7 @@ fn vec_iter_50000_sorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(50_000, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -461,7 +461,7 @@ fn vec_iter_50000_unsorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(50_000, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -474,7 +474,7 @@ fn vec_iter_100000_sorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(100_000, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -486,7 +486,7 @@ fn vec_iter_100000_unsorted_failing_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(100_000, 100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -499,7 +499,7 @@ fn vec_iter_10_sorted_succeeding_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(0, 10);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -511,7 +511,7 @@ fn vec_iter_10_unsorted_succeeding_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(0, 10);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -524,7 +524,7 @@ fn vec_iter_50_sorted_succeeding_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(0, 50);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -536,7 +536,7 @@ fn vec_iter_50_unsorted_succeeding_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(0, 50);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -549,7 +549,7 @@ fn vec_iter_100_sorted_succeeding_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(0, 100);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -561,7 +561,7 @@ fn vec_iter_100_unsorted_succeeding_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(0, 100);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -574,7 +574,7 @@ fn vec_iter_500_sorted_succeeding_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(0, 500);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -586,7 +586,7 @@ fn vec_iter_500_unsorted_succeeding_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(0, 500);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -599,7 +599,7 @@ fn vec_iter_1000_sorted_succeeding_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(0, 1_000);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -611,7 +611,7 @@ fn vec_iter_1000_unsorted_succeeding_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(0, 1_000);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -624,7 +624,7 @@ fn vec_iter_5000_sorted_succeeding_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(0, 5_000);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -636,7 +636,7 @@ fn vec_iter_5000_unsorted_succeeding_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(0, 5_000);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -649,7 +649,7 @@ fn vec_iter_10000_sorted_succeeding_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(0, 10_000);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -661,7 +661,7 @@ fn vec_iter_10000_unsorted_succeeding_containment_checks(bencher: &mut Bencher) 
     let set: HashSet<i64> = get_set(0, 10_000);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -674,7 +674,7 @@ fn vec_iter_50000_sorted_succeeding_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(0, 50_000);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -686,7 +686,7 @@ fn vec_iter_50000_unsorted_succeeding_containment_checks(bencher: &mut Bencher) 
     let set: HashSet<i64> = get_set(0, 50_000);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -699,7 +699,7 @@ fn vec_iter_100000_sorted_succeeding_containment_checks(bencher: &mut Bencher) {
     let set: HashSet<i64> = get_set(0, 100_000);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });
@@ -711,7 +711,7 @@ fn vec_iter_100000_unsorted_succeeding_containment_checks(bencher: &mut Bencher)
     let set: HashSet<i64> = get_set(0, 100_000);;
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(set.contains(item));
         }
     });

@@ -37,7 +37,7 @@ fn vec_iter_10_sorted(bencher: &mut Bencher) {
     list.sort();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -48,7 +48,7 @@ fn vec_iter_10_unsorted(bencher: &mut Bencher) {
     let list: Vec<i64> = get_unsorted_list_of_size(10);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -60,7 +60,7 @@ fn vec_iter_50_sorted(bencher: &mut Bencher) {
     list.sort();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -71,7 +71,7 @@ fn vec_iter_50_unsorted(bencher: &mut Bencher) {
     let list: Vec<i64> = get_unsorted_list_of_size(50);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -83,7 +83,7 @@ fn vec_iter_100_sorted(bencher: &mut Bencher) {
     list.sort();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -94,7 +94,7 @@ fn vec_iter_100_unsorted(bencher: &mut Bencher) {
     let list: Vec<i64> = get_unsorted_list_of_size(100);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -106,7 +106,7 @@ fn vec_iter_500_sorted(bencher: &mut Bencher) {
     list.sort();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -117,7 +117,7 @@ fn vec_iter_500_unsorted(bencher: &mut Bencher) {
     let list: Vec<i64> = get_unsorted_list_of_size(500);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -129,7 +129,7 @@ fn vec_iter_1000_sorted(bencher: &mut Bencher) {
     list.sort();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -140,7 +140,7 @@ fn vec_iter_1000_unsorted(bencher: &mut Bencher) {
     let list: Vec<i64> = get_unsorted_list_of_size(1_000);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -152,7 +152,7 @@ fn vec_iter_5000_sorted(bencher: &mut Bencher) {
     list.sort();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -163,7 +163,7 @@ fn vec_iter_5000_unsorted(bencher: &mut Bencher) {
     let list: Vec<i64> = get_unsorted_list_of_size(5_000);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -175,7 +175,7 @@ fn vec_iter_10000_sorted(bencher: &mut Bencher) {
     list.sort();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -186,7 +186,7 @@ fn vec_iter_10000_unsorted(bencher: &mut Bencher) {
     let list: Vec<i64> = get_unsorted_list_of_size(10_000);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -198,7 +198,7 @@ fn vec_iter_50000_sorted(bencher: &mut Bencher) {
     list.sort();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -209,7 +209,7 @@ fn vec_iter_50000_unsorted(bencher: &mut Bencher) {
     let list: Vec<i64> = get_unsorted_list_of_size(50_000);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -221,7 +221,7 @@ fn vec_iter_100000_sorted(bencher: &mut Bencher) {
     list.sort();
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
@@ -232,7 +232,7 @@ fn vec_iter_100000_unsorted(bencher: &mut Bencher) {
     let list: Vec<i64> = get_unsorted_list_of_size(100_000);
 
     bencher.iter(|| {
-        for item in list.iter() {
+        for item in &list {
             black_box(&item);
         }
     });
