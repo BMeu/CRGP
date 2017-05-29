@@ -9,11 +9,13 @@
 #![feature(test)]
 
 extern crate fine_grained;
+extern crate fnv;
 extern crate rand;
 extern crate test;
 
 use std::collections::HashSet;
 
+use fnv::FnvHashSet;
 use rand::Rng;
 use rand::SeedableRng;
 use rand::StdRng;
@@ -54,6 +56,15 @@ fn get_set(start: i64, size: i64) -> HashSet<i64> {
     set
 }
 
+/// Get an FNV hash set with values in `[start, start + size)`.
+fn get_fnv_set(start: i64, size: i64) -> FnvHashSet<i64> {
+    let mut set: FnvHashSet<i64> = FnvHashSet::default();
+    for item in start..start + size {
+        set.insert(item);
+    }
+    set
+}
+
 /// Get an unsorted list of the given `size` of integers. Values are in the range `[0, size)`.
 fn get_unsorted_list_of_size(size: i64) -> Vec<i64> {
     // Always use the same values.
@@ -72,6 +83,7 @@ mod hashset {
     use std::collections::HashSet;
     use std::iter::FromIterator;
     use super::fmt_thousands_sep;
+    use super::get_fnv_set;
     use super::get_set;
     use super::get_unsorted_list_of_size;
     use super::ITERATIONS;
@@ -85,11 +97,13 @@ mod hashset {
     /// Do the containment check on a set of the same size as the list, with matching elements for all list elements.
     mod list_size_matching {
         use fine_grained::Stopwatch;
+        use fnv::FnvHashSet;
         use std::collections::HashSet;
         use test::black_box;
         use test::Bencher;
         use test::stats::Summary;
         use super::fmt_thousands_sep;
+        use super::get_fnv_set;
         use super::get_set;
         use super::get_hashset_of_size;
         use super::ITERATIONS;
@@ -114,12 +128,34 @@ mod hashset {
             println!("bench: {}", format_args!("{:>11} ns/iter (+/- {})", fmt_thousands_sep(median, ','),
                                                fmt_thousands_sep(deviation, ',')));
         }
+
+        #[bench]
+        fn iter_100000_containment_check_fnv(_bencher: &mut Bencher) {
+            let list: HashSet<i64> = get_hashset_of_size(100_000);
+            let set: FnvHashSet<i64> = get_fnv_set(0, 100_000);
+
+            let mut stopwatch = Stopwatch::start_new();
+            for _ in 0..ITERATIONS {
+                for item in &list {
+                    black_box(set.contains(item));
+                }
+                stopwatch.lap();
+            }
+            stopwatch.stop();
+
+            let summ = Summary::new(stopwatch.laps().iter().map(|s| *s as f64).collect::<Vec<f64>>().as_slice());
+            let median: usize = summ.median as usize;
+            let deviation: usize = (summ.max - summ.min) as usize;
+            println!("bench: {}", format_args!("{:>11} ns/iter (+/- {})", fmt_thousands_sep(median, ','),
+                                               fmt_thousands_sep(deviation, ',')));
+        }
     }
 }
 
 /// Measure the performance of sorted vectors.
 mod vector_sorted {
     use super::fmt_thousands_sep;
+    use super::get_fnv_set;
     use super::get_set;
     use super::get_unsorted_list_of_size;
     use super::ITERATIONS;
@@ -134,11 +170,13 @@ mod vector_sorted {
     /// Do the containment check on a set of the same size as the list, with matching elements for all list elements.
     mod list_size_matching {
         use fine_grained::Stopwatch;
+        use fnv::FnvHashSet;
         use std::collections::HashSet;
         use test::black_box;
         use test::Bencher;
         use test::stats::Summary;
         use super::fmt_thousands_sep;
+        use super::get_fnv_set;
         use super::get_set;
         use super::get_sorted_list_of_size;
         use super::ITERATIONS;
@@ -163,12 +201,34 @@ mod vector_sorted {
             println!("bench: {}", format_args!("{:>11} ns/iter (+/- {})", fmt_thousands_sep(median, ','),
                                                fmt_thousands_sep(deviation, ',')));
         }
+
+        #[bench]
+        fn iter_100000_containment_check_fnv(_bencher: &mut Bencher) {
+            let list: Vec<i64> = get_sorted_list_of_size(100_000);
+            let set: FnvHashSet<i64> = get_fnv_set(0, 100_000);
+
+            let mut stopwatch = Stopwatch::start_new();
+            for _ in 0..ITERATIONS {
+                for item in &list {
+                    black_box(set.contains(item));
+                }
+                stopwatch.lap();
+            }
+            stopwatch.stop();
+
+            let summ = Summary::new(stopwatch.laps().iter().map(|s| *s as f64).collect::<Vec<f64>>().as_slice());
+            let median: usize = summ.median as usize;
+            let deviation: usize = (summ.max - summ.min) as usize;
+            println!("bench: {}", format_args!("{:>11} ns/iter (+/- {})", fmt_thousands_sep(median, ','),
+                                               fmt_thousands_sep(deviation, ',')));
+        }
     }
 }
 
 /// Measure the performance of unsorted vectors.
 mod vector_unsorted {
     use super::fmt_thousands_sep;
+    use super::get_fnv_set;
     use super::get_set;
     use super::get_unsorted_list_of_size;
     use super::ITERATIONS;
@@ -176,11 +236,13 @@ mod vector_unsorted {
     /// Do the containment check on a set of the same size as the list, with matching elements for all list elements.
     mod list_size_matching {
         use fine_grained::Stopwatch;
+        use fnv::FnvHashSet;
         use std::collections::HashSet;
         use test::black_box;
         use test::Bencher;
         use test::stats::Summary;
         use super::fmt_thousands_sep;
+        use super::get_fnv_set;
         use super::get_set;
         use super::get_unsorted_list_of_size;
         use super::ITERATIONS;
@@ -189,6 +251,27 @@ mod vector_unsorted {
         fn iter_100000_containment_check(_bencher: &mut Bencher) {
             let list: Vec<i64> = get_unsorted_list_of_size(100_000);
             let set: HashSet<i64> = get_set(0, 100_000);
+
+            let mut stopwatch = Stopwatch::start_new();
+            for _ in 0..ITERATIONS {
+                for item in &list {
+                    black_box(set.contains(item));
+                }
+                stopwatch.lap();
+            }
+            stopwatch.stop();
+
+            let summ = Summary::new(stopwatch.laps().iter().map(|s| *s as f64).collect::<Vec<f64>>().as_slice());
+            let median: usize = summ.median as usize;
+            let deviation: usize = (summ.max - summ.min) as usize;
+            println!("bench: {}", format_args!("{:>11} ns/iter (+/- {})", fmt_thousands_sep(median, ','),
+                                               fmt_thousands_sep(deviation, ',')));
+        }
+
+        #[bench]
+        fn iter_100000_containment_check_fnv(_bencher: &mut Bencher) {
+            let list: Vec<i64> = get_unsorted_list_of_size(100_000);
+            let set: FnvHashSet<i64> = get_fnv_set(0, 100_000);
 
             let mut stopwatch = Stopwatch::start_new();
             for _ in 0..ITERATIONS {
