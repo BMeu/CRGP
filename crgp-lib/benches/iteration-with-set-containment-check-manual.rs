@@ -78,6 +78,126 @@ fn get_unsorted_list_of_size(size: i64) -> Vec<i64> {
     list
 }
 
+mod lookup {
+    use fine_grained::Stopwatch;
+    use fnv::FnvHashSet;
+    use std::collections::HashSet;
+    use test::black_box;
+    use test::Bencher;
+    use test::stats::Summary;
+    use super::fmt_thousands_sep;
+    use super::get_fnv_set;
+    use super::get_set;
+
+    #[bench]
+    fn containment_check(_bencher: &mut Bencher) {
+        let set: HashSet<i64> = get_set(0, 100_000);
+
+        let mut stopwatch = Stopwatch::start_new();
+        for item in 0..100_000 {
+            black_box(set.contains(&item));
+            stopwatch.lap();
+        }
+        stopwatch.stop();
+
+        let summ = Summary::new(stopwatch.laps().clone().iter().map(|s| *s as f64).collect::<Vec<f64>>().as_slice());
+        let median: usize = summ.median as usize;
+        let deviation: usize = (summ.max - summ.min) as usize;
+        println!("bench: {}", format_args!("{:>11} ns/iter (+/- {})", fmt_thousands_sep(median, ','),
+                                           fmt_thousands_sep(deviation, ',')));
+
+        for (item, time) in stopwatch.laps().iter().enumerate() {
+            if *time > 10_000 {
+                println!("  Lookup of {} in {}ns", fmt_thousands_sep(item, ','), fmt_thousands_sep(*time as usize, ','));
+            }
+        }
+    }
+
+    #[bench]
+    fn containment_check_fnv(_bencher: &mut Bencher) {
+        let set: FnvHashSet<i64> = get_fnv_set(0, 100_000);
+
+        let mut stopwatch = Stopwatch::start_new();
+        for item in 0..100_000 {
+            black_box(set.contains(&item));
+            stopwatch.lap();
+        }
+        stopwatch.stop();
+
+        let summ = Summary::new(stopwatch.laps().clone().iter().map(|s| *s as f64).collect::<Vec<f64>>().as_slice());
+        let median: usize = summ.median as usize;
+        let deviation: usize = (summ.max - summ.min) as usize;
+        println!("bench: {}", format_args!("{:>11} ns/iter (+/- {})", fmt_thousands_sep(median, ','),
+                                           fmt_thousands_sep(deviation, ',')));
+
+        for (item, time) in stopwatch.laps().iter().enumerate() {
+            if *time > 10_000 {
+                println!("  Lookup of {} in {}ns", fmt_thousands_sep(item, ','), fmt_thousands_sep(*time as usize, ','));
+            }
+        }
+    }
+}
+
+mod iter {
+    use fine_grained::Stopwatch;
+    use fnv::FnvHashSet;
+    use std::collections::HashSet;
+    use test::black_box;
+    use test::Bencher;
+    use test::stats::Summary;
+    use super::fmt_thousands_sep;
+    use super::get_fnv_set;
+    use super::get_set;
+
+    #[bench]
+    fn hashset(_bencher: &mut Bencher) {
+        let set: HashSet<i64> = get_set(0, 100_000);
+
+        let mut stopwatch = Stopwatch::start_new();
+        for item in set {
+            black_box(&item);
+            stopwatch.lap();
+        }
+        stopwatch.stop();
+
+        let summ = Summary::new(stopwatch.laps().clone().iter().map(|s| *s as f64).collect::<Vec<f64>>().as_slice());
+        let median: usize = summ.median as usize;
+        let deviation: usize = (summ.max - summ.min) as usize;
+        println!("bench: {}", format_args!("{:>11} ns/iter (+/- {})", fmt_thousands_sep(median, ','),
+                                           fmt_thousands_sep(deviation, ',')));
+
+        for (item, time) in stopwatch.laps().iter().enumerate() {
+            if *time > 10_000 {
+                println!("  Item {} in {}ns", fmt_thousands_sep(item, ','), fmt_thousands_sep(*time as usize, ','));
+            }
+        }
+    }
+
+    #[bench]
+    fn hashset_fnv(_bencher: &mut Bencher) {
+        let set: FnvHashSet<i64> = get_fnv_set(0, 100_000);
+
+        let mut stopwatch = Stopwatch::start_new();
+        for item in set {
+            black_box(item);
+            stopwatch.lap();
+        }
+        stopwatch.stop();
+
+        let summ = Summary::new(stopwatch.laps().clone().iter().map(|s| *s as f64).collect::<Vec<f64>>().as_slice());
+        let median: usize = summ.median as usize;
+        let deviation: usize = (summ.max - summ.min) as usize;
+        println!("bench: {}", format_args!("{:>11} ns/iter (+/- {})", fmt_thousands_sep(median, ','),
+                                           fmt_thousands_sep(deviation, ',')));
+
+        for (item, time) in stopwatch.laps().iter().enumerate() {
+            if *time > 10_000 {
+                println!("  Item {} in {}ns", fmt_thousands_sep(item, ','), fmt_thousands_sep(*time as usize, ','));
+            }
+        }
+    }
+}
+
 /// Measure the performance of hash sets.
 mod hashset {
     use std::collections::HashSet;
