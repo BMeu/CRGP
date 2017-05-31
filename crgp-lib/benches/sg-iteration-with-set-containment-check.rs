@@ -41,7 +41,7 @@ mod vector_sorted {
         let _ = load(SOCIAL_GRAPH_PATH, true, Some(SELECTED_USERS_PATH), true, &mut sg).unwrap();
 
         let mut prefix: HashSet<i64> = HashSet::new();
-        let _ = get_selected_friends(&PathBuf::from(String::from(SELECTED_USERS_PATH)), &mut prefix).unwrap();
+        get_selected_friends(&PathBuf::from(String::from(SELECTED_USERS_PATH)), &mut prefix).unwrap();
 
         bencher.iter(|| {
             for (user, friends) in &sg {
@@ -60,7 +60,7 @@ mod vector_sorted {
         let _ = load(SOCIAL_GRAPH_PATH, true, Some(SELECTED_USERS_PATH), true, &mut sg).unwrap();
 
         let mut prefix: HashSet<i64> = HashSet::new();
-        let _ = get_selected_friends(&PathBuf::from(String::from(SELECTED_USERS_PATH)), &mut prefix).unwrap();
+        get_selected_friends(&PathBuf::from(String::from(SELECTED_USERS_PATH)), &mut prefix).unwrap();
 
         let mut stopwatch = Stopwatch::start_new();
         for _ in 0..10 {
@@ -88,7 +88,7 @@ mod vector_sorted {
         let _ = load(SOCIAL_GRAPH_PATH, true, Some(SELECTED_USERS_PATH), true, &mut sg).unwrap();
 
         let mut prefix: HashSet<i64> = HashSet::new();
-        let _ = get_selected_friends(&PathBuf::from(String::from(SELECTED_USERS_PATH)), &mut prefix).unwrap();
+        get_selected_friends(&PathBuf::from(String::from(SELECTED_USERS_PATH)), &mut prefix).unwrap();
 
         let mut stopwatch = Stopwatch::start_new();
         for _ in 0..100 {
@@ -136,7 +136,7 @@ mod vector_unsorted {
         let _ = load(SOCIAL_GRAPH_PATH, true, Some(SELECTED_USERS_PATH), false, &mut sg).unwrap();
 
         let mut prefix: HashSet<i64> = HashSet::new();
-        let _ = get_selected_friends(&PathBuf::from(String::from(SELECTED_USERS_PATH)), &mut prefix).unwrap();
+        get_selected_friends(&PathBuf::from(String::from(SELECTED_USERS_PATH)), &mut prefix).unwrap();
 
         bencher.iter(|| {
             for (user, friends) in &sg {
@@ -155,7 +155,7 @@ mod vector_unsorted {
         let _ = load(SOCIAL_GRAPH_PATH, true, Some(SELECTED_USERS_PATH), false, &mut sg).unwrap();
 
         let mut prefix: HashSet<i64> = HashSet::new();
-        let _ = get_selected_friends(&PathBuf::from(String::from(SELECTED_USERS_PATH)), &mut prefix).unwrap();
+        get_selected_friends(&PathBuf::from(String::from(SELECTED_USERS_PATH)), &mut prefix).unwrap();
 
         let mut stopwatch = Stopwatch::start_new();
         for _ in 0..10 {
@@ -183,7 +183,7 @@ mod vector_unsorted {
         let _ = load(SOCIAL_GRAPH_PATH, true, Some(SELECTED_USERS_PATH), false, &mut sg).unwrap();
 
         let mut prefix: HashSet<i64> = HashSet::new();
-        let _ = get_selected_friends(&PathBuf::from(String::from(SELECTED_USERS_PATH)), &mut prefix).unwrap();
+        get_selected_friends(&PathBuf::from(String::from(SELECTED_USERS_PATH)), &mut prefix).unwrap();
 
         let mut stopwatch = Stopwatch::start_new();
         for _ in 0..100 {
