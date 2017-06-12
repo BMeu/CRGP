@@ -7,7 +7,6 @@
 //! Reconstruct retweet cascades.
 
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::hash::Hash;
 
 use timely::dataflow::Stream;
@@ -18,6 +17,7 @@ use timely::dataflow::operators::binary::Binary;
 
 use UserID;
 use social_graph::InfluenceEdge;
+use social_graph::SocialGraph;
 use twitter::Tweet;
 
 /// Reconstruct retweet cascades.
@@ -35,7 +35,7 @@ impl<G: Scope> Reconstruct<G> for Stream<G, Tweet>
 where G::Timestamp: Hash {
     fn reconstruct(&self, graph: Stream<G, (UserID, Vec<UserID>)>) -> Stream<G, InfluenceEdge<UserID>> {
         // For each user, given by their ID, the set of their friends, given by their ID.
-        let mut edges: HashMap<UserID, HashSet<UserID>> = HashMap::new();
+        let mut edges = SocialGraph::new();
 
         // For each cascade, given by its ID, a set of activated users, given by their ID, i.e. those users who have
         // retweeted within this cascade before, per worker. Users are associated with the time at which they first
@@ -50,7 +50,7 @@ where G::Timestamp: Hash {
             move |retweets, friendships, output| {
                 // Input 1: Process the retweets.
                 retweets.for_each(|time, retweet_data| {
-                    for retweet in retweet_data.iter() {
+                    for retweet in retweet_data.take().iter() {
                         // Skip all tweets that are not retweets.
                         let original_tweet: &Tweet = match retweet.retweeted_status {
                             Some(ref t) => t,
@@ -70,7 +70,7 @@ where G::Timestamp: Hash {
 
                         // If this is the worker storing the retweeting user's friends, find
                         // all influences. Otherwise, move on.
-                        let friends: &HashSet<UserID> = match edges.get(&retweet.user.id) {
+                        let friends: &Vec<UserID> = match edges.get(&retweet.user.id) {
                             Some(friends) => friends,
                             None => continue
                         };
@@ -96,9 +96,10 @@ where G::Timestamp: Hash {
                             // Iterate over the activations.
                             for (user_id, activation_timestamp) in cascade_activations {
                                 // If the current activation is not a friend, move on.
-                                let friend: UserID = match friends.get(user_id) {
-                                    Some(friend) => *friend,
-                                    None => continue
+                                let friend: UserID = if friends.binary_search(user_id).is_ok() {
+                                    *user_id
+                                } else {
+                                    continue;
                                 };
 
                                 // Ensure the influence is possible.
@@ -116,11 +117,15 @@ where G::Timestamp: Hash {
 
                 // Input 2: Capture all friends for each user.
                 friendships.for_each(|_time, friendship_data| {
-                    for friendship in friendship_data.iter() {
-                        edges.entry(friendship.0)
-                            .or_insert_with(HashSet::new)
-                            .extend(friendship.1.iter().cloned());
+                    for friendship in friendship_data.take().iter() {
+                        let friendship_set: &mut Vec<UserID> = edges.entry(friendship.0)
+                            .or_insert_with(|| Vec::with_capacity(friendship.1.len()));
+                        friendship_set.extend(friendship.1.iter());
+                        friendship_set.shrink_to_fit();
+                        friendship_set.sort();
                     };
+
+                    edges.shrink_to_fit();
                 });
             }
         )

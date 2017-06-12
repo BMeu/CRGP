@@ -8,7 +8,9 @@
 //!
 //! A social graph is a collection of directed edges.
 
+pub use self::graph::SocialGraph;
 pub use self::influence_edge::InfluenceEdge;
 
+mod graph;
 mod influence_edge;
 pub mod source;

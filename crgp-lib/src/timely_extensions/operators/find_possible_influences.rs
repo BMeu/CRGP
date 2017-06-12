@@ -8,7 +8,6 @@
 
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::hash::*;
 use std::rc::Rc;
 
@@ -19,6 +18,7 @@ use timely::dataflow::operators::binary::Binary;
 
 use UserID;
 use social_graph::InfluenceEdge;
+use social_graph::SocialGraph;
 use twitter::Tweet;
 
 /// Find possible influence edges within social graphs.
@@ -38,7 +38,7 @@ impl<G: Scope> FindPossibleInfluences<G> for Stream<G, (UserID, Vec<UserID>)>
                                 activated_users: Rc<RefCell<HashMap<u64, HashMap<UserID, u64>>>>)
                                 -> Stream<G, InfluenceEdge<UserID>> {
         // For each user, given by their ID, the set of their friends, given by their ID.
-        let mut edges: HashMap<UserID, HashSet<UserID>> = HashMap::new();
+        let mut edges = SocialGraph::new();
 
         self.binary_stream(
             &retweets,
@@ -48,16 +48,20 @@ impl<G: Scope> FindPossibleInfluences<G> for Stream<G, (UserID, Vec<UserID>)>
             move |friendships, retweets, output| {
                 // Input 1: Capture all friends for each user.
                 friendships.for_each(|_time, friendship_data| {
-                    for friendship in friendship_data.iter() {
-                        edges.entry(friendship.0)
-                            .or_insert_with(HashSet::new)
-                            .extend(friendship.1.iter().cloned());
-                    }
+                    for friendship in friendship_data.take().iter() {
+                        let friendship_set: &mut Vec<UserID> = edges.entry(friendship.0)
+                            .or_insert_with(|| Vec::with_capacity(friendship.1.len()));
+                        friendship_set.extend(friendship.1.iter());
+                        friendship_set.shrink_to_fit();
+                        friendship_set.sort()
+                    };
+
+                    edges.shrink_to_fit();
                 });
 
                 // Input 2: Process the retweets.
                 retweets.for_each(|time, retweet_data| {
-                    for retweet in retweet_data.iter() {
+                    for retweet in retweet_data.take().iter() {
                         // Skip all tweets that are not retweets.
                         let original_tweet: &Tweet = match retweet.retweeted_status {
                             Some(ref t) => t,
