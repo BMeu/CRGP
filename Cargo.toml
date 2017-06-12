@@ -15,6 +15,9 @@ members = [
     "crgp-lib"
 ]
 
+[profile.release]
+panic = "abort"
+
 [dependencies]
 clap = "2.24"
 crgp_lib = { path = "crgp-lib" }
