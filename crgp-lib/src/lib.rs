@@ -27,6 +27,7 @@ extern crate lazy_static;
 #[macro_use]
 extern crate quickcheck;
 extern crate regex;
+extern crate s3;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;

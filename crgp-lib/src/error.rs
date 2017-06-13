@@ -7,6 +7,7 @@
 //! Error handling.
 
 use std;
+use std::env::VarError;
 use std::fmt;
 use std::io;
 use std::result;
@@ -21,14 +22,18 @@ pub enum Error {
     IO(io::Error),
 
     /// Errors caused by Timely failures.
-    Timely(String)
+    Timely(String),
+
+    /// Errors caused when handling environment variables.
+    EnvVar(VarError),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::IO(ref error) => error.fmt(formatter),
-            Error::Timely(ref error) => error.fmt(formatter)
+            Error::Timely(ref error) => error.fmt(formatter),
+            Error::EnvVar(ref error) => error.fmt(formatter),
         }
     }
 }
@@ -37,14 +42,16 @@ impl std::error::Error for Error {
     fn description(&self) -> &str {
         match *self {
             Error::IO(ref error) => error.description(),
-            Error::Timely(ref error) => error
+            Error::Timely(ref error) => error,
+            Error::EnvVar(ref error) => error.description(),
         }
     }
 
     fn cause(&self) -> Option<&std::error::Error> {
         match *self {
             Error::IO(ref error) => Some(error),
-            Error::Timely(_) => None
+            Error::Timely(_) => None,
+            Error::EnvVar(ref error) => Some(error),
         }
     }
 }
@@ -61,8 +68,15 @@ impl From<String> for Error {
     }
 }
 
+impl From<VarError> for Error {
+    fn from(error: VarError) -> Error {
+        Error::EnvVar(error)
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use std::env::VarError;
     use std::error::Error as StdError;
     use std::fmt;
     use std::io;
@@ -77,6 +91,11 @@ mod tests {
 
         let error: Error = Error::Timely(String::from("42"));
         assert_eq!(format!("{}", error), "42");
+
+        let var_error: VarError = VarError::NotPresent;
+        let fmt: String = String::from(format!("{}", var_error));
+        let error: Error = Error::EnvVar(var_error);
+        assert_eq!(format!("{}", error), fmt);
     }
 
     #[test]
@@ -88,6 +107,11 @@ mod tests {
 
         let error: Error = Error::Timely(String::from("42"));
         assert_eq!(error.description(), String::from("42"));
+
+        let var_error: VarError = VarError::NotPresent;
+        let description: String = String::from(var_error.description());
+        let error: Error = Error::EnvVar(var_error);
+        assert_eq!(error.description(), description);
     }
 
     #[test]
@@ -97,6 +121,9 @@ mod tests {
 
         let error: Error = Error::Timely(String::from("42"));
         assert!(error.cause().is_none());
+
+        let error: Error = Error::EnvVar(VarError::NotPresent);
+        assert!(error.cause().is_some());
     }
 
     #[test]
@@ -113,6 +140,15 @@ mod tests {
         let string_error = String::from("42");
         assert!(match Error::from(string_error) {
             Error::Timely(_) => true,
+            _ => false
+        });
+    }
+
+    #[test]
+    fn from_var() {
+        let var_error = VarError::NotPresent;
+        assert!(match Error::from(var_error) {
+            Error::EnvVar(_) => true,
             _ => false
         });
     }

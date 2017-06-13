@@ -28,6 +28,9 @@ pub enum ExitCode {
 
     /// Execution failure (Code: `4`).
     ExecutionFailure = 4,
+
+    /// Faulty usage of environment variables (Code: `5`).
+    EnvVarFailure = 5,
 }
 
 /// Quit the program execution. The exit code and message are chosen based on `error`.
@@ -38,6 +41,9 @@ pub fn fail_from_error(error: Error) -> ! {
         },
         Error::Timely(message) => {
             fail_with_message(ExitCode::ExecutionFailure, &message);
+        },
+        Error::EnvVar(message) => {
+            fail_with_message(ExitCode::EnvVarFailure, message.description());
         }
     }
 }
