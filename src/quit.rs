@@ -31,6 +31,9 @@ pub enum ExitCode {
 
     /// Faulty usage of environment variables (Code: `5`).
     EnvVarFailure = 5,
+
+    /// Failure during AWS S3 access (Code: `6`).
+    S3Failure = 6,
 }
 
 /// Quit the program execution. The exit code and message are chosen based on `error`.
@@ -44,6 +47,9 @@ pub fn fail_from_error(error: Error) -> ! {
         },
         Error::EnvVar(message) => {
             fail_with_message(ExitCode::EnvVarFailure, message.description());
+        }
+        Error::S3(message) => {
+            fail_with_message(ExitCode::S3Failure, message.description());
         }
     }
 }
