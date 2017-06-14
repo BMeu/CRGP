@@ -26,7 +26,6 @@ mod vector_sorted {
     use std::path::PathBuf;
     use test::black_box;
     use test::Bencher;
-    use test::stats::Summary;
     use super::fmt_thousands_sep;
     use super::SELECTED_USERS_PATH;
     use super::SOCIAL_GRAPH_PATH;
@@ -65,7 +64,6 @@ mod vector_unsorted {
     use std::path::PathBuf;
     use test::black_box;
     use test::Bencher;
-    use test::stats::Summary;
     use super::fmt_thousands_sep;
     use super::SELECTED_USERS_PATH;
     use super::SOCIAL_GRAPH_PATH;
