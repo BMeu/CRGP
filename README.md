@@ -4,7 +4,8 @@
 
 A graph-parallel approach for reconstructing the influences within Retweet cascades.
 
-For details and benchmarks, see [the Wiki](https://bitbucket.org/BMeu/crgp/wiki/Home).
+For details and [benchmarks](https://bitbucket.org/BMeu/crgp/wiki/Benchmarks/Home.md), see the
+[Wiki](https://bitbucket.org/BMeu/crgp/wiki/Home).
 
 ## Requirements
 
