@@ -46,6 +46,7 @@ use clap::Arg;
 use clap::ArgMatches;
 use crgp_lib::Configuration;
 use crgp_lib::Error;
+use crgp_lib::aws_s3;
 use crgp_lib::configuration;
 use flexi_logger::with_thread;
 use flexi_logger::LogOptions;
@@ -63,11 +64,13 @@ fn main() {
 
     // Define the usage.
     let arguments: ArgMatches = app_from_crate!()
-        .after_help("When loading data sets from AWS S3, both options \"--s3-[*]-[bucket|region]\" must be set. The \
-                     paths within the bucket are the respective standard arguments. The access and secret keys will be \
-                     read from the environment variables \"AWS_ACCESS_KEY_ID\" and \"AWS_SECRET_ACCESS_KEY\", \
-                     respectively. If an access token is required, it can be given using the environment variable \
-                     \"AWS_TOKEN\".")
+        .after_help(format!("When loading data sets from AWS S3, both options \"--s3-[*]-[bucket|region]\" must be set. \
+                             The paths within the bucket are the respective standard arguments. The access and secret \
+                             keys will be read from the environment variables \"{access}\" and \"{secret}\", \
+                             respectively. If an access token is required, it can be given using the environment \
+                             variable \"{token}\".",
+                            access = aws_s3::ACCESS_KEY_VAR_NAME, secret = aws_s3::SECRET_VAR_NAME,
+                            token = aws_s3::TOKEN_VAR_NAME).as_str())
         .arg(Arg::with_name("algorithm")
             .long("algorithm")
             .takes_value(true)
