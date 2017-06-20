@@ -42,6 +42,8 @@ where G::Timestamp: Hash {
         // retweeted within a cascade.
         let mut activations: HashMap<u64, HashMap<UserID, u64>> = HashMap::new();
 
+        let mut processed_tweets: usize = 0;
+
         self.binary_stream(
             &graph,
             Pipeline,
@@ -74,6 +76,8 @@ where G::Timestamp: Hash {
                             Some(friends) => friends,
                             None => continue
                         };
+                        processed_tweets += 1;
+                        debug!("Tweets: {}", processed_tweets);
 
                         // If the number of friends is smaller than the number of activations for
                         // this cascade, iterate over the friends, otherwise iterate over the
@@ -126,6 +130,11 @@ where G::Timestamp: Hash {
                     };
 
                     edges.shrink_to_fit();
+                    let mut num_friends: usize = 0;
+                    for (_user, friends) in &edges.graph {
+                        num_friends += friends.len();
+                    }
+                    debug!("Users: {}, Friends: {}", edges.graph.len(), num_friends);
                 });
             }
         )

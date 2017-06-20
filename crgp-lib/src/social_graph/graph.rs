@@ -18,7 +18,7 @@ pub struct SocialGraph {
     /// The actual container storing the social graph.
     ///
     /// For each user, a list of their friends.
-    graph: HashMap<UserID, Vec<UserID>>,
+    pub graph: HashMap<UserID, Vec<UserID>>,
 }
 
 impl SocialGraph {
