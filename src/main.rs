@@ -64,6 +64,7 @@ fn main() {
 
     // Define the usage.
     let arguments: ArgMatches = app_from_crate!()
+        // TODO: List string representations of S3 regions.
         .after_help(format!("When loading data sets from AWS S3, both options \"--s3-[*]-[bucket|region]\" must be set. \
                              The paths within the bucket are the respective standard arguments. The access and secret \
                              keys will be read from the environment variables \"{access}\" and \"{secret}\", \
