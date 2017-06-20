@@ -1,6 +1,6 @@
 [package]
 name = "crgp_lib"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Bastian Meyer <bastian@bastianmeyer.eu>"]
 description = "A graph-parallel library for reconstructing the influences within Retweet cascades."
 repository = "https://bitbucket.org/BMeu/crgp"
