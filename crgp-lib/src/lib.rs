@@ -35,11 +35,7 @@ extern crate tar;
 extern crate timely;
 extern crate timely_communication;
 
-pub use configuration::Algorithm;
 pub use configuration::Configuration;
-pub use configuration::InputSource;
-pub use configuration::OutputTarget;
-pub use configuration::S3Configuration;
 pub use error::Error;
 pub use error::Result;
 pub use reconstruction::run;

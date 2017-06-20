@@ -148,7 +148,7 @@ impl fmt::Display for Statistics {
 #[cfg(test)]
 mod tests {
 
-    use InputSource;
+    use configuration::InputSource;
     use super::*;
 
     #[test]

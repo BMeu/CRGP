@@ -19,11 +19,11 @@ use std::sync::Mutex;
 #[cfg(unix)]
 use gag::BufferRedirect;
 
-use crgp_lib::Algorithm;
 use crgp_lib::Configuration;
-use crgp_lib::InputSource;
 use crgp_lib::Result;
 use crgp_lib::Statistics;
+use crgp_lib::configuration::Algorithm;
+use crgp_lib::configuration::InputSource;
 
 #[cfg(unix)]
 lazy_static! {

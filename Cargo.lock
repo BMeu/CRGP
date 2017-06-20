@@ -140,7 +140,6 @@ dependencies = [
  "clap 2.24.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "crgp_lib 0.3.0",
  "flexi_logger 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "rust-s3 0.5.1 (git+https://github.com/BMeu/rust-s3?branch=large-sizes-and-missing-fields)",
  "time 0.1.37 (registry+https://github.com/rust-lang/crates.io-index)",
  "toml 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

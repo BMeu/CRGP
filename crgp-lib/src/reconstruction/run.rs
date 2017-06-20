@@ -13,11 +13,11 @@ use timely::execute::execute as timely_execute;
 use timely_communication::initialize::Configuration as TimelyConfiguration;
 use timely_communication::initialize::WorkerGuards;
 
-use Algorithm;
 use Configuration;
-use OutputTarget;
 use Result;
 use Statistics;
+use configuration::Algorithm;
+use configuration::OutputTarget;
 use reconstruction::SimplifyResult;
 use reconstruction::algorithms::gale;
 use reconstruction::algorithms::leaf;

@@ -4,157 +4,18 @@
 // MIT license <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your option. This file may not be copied,
 // modified, or distributed except according to those terms.
 
-//! Algorithm configuration.
+//! The main configuration object.
 
 use std::fmt;
 use std::path::PathBuf;
 
-use s3::bucket::Bucket;
-use s3::credentials::Credentials;
-use s3::region::Region;
 use timely_communication::initialize::Configuration as TimelyConfiguration;
 
 use Error;
 use Result;
-use aws_s3::credentials_from_env;
-
-/// Available algorithms for reconstruction.
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum Algorithm {
-    /// Activate retweeting users on all workers, produce influence edges on the worker storing the user's friends.
-    ///
-    /// `GALE` = Global Activations, Local Edges
-    GALE,
-
-    /// Activate user and produce possible influences on worker storing the user's friends, filter possible influences
-    /// on worker storing influencer's friends.
-    ///
-    /// `LEAF` = Local Edges, Activations, and Filtering
-    LEAF,
-}
-
-impl fmt::Display for Algorithm {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        let algorithm_name: &str = match *self {
-            Algorithm::GALE => "GALE",
-            Algorithm::LEAF => "LEAF",
-        };
-        write!(formatter, "{algorithm}", algorithm = algorithm_name)
-    }
-}
-
-/// Specify where the result will be written to.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum OutputTarget {
-    /// Write the result to a file in the specified directory.
-    Directory(PathBuf),
-
-    /// Write the result to `STDOUT`.
-    StdOut,
-
-    /// Do not write the result at all.
-    None,
-}
-
-impl fmt::Display for OutputTarget {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        let target: &str = match *self {
-            OutputTarget::Directory(ref path) => return write!(formatter, "\"{path}\"", path = path.display()),
-            OutputTarget::StdOut => "STDOUT",
-            OutputTarget::None => "[disabled]",
-        };
-        write!(formatter, "{output}", output = target)
-    }
-}
-
-/// Configuration of an input source, for either social graph or cascade data sets.
-///
-/// Supports AWS S3.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct InputSource {
-    /// Path to the input file.
-    pub path: String,
-
-    /// Optionally, configuration to access AWS S3.
-    pub s3: Option<S3Configuration>,
-
-    /// Private field to prevent initialization without the provided methods.
-    ///
-    /// All other fields should be public for easy access without getter functions. However, adding more fields later
-    /// could break code if the `InputSource` were manually initialized.
-    #[serde(skip_serializing)]
-    _prevent_outside_initialization: bool,
-}
-
-impl InputSource {
-    /// Initialize a new input source from a path. The AWS S3 configuration will be set to `None`.
-    pub fn new(path: &str) -> InputSource {
-        InputSource {
-            path: String::from(path),
-            s3: None,
-            _prevent_outside_initialization: true,
-        }
-    }
-
-    /// Set the AWS S3 configuration.
-    pub fn s3(mut self, s3_configuration: Option<S3Configuration>) -> InputSource {
-        self.s3 = s3_configuration;
-        self
-    }
-}
-
-impl fmt::Display for InputSource {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        match self.s3 {
-            Some(ref s3) => write!(formatter, "{path} on S3 {s3}", path = self.path, s3 = s3),
-            None => write!(formatter, "{path}", path = self.path)
-        }
-    }
-}
-
-/// Configuration for accessing AWS S3. The access and secret key will be loaded from respective environment variables
-/// when requesting the bucket.
-///
-/// Neither the access key nor the secret key will ever be written when serializing the S3 configuration!
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct S3Configuration {
-    /// The bucket to access.
-    pub bucket: String,
-
-    /// The AWS region where the bucket is located.
-    pub region: String,
-
-    /// Private field to prevent initialization without the provided methods.
-    ///
-    /// All other fields should be public for easy access without getter functions. However, adding more fields later
-    /// could break code if the `S3Configuration` were manually initialized.
-    #[serde(skip_serializing)]
-    _prevent_outside_initialization: bool,
-}
-
-impl S3Configuration {
-    /// Initialize a configuration for accessing AWS S3.
-    pub fn new(bucket: &str, region: &str) -> S3Configuration {
-        S3Configuration {
-            bucket: String::from(bucket),
-            region: String::from(region),
-            _prevent_outside_initialization: true,
-        }
-    }
-
-    /// Get a connection to AWS S3.
-    pub fn get_bucket(&self) -> Result<Bucket> {
-        let credentials: Credentials = credentials_from_env()?;
-        let region: Region = self.region.parse()?;
-        Ok(Bucket::new(&self.bucket, region, credentials))
-    }
-}
-
-impl fmt::Display for S3Configuration {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        write!(formatter, "{bucket} ({region})", bucket = self.bucket, region = self.region)
-    }
-}
+use configuration::Algorithm;
+use configuration::InputSource;
+use configuration::OutputTarget;
 
 /// Configuration for the `CRGP` algorithm.
 ///
@@ -165,10 +26,10 @@ impl fmt::Display for S3Configuration {
 /// ```rust
 /// use std::path::PathBuf;
 ///
-/// use crgp_lib::Algorithm;
 /// use crgp_lib::Configuration;
-/// use crgp_lib::InputSource;
-/// use crgp_lib::OutputTarget;
+/// use crgp_lib::configuration::Algorithm;
+/// use crgp_lib::configuration::InputSource;
+/// use crgp_lib::configuration::OutputTarget;
 ///
 /// let retweets = InputSource::new("path/to/retweets.json");
 /// let social_graph = InputSource::new("path/to/social/graph");
@@ -419,8 +280,8 @@ impl fmt::Display for Configuration {
 
 #[cfg(test)]
 mod tests {
-    use Algorithm;
-    use OutputTarget;
+    use configuration::Algorithm;
+    use configuration::OutputTarget;
     use std::error::Error;
     use std::path::PathBuf;
     use timely_communication::initialize::Configuration as TimelyConfiguration;
@@ -542,7 +403,7 @@ mod tests {
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 1);
         assert_eq!(configuration.output_target,
-                   OutputTarget::Directory(PathBuf::from("results")));
+        OutputTarget::Directory(PathBuf::from("results")));
         assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
@@ -728,9 +589,9 @@ mod tests {
         assert!(timely_config.is_err());
         // Since `TimelyConfiguration` does not implement `Debug`, we have to get rid of it before calling `expect_err`.
         assert_eq!(timely_config.map(|_| ())
-                    .expect_err("unexpectedly succeeded getting the Timely configuration")
-                    .description(),
-                   "the process ID is not in range of all processes");
+            .expect_err("unexpectedly succeeded getting the Timely configuration")
+            .description(),
+        "the process ID is not in range of all processes");
 
         // Multiple processes, with hosts, wrong number of addresses.
         let mut configuration = Configuration::default(retweets.clone(), social_graph.clone())
@@ -746,9 +607,9 @@ mod tests {
         assert!(timely_config.is_err());
         // Since `TimelyConfiguration` does not implement `Debug`, we have to get rid of it before calling `expect_err`.
         assert_eq!(timely_config.map(|_| ())
-                    .expect_err("unexpectedly succeeded getting the Timely configuration")
-                    .description(),
-                   "3 hosts given, but expected 42");
+            .expect_err("unexpectedly succeeded getting the Timely configuration")
+            .description(),
+        "3 hosts given, but expected 42");
 
         // Multiple processes, with hosts.
         let mut configuration = Configuration::default(retweets.clone(), social_graph.clone())

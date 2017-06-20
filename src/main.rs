@@ -44,11 +44,9 @@ use std::path::PathBuf;
 
 use clap::Arg;
 use clap::ArgMatches;
-use crgp_lib::Algorithm;
 use crgp_lib::Configuration;
 use crgp_lib::Error;
-use crgp_lib::InputSource;
-use crgp_lib::OutputTarget;
+use crgp_lib::configuration;
 use flexi_logger::with_thread;
 use flexi_logger::LogOptions;
 use time::Tm;
@@ -154,16 +152,16 @@ fn main() {
         .get_matches();
 
     // Get the positional arguments. Since they are required the `unwrap()`s cannot fail.
-    let social_graph_path: InputSource = InputSource::new(arguments.value_of("FRIENDS").unwrap());
-    let retweet_path: InputSource = InputSource::new(arguments.value_of("RETWEETS").unwrap());
+    let social_graph_path = configuration::InputSource::new(arguments.value_of("FRIENDS").unwrap());
+    let retweet_path = configuration::InputSource::new(arguments.value_of("RETWEETS").unwrap());
 
     // Get the arguments with default values. Since these arguments have default values and validators defined none
     // of the `unwrap()`s can fail.
     let given_algorithm: &str = arguments.value_of("algorithm").unwrap();
-    let algorithm: Algorithm = if given_algorithm == "LEAF" {
-        Algorithm::LEAF
+    let algorithm: configuration::Algorithm = if given_algorithm == "LEAF" {
+        configuration::Algorithm::LEAF
     } else {
-        Algorithm::GALE
+        configuration::Algorithm::GALE
     };
     let batch_size: usize = arguments.value_of("batch-size").unwrap().parse().unwrap();
     let process_id: usize = arguments.value_of("process").unwrap().parse().unwrap();
@@ -173,13 +171,13 @@ fn main() {
     let pad_with_dummy_users: bool = arguments.is_present("pad-users");
 
     // Determine the output target.
-    let output_target: OutputTarget = if arguments.is_present("no-output") {
-        OutputTarget::None
+    let output_target: configuration::OutputTarget = if arguments.is_present("no-output") {
+        configuration::OutputTarget::None
     } else {
         match arguments.value_of("output-directory") {
-            Some(directory) => OutputTarget::Directory(PathBuf::from(directory)),
+            Some(directory) => configuration::OutputTarget::Directory(PathBuf::from(directory)),
             None => match current_dir() {
-                Ok(directory) => OutputTarget::Directory(directory),
+                Ok(directory) => configuration::OutputTarget::Directory(directory),
                 Err(error) => {
                     quit::fail_from_error(Error::from(error));
                 }
@@ -260,7 +258,7 @@ fn main() {
         Ok(results) => {
             if process_id == 0 {
                 // Only save to file if output is requested.
-                if let OutputTarget::Directory(directory) = output_target {
+                if let configuration::OutputTarget::Directory(directory) = output_target {
                     // Parse the statistics to TOML.
                     if let Ok(results) = toml::to_string(&results) {
                         // Create the file name from the program name and the current time.

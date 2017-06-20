@@ -15,7 +15,7 @@ use timely::dataflow::operators::Input;
 use timely::dataflow::operators::Probe;
 use timely::dataflow::operators::exchange::Exchange;
 
-use OutputTarget;
+use configuration::OutputTarget;
 use UserID;
 use reconstruction::algorithms::GraphHandle;
 use reconstruction::algorithms::ProbeHandle;
