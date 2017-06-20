@@ -27,7 +27,7 @@ use twitter::Tweet;
 /// Load the Retweets from the given input.
 pub fn from_source(input: InputSource) -> Result<Vec<Tweet>> {
     info!("Loading Retweets");
-    let path = input.path.clone();
+    let path: String = input.path.clone();
     match input.s3 {
         Some(s3_config) => from_aws_s3(&path, &s3_config.get_bucket()?),
         None => from_file(&PathBuf::from(path))
@@ -50,7 +50,7 @@ fn from_file(path: &PathBuf) -> Result<Vec<Tweet>> {
             return Err(Error::from(error));
         }
     };
-    let retweet_file = BufReader::new(retweet_file);
+    let retweet_file: BufReader<File> = BufReader::new(retweet_file);
 
     // Parse the lines while discarding those that are invalid.
     let retweets: Vec<Tweet> = retweet_file.lines()
