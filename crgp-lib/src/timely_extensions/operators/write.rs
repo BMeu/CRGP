@@ -19,8 +19,8 @@ use timely::dataflow::Scope;
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::operators::unary::Unary;
 
-use OutputTarget;
 use UserID;
+use configuration::OutputTarget;
 use social_graph::InfluenceEdge;
 
 /// Write a stream to a file, passing on all seen messages.

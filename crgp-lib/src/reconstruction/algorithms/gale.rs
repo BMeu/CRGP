@@ -10,7 +10,7 @@ use timely::dataflow::operators::Broadcast;
 use timely::dataflow::operators::Input;
 use timely::dataflow::operators::Probe;
 
-use OutputTarget;
+use configuration::OutputTarget;
 use reconstruction::algorithms::GraphHandle;
 use reconstruction::algorithms::ProbeHandle;
 use reconstruction::algorithms::RetweetHandle;

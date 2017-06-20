@@ -44,10 +44,10 @@ use std::path::PathBuf;
 
 use clap::Arg;
 use clap::ArgMatches;
-use crgp_lib::Algorithm;
 use crgp_lib::Configuration;
 use crgp_lib::Error;
-use crgp_lib::OutputTarget;
+use crgp_lib::aws_s3;
+use crgp_lib::configuration;
 use flexi_logger::with_thread;
 use flexi_logger::LogOptions;
 use time::Tm;
@@ -64,6 +64,14 @@ fn main() {
 
     // Define the usage.
     let arguments: ArgMatches = app_from_crate!()
+        // TODO: List string representations of S3 regions.
+        .after_help(format!("When loading data sets from AWS S3, both options \"--s3-[*]-[bucket|region]\" must be set. \
+                             The paths within the bucket are the respective standard arguments. The access and secret \
+                             keys will be read from the environment variables \"{access}\" and \"{secret}\", \
+                             respectively. If an access token is required, it can be given using the environment \
+                             variable \"{token}\".",
+                            access = aws_s3::ACCESS_KEY_VAR_NAME, secret = aws_s3::SECRET_VAR_NAME,
+                            token = aws_s3::TOKEN_VAR_NAME).as_str())
         .arg(Arg::with_name("algorithm")
             .long("algorithm")
             .takes_value(true)
@@ -124,6 +132,30 @@ fn main() {
         .arg(Arg::with_name("report-connection-progress")
             .long("report-connection-progress")
             .help("Print connection progress to STDOUT when using multiple processes."))
+        .arg(Arg::with_name("s3-tweets-bucket")
+            .long("s3-tweets-bucket")
+            .help("The AWS S3 bucket for the Retweet cascade file.")
+            .takes_value(true)
+            .value_name("BUCKET")
+            .requires("s3-tweets-region"))
+        .arg(Arg::with_name("s3-tweets-region")
+            .long("s3-tweets-region")
+            .help("The AWS S3 region for the Retweet cascade file.")
+            .takes_value(true)
+            .value_name("REGION")
+            .requires("s3-tweets-bucket"))
+        .arg(Arg::with_name("s3-sg-bucket")
+            .long("s3-sg-bucket")
+            .help("The AWS S3 bucket for the social graph.")
+            .takes_value(true)
+            .value_name("BUCKET")
+            .requires("s3-sg-region"))
+        .arg(Arg::with_name("s3-sg-region")
+            .long("s3-sg-region")
+            .help("The AWS S3 region for the social graph.")
+            .takes_value(true)
+            .value_name("REGION")
+            .requires("s3-sg-bucket"))
         .arg(Arg::with_name("selected-users")
             .long("selected-users")
             .value_name("FILE")
@@ -153,16 +185,16 @@ fn main() {
         .get_matches();
 
     // Get the positional arguments. Since they are required the `unwrap()`s cannot fail.
-    let social_graph_path: String = arguments.value_of("FRIENDS").unwrap().to_owned();
-    let retweet_path: String = arguments.value_of("RETWEETS").unwrap().to_owned();
+    let mut social_graph_path = configuration::InputSource::new(arguments.value_of("FRIENDS").unwrap());
+    let mut retweet_path = configuration::InputSource::new(arguments.value_of("RETWEETS").unwrap());
 
     // Get the arguments with default values. Since these arguments have default values and validators defined none
     // of the `unwrap()`s can fail.
     let given_algorithm: &str = arguments.value_of("algorithm").unwrap();
-    let algorithm: Algorithm = if given_algorithm == "LEAF" {
-        Algorithm::LEAF
+    let algorithm: configuration::Algorithm = if given_algorithm == "LEAF" {
+        configuration::Algorithm::LEAF
     } else {
-        Algorithm::GALE
+        configuration::Algorithm::GALE
     };
     let batch_size: usize = arguments.value_of("batch-size").unwrap().parse().unwrap();
     let process_id: usize = arguments.value_of("process").unwrap().parse().unwrap();
@@ -172,19 +204,33 @@ fn main() {
     let pad_with_dummy_users: bool = arguments.is_present("pad-users");
 
     // Determine the output target.
-    let output_target: OutputTarget = if arguments.is_present("no-output") {
-        OutputTarget::None
+    let output_target: configuration::OutputTarget = if arguments.is_present("no-output") {
+        configuration::OutputTarget::None
     } else {
         match arguments.value_of("output-directory") {
-            Some(directory) => OutputTarget::Directory(PathBuf::from(directory)),
+            Some(directory) => configuration::OutputTarget::Directory(PathBuf::from(directory)),
             None => match current_dir() {
-                Ok(directory) => OutputTarget::Directory(directory),
+                Ok(directory) => configuration::OutputTarget::Directory(directory),
                 Err(error) => {
                     quit::fail_from_error(Error::from(error));
                 }
             },
         }
     };
+
+    // Determine if any of the data sets is to be read from AWS S3.
+    if arguments.is_present("s3-tweets-bucket") && arguments.is_present("s3-tweets-region") {
+        let bucket: &str = arguments.value_of("s3-tweets-bucket").unwrap();
+        let region: &str = arguments.value_of("s3-tweets-region").unwrap();
+        let s3_config = configuration::S3::new(bucket, region);
+        retweet_path.s3 = Some(s3_config);
+    }
+    if arguments.is_present("s3-sg-bucket") && arguments.is_present("s3-sg-region") {
+        let bucket: &str = arguments.value_of("s3-sg-bucket").unwrap();
+        let region: &str = arguments.value_of("s3-sg-region").unwrap();
+        let s3_config = configuration::S3::new(bucket, region);
+        social_graph_path.s3 = Some(s3_config);
+    }
 
     // Get the hosts.
     let hosts: Option<Vec<String>> = match arguments.value_of("hostfile") {
@@ -259,7 +305,7 @@ fn main() {
         Ok(results) => {
             if process_id == 0 {
                 // Only save to file if output is requested.
-                if let OutputTarget::Directory(directory) = output_target {
+                if let configuration::OutputTarget::Directory(directory) = output_target {
                     // Parse the statistics to TOML.
                     if let Ok(results) = toml::to_string(&results) {
                         // Create the file name from the program name and the current time.

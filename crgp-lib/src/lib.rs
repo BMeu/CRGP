@@ -27,6 +27,7 @@ extern crate lazy_static;
 #[macro_use]
 extern crate quickcheck;
 extern crate regex;
+extern crate s3;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
@@ -34,15 +35,14 @@ extern crate tar;
 extern crate timely;
 extern crate timely_communication;
 
-pub use configuration::Algorithm;
 pub use configuration::Configuration;
-pub use configuration::OutputTarget;
 pub use error::Error;
 pub use error::Result;
 pub use reconstruction::run;
 pub use statistics::Statistics;
 use twitter::UserID;
 
+pub mod aws_s3;
 pub mod configuration;
 mod error;
 mod reconstruction;

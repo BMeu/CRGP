@@ -148,12 +148,13 @@ impl fmt::Display for Statistics {
 #[cfg(test)]
 mod tests {
 
+    use configuration::InputSource;
     use super::*;
 
     #[test]
     fn new() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
         let configuration = Configuration::default(retweets, social_graph);
 
         let statistics = Statistics::new(configuration.clone());
@@ -171,8 +172,8 @@ mod tests {
 
     #[test]
     fn number_of_friendships() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
         let configuration = Configuration::default(retweets, social_graph);
 
         let statistics = Statistics::new(configuration.clone())
@@ -191,8 +192,8 @@ mod tests {
 
     #[test]
     fn number_of_retweets() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
         let configuration = Configuration::default(retweets, social_graph);
 
         let statistics = Statistics::new(configuration.clone())
@@ -211,8 +212,8 @@ mod tests {
 
     #[test]
     fn time_to_setup() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
         let configuration = Configuration::default(retweets, social_graph);
 
         let statistics = Statistics::new(configuration.clone())
@@ -231,8 +232,8 @@ mod tests {
 
     #[test]
     fn time_to_process_social_graph() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
         let configuration = Configuration::default(retweets, social_graph);
 
         let statistics = Statistics::new(configuration.clone())
@@ -251,8 +252,8 @@ mod tests {
 
     #[test]
     fn time_to_load_retweets() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
         let configuration = Configuration::default(retweets, social_graph);
 
         let statistics = Statistics::new(configuration.clone())
@@ -271,8 +272,8 @@ mod tests {
 
     #[test]
     fn time_to_process_retweets() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
         let configuration = Configuration::default(retweets, social_graph);
 
         // The Retweet processing rate should also be updated (if number of Retweets is given).
@@ -293,8 +294,8 @@ mod tests {
 
     #[test]
     fn total_time() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
         let configuration = Configuration::default(retweets, social_graph);
 
         let statistics = Statistics::new(configuration.clone())
@@ -313,8 +314,8 @@ mod tests {
 
     #[test]
     fn retweet_processing_rate() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
         let configuration = Configuration::default(retweets, social_graph);
 
         let mut statistics = Statistics::new(configuration.clone());
@@ -339,8 +340,8 @@ mod tests {
         /// measurement inaccuracies.
         #[allow(trivial_casts)]
         fn compare_retweet_processing_rate_calcs(number_of_retweets: u64, time_to_process_retweets: u64) -> bool {
-            let retweets = String::from("path/to/retweets.json");
-            let social_graph = String::from("path/to/social/graph");
+            let retweets = InputSource::new("path/to/retweets.json");
+            let social_graph = InputSource::new("path/to/social/graph");
             let configuration = Configuration::default(retweets, social_graph);
             let statistics = Statistics::new(configuration)
                 .number_of_retweets(number_of_retweets)

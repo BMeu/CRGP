@@ -4,7 +4,7 @@
 // MIT license <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your option. This file may not be copied,
 // modified, or distributed except according to those terms.
 
-//! Algorithm configuration.
+//! The main configuration object.
 
 use std::fmt;
 use std::path::PathBuf;
@@ -13,55 +13,9 @@ use timely_communication::initialize::Configuration as TimelyConfiguration;
 
 use Error;
 use Result;
-
-/// Available algorithms for reconstruction.
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum Algorithm {
-    /// Activate retweeting users on all workers, produce influence edges on the worker storing the user's friends.
-    ///
-    /// `GALE` = Global Activations, Local Edges
-    GALE,
-
-    /// Activate user and produce possible influences on worker storing the user's friends, filter possible influences
-    /// on worker storing influencer's friends.
-    ///
-    /// `LEAF` = Local Edges, Activations, and Filtering
-    LEAF,
-}
-
-impl fmt::Display for Algorithm {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        let algorithm_name: &str = match *self {
-            Algorithm::GALE => "GALE",
-            Algorithm::LEAF => "LEAF",
-        };
-        write!(formatter, "{algorithm}", algorithm = algorithm_name)
-    }
-}
-
-/// Specify where the result will be written to.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum OutputTarget {
-    /// Write the result to a file in the specified directory.
-    Directory(PathBuf),
-
-    /// Write the result to `STDOUT`.
-    StdOut,
-
-    /// Do not write the result at all.
-    None,
-}
-
-impl fmt::Display for OutputTarget {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        let target: &str = match *self {
-            OutputTarget::Directory(ref path) => return write!(formatter, "\"{path}\"", path = path.display()),
-            OutputTarget::StdOut => "STDOUT",
-            OutputTarget::None => "[disabled]",
-        };
-        write!(formatter, "{output}", output = target)
-    }
-}
+use configuration::Algorithm;
+use configuration::InputSource;
+use configuration::OutputTarget;
 
 /// Configuration for the `CRGP` algorithm.
 ///
@@ -72,12 +26,13 @@ impl fmt::Display for OutputTarget {
 /// ```rust
 /// use std::path::PathBuf;
 ///
-/// use crgp_lib::Algorithm;
 /// use crgp_lib::Configuration;
-/// use crgp_lib::OutputTarget;
+/// use crgp_lib::configuration::Algorithm;
+/// use crgp_lib::configuration::InputSource;
+/// use crgp_lib::configuration::OutputTarget;
 ///
-/// let retweets = String::from("path/to/retweets.json");
-/// let social_graph = String::from("path/to/social/graph");
+/// let retweets = InputSource::new("path/to/retweets.json");
+/// let social_graph = InputSource::new("path/to/social/graph");
 /// let output = PathBuf::from("results");
 ///
 /// let configuration = Configuration::default(retweets, social_graph)
@@ -95,9 +50,9 @@ impl fmt::Display for OutputTarget {
 /// assert_eq!(configuration.pad_with_dummy_users, true);
 /// assert_eq!(configuration.process_id, 0);
 /// assert_eq!(configuration.report_connection_progress, false);
-/// assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+/// assert_eq!(configuration.retweets, InputSource::new("path/to/retweets.json"));
 /// assert_eq!(configuration.selected_users, None);
-/// assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+/// assert_eq!(configuration.social_graph, InputSource::new("path/to/social/graph"));
 /// ```
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Configuration {
@@ -134,14 +89,14 @@ pub struct Configuration {
     pub report_connection_progress: bool,
 
     /// Path to the file containing the Retweets.
-    pub retweets: String,
+    pub retweets: InputSource,
 
     /// Path to a file containing the user IDs (one per line) that will be loaded from the social graph. Other users in
     /// the graph will be skipped. If `None`, all users will be loaded.
     pub selected_users: Option<PathBuf>,
 
     /// Path to the data set containing the social graph.
-    pub social_graph: String,
+    pub social_graph: InputSource,
 
     /// Private field to prevent initialization without the provided methods.
     ///
@@ -166,7 +121,7 @@ impl Configuration {
     ///  * `process_id`: `0`
     ///  * `report_connection_progress`: `false`
     ///  * `selected_users`: `None`
-    pub fn default(retweets: String, social_graph: String) -> Configuration {
+    pub fn default(retweets: InputSource, social_graph: InputSource) -> Configuration {
         Configuration {
             algorithm: Algorithm::GALE,
             batch_size: 500,
@@ -325,8 +280,8 @@ impl fmt::Display for Configuration {
 
 #[cfg(test)]
 mod tests {
-    use Algorithm;
-    use OutputTarget;
+    use configuration::Algorithm;
+    use configuration::OutputTarget;
     use std::error::Error;
     use std::path::PathBuf;
     use timely_communication::initialize::Configuration as TimelyConfiguration;
@@ -335,8 +290,8 @@ mod tests {
 
     #[test]
     fn default() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
 
         let configuration = Configuration::default(retweets, social_graph);
 
@@ -349,16 +304,16 @@ mod tests {
         assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
-        assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.retweets, InputSource::new("path/to/retweets.json"));
         assert_eq!(configuration.selected_users, None);
-        assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert_eq!(configuration.social_graph, InputSource::new("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
     fn algorithm() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
 
         let configuration = Configuration::default(retweets, social_graph)
             .algorithm(Algorithm::LEAF);
@@ -372,16 +327,16 @@ mod tests {
         assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
-        assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.retweets, InputSource::new("path/to/retweets.json"));
         assert_eq!(configuration.selected_users, None);
-        assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert_eq!(configuration.social_graph, InputSource::new("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
     fn batch_size() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
 
         let configuration = Configuration::default(retweets, social_graph)
             .batch_size(1);
@@ -395,16 +350,16 @@ mod tests {
         assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
-        assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.retweets, InputSource::new("path/to/retweets.json"));
         assert_eq!(configuration.selected_users, None);
-        assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert_eq!(configuration.social_graph, InputSource::new("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
     fn hosts() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
         let hosts = vec![
             String::from("host1:2101"),
             String::from("host1:2102"),
@@ -427,16 +382,16 @@ mod tests {
         assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
-        assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.retweets, InputSource::new("path/to/retweets.json"));
         assert_eq!(configuration.selected_users, None);
-        assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert_eq!(configuration.social_graph, InputSource::new("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
     fn output_target() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
         let output = PathBuf::from("results");
 
         let configuration = Configuration::default(retweets, social_graph)
@@ -448,20 +403,20 @@ mod tests {
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 1);
         assert_eq!(configuration.output_target,
-                   OutputTarget::Directory(PathBuf::from("results")));
+        OutputTarget::Directory(PathBuf::from("results")));
         assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
-        assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.retweets, InputSource::new("path/to/retweets.json"));
         assert_eq!(configuration.selected_users, None);
-        assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert_eq!(configuration.social_graph, InputSource::new("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
     fn pad_with_dummy_users() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
 
         let configuration = Configuration::default(retweets, social_graph)
             .pad_with_dummy_users(true);
@@ -475,16 +430,16 @@ mod tests {
         assert_eq!(configuration.pad_with_dummy_users, true);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
-        assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.retweets, InputSource::new("path/to/retweets.json"));
         assert_eq!(configuration.selected_users, None);
-        assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert_eq!(configuration.social_graph, InputSource::new("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
     fn process_id() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
 
         let configuration = Configuration::default(retweets, social_graph)
             .process_id(42);
@@ -498,16 +453,16 @@ mod tests {
         assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 42);
         assert_eq!(configuration.report_connection_progress, false);
-        assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.retweets, InputSource::new("path/to/retweets.json"));
         assert_eq!(configuration.selected_users, None);
-        assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert_eq!(configuration.social_graph, InputSource::new("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
     fn processes() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
 
         let configuration = Configuration::default(retweets, social_graph)
             .processes(42);
@@ -521,16 +476,16 @@ mod tests {
         assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
-        assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.retweets, InputSource::new("path/to/retweets.json"));
         assert_eq!(configuration.selected_users, None);
-        assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert_eq!(configuration.social_graph, InputSource::new("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
     fn report_connection_progress() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
 
         let configuration = Configuration::default(retweets, social_graph)
             .report_connection_progress(true);
@@ -544,17 +499,17 @@ mod tests {
         assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, true);
-        assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.retweets, InputSource::new("path/to/retweets.json"));
         assert_eq!(configuration.selected_users, None);
-        assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert_eq!(configuration.social_graph, InputSource::new("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
     fn selected_users() {
-        let retweets = String::from("path/to/retweets.json");
+        let retweets = InputSource::new("path/to/retweets.json");
         let selected_users = PathBuf::from("path/to/selected/users.txt");
-        let social_graph = String::from("path/to/social/graph");
+        let social_graph = InputSource::new("path/to/social/graph");
 
         let configuration = Configuration::default(retweets, social_graph)
             .selected_users(Some(selected_users));
@@ -568,16 +523,16 @@ mod tests {
         assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
-        assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.retweets, InputSource::new("path/to/retweets.json"));
         assert_eq!(configuration.selected_users, Some(PathBuf::from("path/to/selected/users.txt")));
-        assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert_eq!(configuration.social_graph, InputSource::new("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
     fn workers() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
 
         let configuration = Configuration::default(retweets, social_graph)
             .workers(42);
@@ -591,16 +546,16 @@ mod tests {
         assert_eq!(configuration.pad_with_dummy_users, false);
         assert_eq!(configuration.process_id, 0);
         assert_eq!(configuration.report_connection_progress, false);
-        assert_eq!(configuration.retweets, String::from("path/to/retweets.json"));
+        assert_eq!(configuration.retweets, InputSource::new("path/to/retweets.json"));
         assert_eq!(configuration.selected_users, None);
-        assert_eq!(configuration.social_graph, String::from("path/to/social/graph"));
+        assert_eq!(configuration.social_graph, InputSource::new("path/to/social/graph"));
         assert!(configuration._prevent_outside_initialization);
     }
 
     #[test]
     fn get_timely_configuration() {
-        let retweets = String::from("path/to/retweets.json");
-        let social_graph = String::from("path/to/social/graph");
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
 
         // Single thread by default.
         let mut configuration = Configuration::default(retweets.clone(), social_graph.clone());
@@ -634,9 +589,9 @@ mod tests {
         assert!(timely_config.is_err());
         // Since `TimelyConfiguration` does not implement `Debug`, we have to get rid of it before calling `expect_err`.
         assert_eq!(timely_config.map(|_| ())
-                    .expect_err("unexpectedly succeeded getting the Timely configuration")
-                    .description(),
-                   "the process ID is not in range of all processes");
+            .expect_err("unexpectedly succeeded getting the Timely configuration")
+            .description(),
+        "the process ID is not in range of all processes");
 
         // Multiple processes, with hosts, wrong number of addresses.
         let mut configuration = Configuration::default(retweets.clone(), social_graph.clone())
@@ -652,9 +607,9 @@ mod tests {
         assert!(timely_config.is_err());
         // Since `TimelyConfiguration` does not implement `Debug`, we have to get rid of it before calling `expect_err`.
         assert_eq!(timely_config.map(|_| ())
-                    .expect_err("unexpectedly succeeded getting the Timely configuration")
-                    .description(),
-                   "3 hosts given, but expected 42");
+            .expect_err("unexpectedly succeeded getting the Timely configuration")
+            .description(),
+        "3 hosts given, but expected 42");
 
         // Multiple processes, with hosts.
         let mut configuration = Configuration::default(retweets.clone(), social_graph.clone())

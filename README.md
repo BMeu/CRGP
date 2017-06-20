@@ -9,7 +9,12 @@ For details and [benchmarks](https://bitbucket.org/BMeu/crgp/wiki/Benchmarks/Hom
 
 ## Requirements
 
-`CRGP` requires [Rust](https://www.rustup.rs) in version 1.17 or greater.
+`CRGP` requires the following programs to be installed _before_ compilation:
+
+* [Rust `1.17+`](https://www.rustup.rs)
+* OpenSSL `1.0.1+` (on Linux, you will need the developer packages `openssl-devel` or `libssl-dev`, depending on your
+  distribution, and the regular development utilities like `pkg-config`) - see also
+  [these notes](https://github.com/sfackler/rust-openssl/blob/0f02a8b61d9d8878eece3264bdc3271e2bd9b86b/README.md#building).
 
 ## Usage
 
