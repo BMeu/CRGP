@@ -37,13 +37,16 @@ extern crate timely_communication;
 
 pub use configuration::Algorithm;
 pub use configuration::Configuration;
+pub use configuration::InputSource;
 pub use configuration::OutputTarget;
+pub use configuration::S3Configuration;
 pub use error::Error;
 pub use error::Result;
 pub use reconstruction::run;
 pub use statistics::Statistics;
 use twitter::UserID;
 
+pub mod aws_s3;
 pub mod configuration;
 mod error;
 mod reconstruction;

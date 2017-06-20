@@ -47,6 +47,7 @@ use clap::ArgMatches;
 use crgp_lib::Algorithm;
 use crgp_lib::Configuration;
 use crgp_lib::Error;
+use crgp_lib::InputSource;
 use crgp_lib::OutputTarget;
 use flexi_logger::with_thread;
 use flexi_logger::LogOptions;
@@ -153,8 +154,8 @@ fn main() {
         .get_matches();
 
     // Get the positional arguments. Since they are required the `unwrap()`s cannot fail.
-    let social_graph_path: String = arguments.value_of("FRIENDS").unwrap().to_owned();
-    let retweet_path: String = arguments.value_of("RETWEETS").unwrap().to_owned();
+    let social_graph_path: InputSource = InputSource::new(arguments.value_of("FRIENDS").unwrap());
+    let retweet_path: InputSource = InputSource::new(arguments.value_of("RETWEETS").unwrap());
 
     // Get the arguments with default values. Since these arguments have default values and validators defined none
     // of the `unwrap()`s can fail.

@@ -64,7 +64,7 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
         // Load the social graph into the computation (only on the first worker).
         let counts: (u64, u64, u64) = if index == 0 {
             info!("Loading social graph...");
-            let path = PathBuf::from(configuration.social_graph.clone());
+            let path = PathBuf::from(configuration.social_graph.path.clone());
             let selected_users: Option<PathBuf> = configuration.selected_users.clone();
             tar::load(&path, configuration.pad_with_dummy_users, selected_users, &mut graph_input)?
         } else {
@@ -104,7 +104,7 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
 
         // Load the retweets (on the first worker).
         let retweets: Vec<Tweet> = if index == 0 {
-            let path = PathBuf::from(&configuration.retweets);
+            let path = PathBuf::from(&configuration.retweets.path);
             twitter::get::from_file(&path)?
         } else {
             Vec::new()

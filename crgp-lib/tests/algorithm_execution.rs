@@ -21,6 +21,7 @@ use gag::BufferRedirect;
 
 use crgp_lib::Algorithm;
 use crgp_lib::Configuration;
+use crgp_lib::InputSource;
 use crgp_lib::Result;
 use crgp_lib::Statistics;
 
@@ -31,8 +32,8 @@ lazy_static! {
 
 #[test]
 fn algorithm_execution_gale() {
-    let friendship_dataset = String::from("../data/social_graph");
-    let retweet_dataset = String::from("../data/retweets.json");
+    let friendship_dataset = InputSource::new("../data/social_graph");
+    let retweet_dataset = InputSource::new("../data/retweets.json");
 
     let configuration = Configuration::default(retweet_dataset, friendship_dataset)
         .batch_size(1);
@@ -75,8 +76,8 @@ fn algorithm_execution_gale() {
 
 #[test]
 fn algorithm_execution_gale_with_selected_users() {
-    let friendship_dataset = String::from("../data/social_graph");
-    let retweet_dataset = String::from("../data/retweets.json");
+    let friendship_dataset = InputSource::new("../data/social_graph");
+    let retweet_dataset = InputSource::new("../data/retweets.json");
     let selected_users = PathBuf::from("../data/retweeting_users.txt");
 
     let configuration = Configuration::default(retweet_dataset, friendship_dataset)
@@ -121,8 +122,8 @@ fn algorithm_execution_gale_with_selected_users() {
 
 #[test]
 fn algorithm_execution_gale_with_dummy_users() {
-    let friendship_dataset = String::from("../data/social_graph");
-    let retweet_dataset = String::from("../data/retweets.json");
+    let friendship_dataset = InputSource::new("../data/social_graph");
+    let retweet_dataset = InputSource::new("../data/retweets.json");
 
     let configuration = Configuration::default(retweet_dataset, friendship_dataset)
         .batch_size(1)
@@ -166,8 +167,8 @@ fn algorithm_execution_gale_with_dummy_users() {
 
 #[test]
 fn algorithm_execution_gale_with_selected_users_and_dummy_friends() {
-    let friendship_dataset = String::from("../data/social_graph");
-    let retweet_dataset = String::from("../data/retweets.json");
+    let friendship_dataset = InputSource::new("../data/social_graph");
+    let retweet_dataset = InputSource::new("../data/retweets.json");
     let selected_users = PathBuf::from("../data/retweeting_users.txt");
 
     let configuration = Configuration::default(retweet_dataset, friendship_dataset)
@@ -213,8 +214,8 @@ fn algorithm_execution_gale_with_selected_users_and_dummy_friends() {
 
 #[test]
 fn algorithm_execution_leaf() {
-    let friendship_dataset = String::from("../data/social_graph");
-    let retweet_dataset = String::from("../data/retweets.json");
+    let friendship_dataset = InputSource::new("../data/social_graph");
+    let retweet_dataset = InputSource::new("../data/retweets.json");
 
     let configuration = Configuration::default(retweet_dataset, friendship_dataset)
         .algorithm(Algorithm::LEAF)
@@ -258,8 +259,8 @@ fn algorithm_execution_leaf() {
 
 #[test]
 fn algorithm_execution_leaf_with_selected_users() {
-    let friendship_dataset = String::from("../data/social_graph");
-    let retweet_dataset = String::from("../data/retweets.json");
+    let friendship_dataset = InputSource::new("../data/social_graph");
+    let retweet_dataset = InputSource::new("../data/retweets.json");
     let selected_users = PathBuf::from("../data/retweeting_users.txt");
 
     let configuration = Configuration::default(retweet_dataset, friendship_dataset)
@@ -305,8 +306,8 @@ fn algorithm_execution_leaf_with_selected_users() {
 
 #[test]
 fn algorithm_execution_leaf_with_dummy_users() {
-    let friendship_dataset = String::from("../data/social_graph");
-    let retweet_dataset = String::from("../data/retweets.json");
+    let friendship_dataset = InputSource::new("../data/social_graph");
+    let retweet_dataset = InputSource::new("../data/retweets.json");
 
     let configuration = Configuration::default(retweet_dataset, friendship_dataset)
         .algorithm(Algorithm::LEAF)
@@ -351,8 +352,8 @@ fn algorithm_execution_leaf_with_dummy_users() {
 
 #[test]
 fn algorithm_execution_leaf_with_selected_users_and_dummy_friends() {
-    let friendship_dataset = String::from("../data/social_graph");
-    let retweet_dataset = String::from("../data/retweets.json");
+    let friendship_dataset = InputSource::new("../data/social_graph");
+    let retweet_dataset = InputSource::new("../data/retweets.json");
     let selected_users = PathBuf::from("../data/retweeting_users.txt");
 
     let configuration = Configuration::default(retweet_dataset, friendship_dataset)

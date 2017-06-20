@@ -14,14 +14,15 @@
 extern crate crgp_lib;
 
 use crgp_lib::Configuration;
+use crgp_lib::InputSource;
 use crgp_lib::Result;
 use crgp_lib::Statistics;
 
 /// Execute the program.
 fn main() {
     // Use the default algorithm configuration.
-    let retweet_path = String::from("../data/retweets.json");
-    let social_graph_path = String::from("../data/social_graph");
+    let retweet_path = InputSource::new("../data/retweets.json");
+    let social_graph_path = InputSource::new("../data/social_graph");
     let configuration = Configuration::default(retweet_path, social_graph_path);
 
     // Execute the algorithm.
