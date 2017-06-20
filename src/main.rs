@@ -63,6 +63,11 @@ fn main() {
 
     // Define the usage.
     let arguments: ArgMatches = app_from_crate!()
+        .after_help("When loading data sets from AWS S3, both options \"--s3-[*]-[bucket|region]\" must be set. The \
+                     paths within the bucket are the respective standard arguments. The access and secret keys will be \
+                     read from the environment variables \"AWS_ACCESS_KEY_ID\" and \"AWS_SECRET_ACCESS_KEY\", \
+                     respectively. If an access token is required, it can be given using the environment variable \
+                     \"AWS_TOKEN\".")
         .arg(Arg::with_name("algorithm")
             .long("algorithm")
             .takes_value(true)
@@ -123,6 +128,30 @@ fn main() {
         .arg(Arg::with_name("report-connection-progress")
             .long("report-connection-progress")
             .help("Print connection progress to STDOUT when using multiple processes."))
+        .arg(Arg::with_name("s3-tweets-bucket")
+            .long("s3-tweets-bucket")
+            .help("The AWS S3 bucket for the Retweet cascade file.")
+            .takes_value(true)
+            .value_name("BUCKET")
+            .requires("s3-tweets-region"))
+        .arg(Arg::with_name("s3-tweets-region")
+            .long("s3-tweets-region")
+            .help("The AWS S3 region for the Retweet cascade file.")
+            .takes_value(true)
+            .value_name("REGION")
+            .requires("s3-tweets-bucket"))
+        .arg(Arg::with_name("s3-sg-bucket")
+            .long("s3-sg-bucket")
+            .help("The AWS S3 bucket for the social graph.")
+            .takes_value(true)
+            .value_name("BUCKET")
+            .requires("s3-sg-region"))
+        .arg(Arg::with_name("s3-sg-region")
+            .long("s3-sg-region")
+            .help("The AWS S3 region for the social graph.")
+            .takes_value(true)
+            .value_name("REGION")
+            .requires("s3-sg-bucket"))
         .arg(Arg::with_name("selected-users")
             .long("selected-users")
             .value_name("FILE")
@@ -152,8 +181,8 @@ fn main() {
         .get_matches();
 
     // Get the positional arguments. Since they are required the `unwrap()`s cannot fail.
-    let social_graph_path = configuration::InputSource::new(arguments.value_of("FRIENDS").unwrap());
-    let retweet_path = configuration::InputSource::new(arguments.value_of("RETWEETS").unwrap());
+    let mut social_graph_path = configuration::InputSource::new(arguments.value_of("FRIENDS").unwrap());
+    let mut retweet_path = configuration::InputSource::new(arguments.value_of("RETWEETS").unwrap());
 
     // Get the arguments with default values. Since these arguments have default values and validators defined none
     // of the `unwrap()`s can fail.
@@ -184,6 +213,20 @@ fn main() {
             },
         }
     };
+
+    // Determine if any of the data sets is to be read from AWS S3.
+    if arguments.is_present("s3-tweets-bucket") && arguments.is_present("s3-tweets-region") {
+        let bucket: &str = arguments.value_of("s3-tweets-bucket").unwrap();
+        let region: &str = arguments.value_of("s3-tweets-region").unwrap();
+        let s3_config = configuration::S3::new(bucket, region);
+        retweet_path.s3 = Some(s3_config);
+    }
+    if arguments.is_present("s3-sg-bucket") && arguments.is_present("s3-sg-region") {
+        let bucket: &str = arguments.value_of("s3-sg-bucket").unwrap();
+        let region: &str = arguments.value_of("s3-sg-region").unwrap();
+        let s3_config = configuration::S3::new(bucket, region);
+        social_graph_path.s3 = Some(s3_config);
+    }
 
     // Get the hosts.
     let hosts: Option<Vec<String>> = match arguments.value_of("hostfile") {
