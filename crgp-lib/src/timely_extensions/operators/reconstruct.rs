@@ -76,6 +76,8 @@ where G::Timestamp: Hash {
                             Some(friends) => friends,
                             None => continue
                         };
+
+                        // Log how many Retweets the worker has processed.
                         processed_tweets += 1;
                         debug!("Tweets: {}", processed_tweets);
 
@@ -130,6 +132,8 @@ where G::Timestamp: Hash {
                     };
 
                     edges.shrink_to_fit();
+
+                    // Log how many friendships the worker currently stores.
                     let mut num_friends: usize = 0;
                     for (_user, friends) in &edges.graph {
                         num_friends += friends.len();
