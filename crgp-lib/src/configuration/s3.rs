@@ -109,10 +109,10 @@ mod tests {
         let bucket_name: &str = "bucket";
         let region = Region::UsEast1;
         let secret_access_key: &str = "Secret Access Key";
-        remove_var(ACCESS_KEY_VAR_NAME);
-        set_var(SECRET_VAR_NAME, secret_access_key);
 
         let s3 = S3::new(bucket_name, &format!("{}", region));
+        remove_var(ACCESS_KEY_VAR_NAME);
+        set_var(SECRET_VAR_NAME, secret_access_key);
         let bucket: Result<Bucket> = s3.get_bucket();
         assert!(bucket.is_err());
         remove_var(SECRET_VAR_NAME);
@@ -124,10 +124,10 @@ mod tests {
         let region: &str = "test-region-that-should-not-exist";
         let access_key_id: &str = "Access Key ID";
         let secret_access_key: &str = "Secret Access Key";
-        set_var(ACCESS_KEY_VAR_NAME, access_key_id);
-        set_var(SECRET_VAR_NAME, secret_access_key);
 
         let s3 = S3::new(bucket_name, region);
+        set_var(ACCESS_KEY_VAR_NAME, access_key_id);
+        set_var(SECRET_VAR_NAME, secret_access_key);
         let bucket: Result<Bucket> = s3.get_bucket();
         assert!(bucket.is_err());
         remove_var(ACCESS_KEY_VAR_NAME);

@@ -17,6 +17,7 @@ use Configuration;
 use Result;
 use Statistics;
 use configuration::Algorithm;
+use configuration::InputSource;
 use configuration::OutputTarget;
 use reconstruction::SimplifyResult;
 use reconstruction::algorithms::gale;
@@ -64,11 +65,11 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
         // Load the social graph into the computation (only on the first worker).
         let counts: (u64, u64, u64) = if index == 0 {
             info!("Loading social graph...");
-            let path = PathBuf::from(configuration.social_graph.path.clone());
+            let input: InputSource = configuration.social_graph.clone();
             let selected_users: Option<PathBuf> = configuration.selected_users.clone();
-            tar::load(&path, configuration.pad_with_dummy_users, selected_users, &mut graph_input)?
+            tar::load(input, configuration.pad_with_dummy_users, selected_users, &mut graph_input)?
         } else {
-            (0, 0, 0)
+                (0, 0, 0)
         };
         let (number_of_users, number_of_given_friendships, number_of_expected_friendships) = counts;
 

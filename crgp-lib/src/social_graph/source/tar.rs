@@ -21,6 +21,7 @@ use timely::dataflow::operators::input::Handle;
 
 use Result;
 use UserID;
+use configuration::InputSource;
 
 lazy_static! {
     /// A regular expression to validate directory names. The name must consist of exactly three digits.
@@ -45,13 +46,28 @@ lazy_static! {
         .expect("Failed to compile the REGEX.");
 }
 
-/// Load the social graph from the given `path` into the computation using the `graph_input`. If required, dummy users
+/// Load the social graph from the given `input` into the computation using the `graph_input`. If required, dummy users
 /// will be created. The function returns three counts in the following order: the number of users for whom friendships
 /// where loaded, the total number of explicitly given friendships, and the total number of all friendships.
-pub fn load(path: &PathBuf,
+pub fn load(input: InputSource,
             pad_with_dummy_users: bool,
             selected_users_file: Option<PathBuf>,
             graph_input: &mut Handle<u64, (UserID, Vec<UserID>)>
+    ) -> Result<(u64, u64, u64)>
+{
+    if input.s3.is_none() {
+        load_locally(&PathBuf::from(input.path), pad_with_dummy_users, selected_users_file, graph_input)
+    }
+    else {
+        unimplemented!()
+    }
+}
+
+/// Load the social graph from the given local `path`.
+fn load_locally(path: &PathBuf,
+                    pad_with_dummy_users: bool,
+                    selected_users_file: Option<PathBuf>,
+                    graph_input: &mut Handle<u64, (UserID, Vec<UserID>)>
     ) -> Result<(u64, u64, u64)>
 {
     // Get a set of selected users to load from the social graph. If `None`, the entire social graph will be loaded.
