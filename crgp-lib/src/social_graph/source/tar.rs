@@ -16,9 +16,14 @@ use std::io::Result as IOResult;
 use std::path::PathBuf;
 
 use regex::Regex;
+use s3::bucket::Bucket;
+use s3::error::ErrorKind as S3ErrorKind;
+use s3::error::S3Error;
+use s3::serde_types::ListBucketResult;
 use tar::Archive;
 use timely::dataflow::operators::input::Handle;
 
+use Error;
 use Result;
 use UserID;
 use configuration::InputSource;
@@ -55,19 +60,22 @@ pub fn load(input: InputSource,
             graph_input: &mut Handle<u64, (UserID, Vec<UserID>)>
     ) -> Result<(u64, u64, u64)>
 {
-    if input.s3.is_none() {
-        load_locally(&PathBuf::from(input.path), pad_with_dummy_users, selected_users_file, graph_input)
-    }
-    else {
-        unimplemented!()
+    let path = input.path.clone();
+    match input.s3 {
+        Some(s3_config) => {
+            load_from_s3(&path, &s3_config.get_bucket()?, pad_with_dummy_users, selected_users_file, graph_input)
+        },
+        None => {
+            load_locally(&PathBuf::from(path), pad_with_dummy_users, selected_users_file, graph_input)
+        }
     }
 }
 
 /// Load the social graph from the given local `path`.
 fn load_locally(path: &PathBuf,
-                    pad_with_dummy_users: bool,
-                    selected_users_file: Option<PathBuf>,
-                    graph_input: &mut Handle<u64, (UserID, Vec<UserID>)>
+                pad_with_dummy_users: bool,
+                selected_users_file: Option<PathBuf>,
+                graph_input: &mut Handle<u64, (UserID, Vec<UserID>)>
     ) -> Result<(u64, u64, u64)>
 {
     // Get a set of selected users to load from the social graph. If `None`, the entire social graph will be loaded.
@@ -185,6 +193,134 @@ fn load_locally(path: &PathBuf,
 
                 graph_input.send((user, friendships));
             }
+        }
+    }
+
+    Ok((users, total_given_friendships, total_expected_friendships))
+}
+
+/// Load the social graph from the given AWS S3 `bucket`.
+fn load_from_s3(path: &str,
+                bucket: &Bucket,
+                pad_with_dummy_users: bool,
+                selected_users_file: Option<PathBuf>,
+                graph_input: &mut Handle<u64, (UserID, Vec<UserID>)>
+    ) -> Result<(u64, u64, u64)>
+{
+    // Get a set of selected users to load from the social graph. If `None`, the entire social graph will be loaded.
+    let selected_users: Option<HashSet<UserID>> = match selected_users_file {
+        Some(file) => {
+            let mut selected_users: HashSet<UserID> = HashSet::new();
+            get_selected_friends(&file, &mut selected_users)?;
+            Some(selected_users)
+        },
+        None => None
+    };
+
+    let mut total_expected_friendships: u64 = 0;
+    let mut total_given_friendships: u64 = 0;
+    let mut users: u64 = 0;
+
+    // Get all objects in the given path.
+    let (list, code): (ListBucketResult, u32) = bucket.list(path, None)?;
+    if code != 200 {
+        let message: String = format!("Could not get contents of AWS S3 bucket \"{bucket} (region {region})\": \
+                                       HTTP error {code}",
+                                      bucket = bucket.name, region = bucket.region, code = code);
+        error!("{}", message);
+        return Err(Error::from(S3Error::from_kind(S3ErrorKind::Msg(message))));
+    }
+
+    // Load all TAR archives and parse them.
+    for entry in list.contents {
+        // Validate the file name.
+        if !TAR_NAME_TEMPLATE.is_match(&entry.key) {
+            trace!("Invalid filename: {name}", name = entry.key);
+            continue;
+        }
+
+        // Load the actual file.
+        let (contents, code): (Vec<u8>, u32) = bucket.get(&entry.key)?;
+        if code != 200 {
+            let message: String = format!("Could not get file \"{file}\" from AWS S3 bucket \"{bucket} (region \
+                                           {region})\": HTTP error {code}",
+                                          file = entry.key, bucket = bucket.name, region = bucket.region, code = code);
+            error!("{}", message);
+            return Err(Error::from(S3Error::from_kind(S3ErrorKind::Msg(message))));
+        }
+
+        // The array of `u8`s is just the archive we want to read.
+        let mut archive: Archive<&[u8]> = Archive::new(&contents);
+        let archive_entries = match archive.entries() {
+            Ok(entries) => entries,
+            Err(message) => {
+                error!("Could not read contents of archive {archive}: {error}",
+                        archive = entry.key, error = message);
+                continue;
+            }
+        };
+
+        // Open the friend files.
+        for file in archive_entries {
+            // Ensure correct reading.
+            let file = match file {
+                Ok(file) => file,
+                Err(message) => {
+                    error!("Could not read archived file in archive {archive}: {error}",
+                            archive = entry.key, error = message);
+                    continue;
+                }
+            };
+
+            let friends_path: PathBuf = match file.path() {
+                Ok(path) => path.to_path_buf(),
+                Err(_) => continue
+            };
+
+            if !is_valid_friend_file(&friends_path) {
+                continue;
+            }
+
+            // Get the user ID.
+            let user: UserID = match get_user_id(&friends_path) {
+                Some(id) => id,
+                None => continue
+            };
+
+            // If only selected users are requested: skip this user if they are not on the VIP list.
+            if let Some(ref selected_users) = selected_users {
+                if !selected_users.contains(&user) {
+                    continue;
+                }
+            }
+
+            // Parse the file.
+            let reader = BufReader::new(file);
+            let (expected_friendships, mut friendships) = parse_friend_file(reader, &friends_path, user);
+            let given_friendships: u64 = friendships.len() as u64;
+
+            // Introduce dummy friends if required. To avoid any overflows, we must first ensure that there are less
+            // given friends than expected ones.
+            let user_has_missing_friends: bool = given_friendships < expected_friendships;
+            if pad_with_dummy_users && user_has_missing_friends {
+                let number_of_missing_friends: u64 = expected_friendships - given_friendships;
+                friendships.extend(create_dummy_friends(number_of_missing_friends));
+                trace!("User {user}: created {number} dummy friends",
+                user = user, number = number_of_missing_friends);
+            }
+
+            // If the user still has no friends, continue.
+            if friendships.is_empty() {
+                warn!("User {user} does not have any friends", user = user);
+                continue;
+            }
+
+            // Update social graph statistics.
+            total_given_friendships += given_friendships;
+            total_expected_friendships += expected_friendships;
+            users += 1;
+
+            graph_input.send((user, friendships));
         }
     }
 
