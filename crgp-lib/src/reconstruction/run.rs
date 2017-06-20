@@ -105,8 +105,7 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
 
         // Load the retweets (on the first worker).
         let retweets: Vec<Tweet> = if index == 0 {
-            let path = PathBuf::from(&configuration.retweets.path);
-            twitter::get::from_file(&path)?
+            twitter::get::from_source(configuration.retweets.clone())?
         } else {
             Vec::new()
         };
