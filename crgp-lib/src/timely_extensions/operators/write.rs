@@ -17,6 +17,7 @@ use std::path::PathBuf;
 use timely::dataflow::Stream;
 use timely::dataflow::Scope;
 use timely::dataflow::channels::pact::Exchange;
+use timely::dataflow::channels::pact::Pipeline;
 use timely::dataflow::operators::unary::Unary;
 
 use UserID;
@@ -25,7 +26,7 @@ use social_graph::InfluenceEdge;
 
 /// Write a stream to a file, passing on all seen messages.
 pub trait Write<G: Scope> {
-    /// Write all input messages to the given `output_target` and pass them on. If `output_target` is
+    /// Write all input messages to the given `output_target`. If `output_target` is
     /// `None`, the messages will be passed on without any further operations.
     ///
     /// On any IO error, an error log message will be generated using the
@@ -37,18 +38,12 @@ impl<G: Scope> Write<G> for Stream<G, InfluenceEdge<UserID>>
 where G::Timestamp: Hash {
     #[cfg_attr(feature = "cargo-clippy", allow(print_stdout))]
     fn write(&self, output_target: OutputTarget) -> Stream<G, InfluenceEdge<UserID>> {
-        // If the output target is None, return an operator that simply passes the input on.
+        // If the output target is None, return an operator that does nothing.
         if let OutputTarget::None = output_target {
             return self.unary_stream(
-                Exchange::new(|influence: &InfluenceEdge<UserID>| influence.cascade_id),
+                Pipeline,
                 "Write",
-                |influences, output| {
-                    influences.for_each(|time, influence_data| {
-                        for influence in influence_data.iter() {
-                            output.session(&time).give(influence.clone());
-                        }
-                    })
-                }
+                |_influences, _output| { }
             )
         }
 
