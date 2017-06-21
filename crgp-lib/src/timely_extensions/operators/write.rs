@@ -111,12 +111,13 @@ where G::Timestamp: Hash {
                                         continue;
                                     };
 
-                                    // Write the edge into the writer's buffer.
+                                    // Write the edge.
                                     let _ = writeln!(cascade_writer,
                                                      "{cascade};{retweet};{user};{influencer};{time};-1",
                                                      cascade = influence.cascade_id, retweet = influence.retweet_id,
                                                      user = influence.influencee, influencer = influence.influencer,
                                                      time = influence.timestamp);
+                                    let _ = cascade_writer.flush();
                                 },
                                 OutputTarget::StdOut => {
                                     println!("{cascade};{retweet};{user};{influencer};{time};-1",
