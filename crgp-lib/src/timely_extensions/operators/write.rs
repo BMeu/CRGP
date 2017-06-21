@@ -40,11 +40,7 @@ where G::Timestamp: Hash {
     fn write(&self, output_target: OutputTarget) -> Stream<G, InfluenceEdge<UserID>> {
         // If the output target is None, return an operator that does nothing.
         if let OutputTarget::None = output_target {
-            return self.unary_stream(
-                Pipeline,
-                "Write",
-                |_influences, _output| { }
-            )
+            return self.unary_stream(Pipeline, "Write", |_influences, _output| {})
         }
 
         // For each cascade, a separate file writer.
