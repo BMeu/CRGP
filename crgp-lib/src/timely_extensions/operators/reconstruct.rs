@@ -42,10 +42,10 @@ where G::Timestamp: Hash {
         // retweeted within a cascade.
         let mut activations: HashMap<u64, HashMap<UserID, u64>> = HashMap::new();
 
-	let mut received_tweets: usize = 0;
+        let mut received_tweets: usize = 0;
         let mut processed_tweets: usize = 0;
-	let mut dismissed_tweets: usize = 0;
-	let mut ignored_tweets: usize = 0;
+        let mut dismissed_tweets: usize = 0;
+        let mut ignored_tweets: usize = 0;
 
         self.binary_stream(
             &graph,
@@ -64,10 +64,10 @@ where G::Timestamp: Hash {
                         let original_tweet: &Tweet = match retweet.retweeted_status {
                             Some(ref t) => t,
                             None => {
-				dismissed_tweets += 1;
-				error!("Tweets Dismissed: {}", dismissed_tweets);
-				continue;
-			    }
+                                dismissed_tweets += 1;
+                                error!("Tweets Dismissed: {}", dismissed_tweets);
+                                continue;
+			                }
                         };
 
                         // Mark this user as active for this cascade.
@@ -86,10 +86,10 @@ where G::Timestamp: Hash {
                         let friends: &Vec<UserID> = match edges.get(&retweet.user.id) {
                             Some(friends) => friends,
                             None => {
-				ignored_tweets += 1;
-				error!("Tweets Ignored:   {} (User {})", ignored_tweets, retweet.user.id);
-				continue
-			    }
+                                ignored_tweets += 1;
+                                error!("Tweets Ignored:   {} (User {})", ignored_tweets, retweet.user.id);
+                                continue
+                            }
                         };
 
                         // Log how many Retweets the worker has processed.
