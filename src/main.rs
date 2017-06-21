@@ -273,6 +273,7 @@ fn main() {
         let logger_initialization = LogOptions::new()
             .format(with_thread)
             .log_to_file(log_to_file)
+            .duplicate_error(!log_to_file)  // Do not print errors to STDOUT if they already are written to a file.
             .directory(log_directory)
             .init(Some(verbosity));
 
