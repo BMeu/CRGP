@@ -37,6 +37,7 @@ pub fn from_source(input: InputSource) -> Result<Vec<Tweet>> {
 /// Load the Retweets from the given `path`.
 fn from_file(path: &PathBuf) -> Result<Vec<Tweet>> {
     if !path.is_file() {
+        #[cfg(not(test))]
         error!("Retweet data set is a not a file: {path}", path = path.display());
         return Err(Error::from(IOError::new(IOErrorKind::InvalidInput,
                                             format!("Retweet data set is not a file: {path}", path = path.display()))));
@@ -114,6 +115,7 @@ fn from_aws_s3(path: &str, bucket: &Bucket) -> Result<Vec<Tweet>> {
 
 #[cfg(test)]
 mod tests {
+    use std::error::Error;
     use std::path::PathBuf;
     use Result;
     use twitter::Tweet;
@@ -124,6 +126,9 @@ mod tests {
         let path = PathBuf::from(String::from("../data/retweets.invalid.json"));
         let retweets: Result<Vec<Tweet>> = super::from_file(&path);
         assert!(retweets.is_err());
+        if let Err(message) = retweets {
+            assert_eq!(message.description(), "Retweet data set is not a file: ../data/retweets.invalid.json");
+        }
 
         // Valid file.
         let path = PathBuf::from(String::from("../data/retweets.json"));
