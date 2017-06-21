@@ -63,15 +63,15 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
          ****************/
 
         // Load the social graph into the computation (only on the first worker).
-        let counts: (u64, u64, u64) = if index == 0 {
+        let counts: (u64, u64, u64, u64) = if index == 0 {
             info!("Loading social graph...");
             let input: InputSource = configuration.social_graph.clone();
             let selected_users: Option<PathBuf> = configuration.selected_users.clone();
             tar::load(input, configuration.pad_with_dummy_users, selected_users, &mut graph_input)?
         } else {
-                (0, 0, 0)
+                (0, 0, 0, 0)
         };
-        let (number_of_users, number_of_given_friendships, number_of_expected_friendships) = counts;
+        let (number_of_users, number_of_given_friendships, number_of_expected_friendships, number_of_dummies) = counts;
 
         // Process the entire social graph before continuing.
         computation.sync(&probe, &mut graph_input, &mut retweet_input);
@@ -86,11 +86,10 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
 
             let mut friendships_in_social_graph: u64 = number_of_given_friendships;
             if configuration.pad_with_dummy_users {
-                let number_of_dummy_users: u64 = number_of_expected_friendships - number_of_given_friendships;
-                info!("Created {number} dummy friends", number = number_of_dummy_users);
+                info!("Created {number} dummy friends", number = number_of_dummies);
 
                 // For the statistics, add the dummy friends to the size of the social graph.
-                friendships_in_social_graph += number_of_dummy_users;
+                friendships_in_social_graph += number_of_dummies;
             }
             friendships_in_social_graph
         } else {
