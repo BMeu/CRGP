@@ -32,6 +32,7 @@ extern crate s3;
 extern crate serde_derive;
 extern crate serde_json;
 extern crate tar;
+extern crate time;
 extern crate timely;
 extern crate timely_communication;
 

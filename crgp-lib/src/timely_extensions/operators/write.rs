@@ -14,6 +14,9 @@ use std::io::Write as IOWrite;
 use std::io::BufWriter;
 use std::path::PathBuf;
 
+use time;
+use time::Tm;
+use time::TmFmt;
 use timely::dataflow::Stream;
 use timely::dataflow::Scope;
 use timely::dataflow::channels::pact::Exchange;
@@ -84,7 +87,18 @@ where G::Timestamp: Hash {
                                     // Create a buffered writer for this edge's cascade if there is none yet.
                                     let has_writer: bool = cascade_writers.contains_key(&cascade);
                                     if !has_writer {
-                                        let filename: String = format!("cascs-{id}.csv", id = cascade);
+                                        // The unwrap is save, since the format string is known to be correct.
+                                        let current_time: Tm = time::now();
+                                        let time_formatted: TmFmt = match current_time.strftime("%Y-%m-%d_%H-%M-%S") {
+                                            // Since the format string is known to be correct, this fallback should
+                                            // never be needed. It just ensures that the execution does not fail for
+                                            // some stupid reason.
+                                            Ok(formatted) => formatted,
+                                            Err(_) => current_time.rfc3339()
+                                        };
+
+                                        let filename: String = format!("cascs-{id}_{time}.csv",
+                                                                       id = cascade, time = time_formatted);
                                         let path: PathBuf = directory.join(filename);
 
                                         // Open the file (automatically create it if does not exist).
