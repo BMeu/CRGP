@@ -7,8 +7,8 @@
 //! Write a stream to a file.
 
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::fs::File;
+use std::fs::OpenOptions;
 use std::hash::Hash;
 use std::io::Write as IOWrite;
 use std::io::BufWriter;
@@ -43,27 +43,24 @@ where G::Timestamp: Hash {
             return self.unary_stream(Pipeline, "Write", |_influences, _output| {})
         }
 
-        // For each cascade, a separate file writer.
-        let mut cascade_writers: HashMap<u64, BufWriter<File>> = HashMap::new();
-
         // For each timely time, a list of the influences seen at that time.
-        let mut influences_at_time: HashMap<G::Timestamp, HashSet<InfluenceEdge<UserID>>> = HashMap::new();
+        let mut influences_at_time: HashMap<G::Timestamp, Vec<InfluenceEdge<UserID>>> = HashMap::new();
 
         self.unary_notify(
             Exchange::new(|influence: &InfluenceEdge<UserID>| influence.cascade_id),
             "Write",
             Vec::new(),
             move |influences, _output, notificator| {
+                // For each cascade, a separate file writer.
+                let mut cascade_writers: HashMap<u64, BufWriter<File>> = HashMap::new();
+
                 // Process the influence edges: immediately pass them on and save them for batched writing.
                 influences.for_each(|time, influence_data| {
                     notificator.notify_at(time.clone());
 
                     let mut influences_now = influences_at_time.entry(time.time().clone())
-                        .or_insert_with(HashSet::new);
-
-                    for influence in influence_data.drain(..) {
-                        influences_now.insert(influence);
-                    }
+                        .or_insert_with(Vec::new);
+                    influences_now.extend(influence_data.drain(..));
                 });
 
                 // If a timely time is done, write all associated edges.
@@ -71,7 +68,7 @@ where G::Timestamp: Hash {
                     // Introduce this sub-scope to unborrow `influences_at_time` so old entries can be removed from it
                     // at the end.
                     {
-                        let influences_now = match influences_at_time.get(&time) {
+                        let influences_now: &Vec<InfluenceEdge<UserID>> = match influences_at_time.get(&time) {
                             Some(influences_now) => influences_now,
                             None => return
                         };
@@ -82,38 +79,39 @@ where G::Timestamp: Hash {
 
                             match output_target {
                                 OutputTarget::Directory(ref directory) => {
-                                    // Get the writer for this cascade. If there is none, create it.
-                                    let has_writer: bool = cascade_writers.contains_key(&influence.cascade_id);
+                                    let cascade: u64 = influence.cascade_id;
+
+                                    // Create a buffered writer for this edge's cascade if there is none yet.
+                                    let has_writer: bool = cascade_writers.contains_key(&cascade);
                                     if !has_writer {
-                                        let filename: String = format!("cascs-{id}.csv", id = influence.cascade_id);
+                                        let filename: String = format!("cascs-{id}.csv", id = cascade);
                                         let path: PathBuf = directory.join(filename);
-                                        let file = match File::create(path.clone()) {
+
+                                        // Open the file (automatically create it if does not exist).
+                                        let mut open_options = OpenOptions::new();
+                                        let file: File = match open_options.create(true).append(true).open(&path) {
                                             Ok(file) => file,
                                             Err(message) => {
-                                                error!("Could not create {file}: {error}",
+                                                error!("Could not open {file}: {error}",
                                                        file = path.display(), error = message);
                                                 continue;
                                             }
                                         };
-                                        trace!("Created result file {file}", file = path.display());
-                                        let _ = cascade_writers.insert(influence.cascade_id, BufWriter::new(file));
+                                        let _ = cascade_writers.insert(cascade, BufWriter::new(file));
                                     }
-                                    let cascade_writer = cascade_writers.get_mut(&influence.cascade_id);
-                                    let cascade_writer: &mut BufWriter<File> = if let Some(writer) = cascade_writer {
-                                        writer
-                                    } else {
-                                        // This should not be possible since the above code will insert a new writer
-                                        // if there is none yet.
-                                        continue;
+
+                                    // Get the writer. Failing is impossible since the writer has just been created.
+                                    let writer: Option<&mut BufWriter<File>> = cascade_writers.get_mut(&cascade);
+                                    let writer: &mut BufWriter<File> = match writer {
+                                        Some(writer) => writer,
+                                        None => continue,
                                     };
 
                                     // Write the edge.
-                                    let _ = writeln!(cascade_writer,
-                                                     "{cascade};{retweet};{user};{influencer};{time};-1",
+                                    let _ = writeln!(writer, "{cascade};{retweet};{user};{influencer};{time};-1",
                                                      cascade = influence.cascade_id, retweet = influence.retweet_id,
                                                      user = influence.influencee, influencer = influence.influencer,
                                                      time = influence.timestamp);
-                                    let _ = cascade_writer.flush();
                                 },
                                 OutputTarget::StdOut => {
                                     println!("{cascade};{retweet};{user};{influencer};{time};-1",
