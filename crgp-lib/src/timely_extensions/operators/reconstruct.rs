@@ -61,13 +61,12 @@ where G::Timestamp: Hash {
                         error!("Tweets Received:  {}", received_tweets);
 
                         // Skip all tweets that are not retweets.
-                        let original_tweet: &Tweet = match retweet.retweeted_status {
-                            Some(ref t) => t,
-                            None => {
-                                dismissed_tweets += 1;
-                                error!("Tweets Dismissed: {}", dismissed_tweets);
-                                continue;
-			                }
+                        let original_tweet: &Tweet = if let Some(ref tweet) = retweet.retweeted_status {
+                            tweet
+                        } else {
+                            dismissed_tweets += 1;
+                            error!("Tweets Dismissed: {}", dismissed_tweets);
+                            continue;
                         };
 
                         // Mark this user as active for this cascade.
@@ -83,13 +82,12 @@ where G::Timestamp: Hash {
 
                         // If this is the worker storing the retweeting user's friends, find
                         // all influences. Otherwise, move on.
-                        let friends: &Vec<UserID> = match edges.get(&retweet.user.id) {
-                            Some(friends) => friends,
-                            None => {
-                                ignored_tweets += 1;
-                                error!("Tweets Ignored:   {} (User {})", ignored_tweets, retweet.user.id);
-                                continue
-                            }
+                        let friends: &Vec<UserID> = if let Some(friends) = edges.get(&retweet.user.id) {
+                            friends
+                        } else {
+                            ignored_tweets += 1;
+                            error!("Tweets Ignored:   {} (User {})", ignored_tweets, retweet.user.id);
+                            continue;
                         };
 
                         // Log how many Retweets the worker has processed.
