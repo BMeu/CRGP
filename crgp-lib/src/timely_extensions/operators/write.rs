@@ -87,7 +87,8 @@ where G::Timestamp: Hash {
                                     // Create a buffered writer for this edge's cascade if there is none yet.
                                     let has_writer: bool = cascade_writers.contains_key(&cascade);
                                     if !has_writer {
-                                        // The unwrap is save, since the format string is known to be correct.
+                                        // Use the current time for the file name so these results are not appended to
+                                        // previous ones.
                                         let current_time: Tm = time::now();
                                         let time_formatted: TmFmt = match current_time.strftime("%Y-%m-%d_%H-%M-%S") {
                                             // Since the format string is known to be correct, this fallback should
@@ -122,16 +123,10 @@ where G::Timestamp: Hash {
                                     };
 
                                     // Write the edge.
-                                    let _ = writeln!(writer, "{cascade};{retweet};{user};{influencer};{time};-1",
-                                                     cascade = influence.cascade_id, retweet = influence.retweet_id,
-                                                     user = influence.influencee, influencer = influence.influencer,
-                                                     time = influence.timestamp);
+                                    let _ = writeln!(writer, "{}", influence);
                                 },
                                 OutputTarget::StdOut => {
-                                    println!("{cascade};{retweet};{user};{influencer};{time};-1",
-                                             cascade = influence.cascade_id, retweet = influence.retweet_id,
-                                             user = influence.influencee, influencer = influence.influencer,
-                                             time = influence.timestamp);
+                                    println!("{}", influence);
                                 },
                                 OutputTarget::None => {}
                             }
