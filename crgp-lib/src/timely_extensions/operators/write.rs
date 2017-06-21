@@ -61,8 +61,8 @@ where G::Timestamp: Hash {
                     let mut influences_now = influences_at_time.entry(time.time().clone())
                         .or_insert_with(HashSet::new);
 
-                    for influence in influence_data.iter() {
-                        influences_now.insert(influence.clone());
+                    for influence in influence_data.drain(..) {
+                        influences_now.insert(influence);
                     }
                 });
 
