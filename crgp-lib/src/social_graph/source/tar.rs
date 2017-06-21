@@ -53,12 +53,13 @@ lazy_static! {
 
 /// Load the social graph from the given `input` into the computation using the `graph_input`. If required, dummy users
 /// will be created. The function returns three counts in the following order: the number of users for whom friendships
-/// where loaded, the total number of explicitly given friendships, and the total number of all friendships.
+/// where loaded, the total number of explicitly given friendships, the total number of all friendships, and the total
+/// number of dummy friends.
 pub fn load(input: InputSource,
             pad_with_dummy_users: bool,
             selected_users_file: Option<PathBuf>,
             graph_input: &mut Handle<u64, (UserID, Vec<UserID>)>
-    ) -> Result<(u64, u64, u64)>
+    ) -> Result<(u64, u64, u64, u64)>
 {
     let path = input.path.clone();
     match input.s3 {
@@ -76,7 +77,7 @@ fn load_locally(path: &PathBuf,
                 pad_with_dummy_users: bool,
                 selected_users_file: Option<PathBuf>,
                 graph_input: &mut Handle<u64, (UserID, Vec<UserID>)>
-    ) -> Result<(u64, u64, u64)>
+    ) -> Result<(u64, u64, u64, u64)>
 {
     // Get a set of selected users to load from the social graph. If `None`, the entire social graph will be loaded.
     let selected_users: Option<HashSet<UserID>> = match selected_users_file {
@@ -90,6 +91,7 @@ fn load_locally(path: &PathBuf,
 
     let mut total_expected_friendships: u64 = 0;
     let mut total_given_friendships: u64 = 0;
+    let mut total_dummy_friendships: u64 = 0;
     let mut users: u64 = 0;
 
     // Top level.
@@ -173,12 +175,15 @@ fn load_locally(path: &PathBuf,
                 // Introduce dummy friends if required. To avoid any overflows, we must first ensure that there are less
                 // given friends than expected ones.
                 let user_has_missing_friends: bool = given_friendships < expected_friendships;
-                if pad_with_dummy_users && user_has_missing_friends {
+                let number_of_dummy_users: u64 = if pad_with_dummy_users && user_has_missing_friends {
                     let number_of_missing_friends: u64 = expected_friendships - given_friendships;
                     friendships.extend(create_dummy_friends(number_of_missing_friends));
                     trace!("User {user}: created {number} dummy friends",
                            user = user, number = number_of_missing_friends);
-                }
+                    number_of_missing_friends
+                } else {
+                    0
+                };
 
                 // If the user still has no friends, continue.
                 if friendships.is_empty() {
@@ -189,6 +194,7 @@ fn load_locally(path: &PathBuf,
                 // Update social graph statistics.
                 total_given_friendships += given_friendships;
                 total_expected_friendships += expected_friendships;
+                total_dummy_friendships += number_of_dummy_users;
                 users += 1;
 
                 graph_input.send((user, friendships));
@@ -196,7 +202,7 @@ fn load_locally(path: &PathBuf,
         }
     }
 
-    Ok((users, total_given_friendships, total_expected_friendships))
+    Ok((users, total_given_friendships, total_expected_friendships, total_dummy_friendships))
 }
 
 /// Load the social graph from the given AWS S3 `bucket`.
@@ -205,7 +211,7 @@ fn load_from_s3(path: &str,
                 pad_with_dummy_users: bool,
                 selected_users_file: Option<PathBuf>,
                 graph_input: &mut Handle<u64, (UserID, Vec<UserID>)>
-    ) -> Result<(u64, u64, u64)>
+    ) -> Result<(u64, u64, u64, u64)>
 {
     // Get a set of selected users to load from the social graph. If `None`, the entire social graph will be loaded.
     let selected_users: Option<HashSet<UserID>> = match selected_users_file {
@@ -219,6 +225,7 @@ fn load_from_s3(path: &str,
 
     let mut total_expected_friendships: u64 = 0;
     let mut total_given_friendships: u64 = 0;
+    let mut total_dummy_friendships: u64 = 0;
     let mut users: u64 = 0;
 
     // Get all objects in the given path.
@@ -302,12 +309,15 @@ fn load_from_s3(path: &str,
             // Introduce dummy friends if required. To avoid any overflows, we must first ensure that there are less
             // given friends than expected ones.
             let user_has_missing_friends: bool = given_friendships < expected_friendships;
-            if pad_with_dummy_users && user_has_missing_friends {
+            let number_of_dummy_users: u64 = if pad_with_dummy_users && user_has_missing_friends {
                 let number_of_missing_friends: u64 = expected_friendships - given_friendships;
                 friendships.extend(create_dummy_friends(number_of_missing_friends));
                 trace!("User {user}: created {number} dummy friends",
-                user = user, number = number_of_missing_friends);
-            }
+                       user = user, number = number_of_missing_friends);
+                number_of_missing_friends
+            } else {
+                0
+            };
 
             // If the user still has no friends, continue.
             if friendships.is_empty() {
@@ -318,13 +328,14 @@ fn load_from_s3(path: &str,
             // Update social graph statistics.
             total_given_friendships += given_friendships;
             total_expected_friendships += expected_friendships;
+            total_dummy_friendships += number_of_dummy_users;
             users += 1;
 
             graph_input.send((user, friendships));
         }
     }
 
-    Ok((users, total_given_friendships, total_expected_friendships))
+    Ok((users, total_given_friendships, total_expected_friendships, total_dummy_friendships))
 }
 
 /// Create the given `amount` of dummy friends.
