@@ -42,7 +42,10 @@ where G::Timestamp: Hash {
         // retweeted within a cascade.
         let mut activations: HashMap<u64, HashMap<UserID, u64>> = HashMap::new();
 
+	let mut received_tweets: usize = 0;
         let mut processed_tweets: usize = 0;
+	let mut dismissed_tweets: usize = 0;
+	let mut ignored_tweets: usize = 0;
 
         self.binary_stream(
             &graph,
@@ -53,10 +56,18 @@ where G::Timestamp: Hash {
                 // Input 1: Process the retweets.
                 retweets.for_each(|time, retweet_data| {
                     for retweet in retweet_data.take().iter() {
+                        // Log how many Retweets the worker has processed.
+                        received_tweets += 1;
+                        error!("Tweets Received:  {}", received_tweets);
+
                         // Skip all tweets that are not retweets.
                         let original_tweet: &Tweet = match retweet.retweeted_status {
                             Some(ref t) => t,
-                            None => continue
+                            None => {
+				dismissed_tweets += 1;
+				error!("Tweets Dismissed: {}", dismissed_tweets);
+				continue;
+			    }
                         };
 
                         // Mark this user as active for this cascade.
@@ -74,12 +85,16 @@ where G::Timestamp: Hash {
                         // all influences. Otherwise, move on.
                         let friends: &Vec<UserID> = match edges.get(&retweet.user.id) {
                             Some(friends) => friends,
-                            None => continue
+                            None => {
+				ignored_tweets += 1;
+				error!("Tweets Ignored:   {} (User {})", ignored_tweets, retweet.user.id);
+				continue
+			    }
                         };
 
                         // Log how many Retweets the worker has processed.
                         processed_tweets += 1;
-                        error!("Tweets: {}", processed_tweets);
+                        error!("Tweets Processed: {}", processed_tweets);
 
                         // If the number of friends is smaller than the number of activations for
                         // this cascade, iterate over the friends, otherwise iterate over the
