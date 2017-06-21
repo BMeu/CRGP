@@ -26,7 +26,7 @@ use social_graph::InfluenceEdge;
 
 /// Write a stream to a file, passing on all seen messages.
 pub trait Write<G: Scope> {
-    /// Write all input messages to the given `output_target`. If `output_target` is
+    /// Write all input messages to the given `output_target` without producing any output. If `output_target` is
     /// `None`, the messages will be passed on without any further operations.
     ///
     /// On any IO error, an error log message will be generated using the
@@ -57,7 +57,7 @@ where G::Timestamp: Hash {
             Exchange::new(|influence: &InfluenceEdge<UserID>| influence.cascade_id),
             "Write",
             Vec::new(),
-            move |influences, output, notificator| {
+            move |influences, _output, notificator| {
                 // Process the influence edges: immediately pass them on and save them for batched writing.
                 influences.for_each(|time, influence_data| {
                     notificator.notify_at(time.clone());
@@ -67,7 +67,6 @@ where G::Timestamp: Hash {
 
                     for influence in influence_data.iter() {
                         influences_now.insert(influence.clone());
-                        output.session(&time).give(influence.clone());
                     }
                 });
 
