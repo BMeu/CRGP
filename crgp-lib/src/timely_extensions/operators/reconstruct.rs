@@ -135,7 +135,7 @@ where G::Timestamp: Hash {
 
                     // Log how many friendships the worker currently stores.
                     let mut num_friends: usize = 0;
-                    for (_user, friends) in &edges.graph {
+                    for friends in edges.graph.values() {
                         num_friends += friends.len();
                     }
                     error!("Users: {}, Friends: {}", edges.graph.len(), num_friends);
