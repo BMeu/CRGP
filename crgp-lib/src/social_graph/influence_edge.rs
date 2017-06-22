@@ -6,6 +6,8 @@
 
 //! A directed edge representing influence in the social graph.
 
+use std::fmt;
+
 use abomonation::Abomonation;
 
 use UserID;
@@ -57,6 +59,14 @@ impl<T> InfluenceEdge<T>
     }
 }
 
+impl<T: Abomonation + fmt::Display> fmt::Display for InfluenceEdge<T> {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(formatter, "{cascade};{retweet};{user};{influencer};{time};-1",
+               cascade = self.cascade_id, retweet = self.retweet_id, user = self.influencee,
+               influencer = self.influencer, time = self.timestamp)
+    }
+}
+
 unsafe_abomonate!(InfluenceEdge<UserID> : influencer, influencee, timestamp, cascade_id, original_user);
 
 #[cfg(test)]
@@ -72,5 +82,11 @@ mod tests {
         assert_eq!(edge.retweet_id, 456);
         assert_eq!(edge.cascade_id, 789);
         assert_eq!(edge.original_user, 0.42);
+    }
+
+    #[test]
+    fn fmt_display() {
+        let edge: InfluenceEdge<f64> = InfluenceEdge::new(42.0, 13.37, 123, 456, 789, 0.42);
+        assert_eq!(format!("{}", edge), String::from("789;456;13.37;42;123;-1"));
     }
 }
