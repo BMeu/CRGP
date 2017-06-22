@@ -59,7 +59,6 @@ where G::Timestamp: Hash {
 
                     let mut influences_now = influences_at_time.entry(time.time().clone())
                         .or_insert_with(Vec::new);
-                    //influences_now.extend(influence_data.drain(..));
                     for influence in influence_data.iter() {
                         influences_now.push(influence.clone());
                     }
