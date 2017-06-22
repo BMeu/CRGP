@@ -26,19 +26,13 @@ pub struct Tweet {
     /// The integer representation of the unique identifier for this tweet.
     pub id: u64,
 
-    /// Number of times this tweet has been retweeted.
-    pub retweet_count: u64,
-
     /// Representation of the original Tweet that was retweeted.
     ///
     /// Retweets can be distinguished from typical tweets by a non-`None` value of this field.
     pub retweeted_status: Option<Box<Tweet>>,
 
-    /// The actual UTF-8 text of the status update.
-    pub text: String,
-
     /// The user who posted this tweet.
     pub user: User
 }
 
-unsafe_abomonate!(Tweet : created_at, id, retweet_count, retweeted_status, text, user);
+unsafe_abomonate!(Tweet : created_at, id, retweeted_status, user);
