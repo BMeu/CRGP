@@ -8,15 +8,11 @@
 
 use std::collections::HashMap;
 use std::fs::File;
-use std::fs::OpenOptions;
 use std::hash::Hash;
 use std::io::Write as IOWrite;
 use std::io::BufWriter;
 use std::path::PathBuf;
 
-use time;
-use time::Tm;
-use time::TmFmt;
 use timely::dataflow::Stream;
 use timely::dataflow::Scope;
 use timely::dataflow::channels::pact::Exchange;
@@ -46,6 +42,9 @@ where G::Timestamp: Hash {
             return self.unary_stream(Pipeline, "Write", |_influences, _output| {})
         }
 
+        // For each cascade, a separate file writer.
+        let mut cascade_writers: HashMap<u64, BufWriter<File>> = HashMap::new();
+
         // For each timely time, a list of the influences seen at that time.
         let mut influences_at_time: HashMap<G::Timestamp, Vec<InfluenceEdge<UserID>>> = HashMap::new();
 
@@ -54,9 +53,6 @@ where G::Timestamp: Hash {
             "Write",
             Vec::new(),
             move |influences, _output, notificator| {
-                // For each cascade, a separate file writer.
-                let mut cascade_writers: HashMap<u64, BufWriter<File>> = HashMap::new();
-
                 // Process the influence edges: immediately pass them on and save them for batched writing.
                 influences.for_each(|time, influence_data| {
                     notificator.notify_at(time.clone());
@@ -87,31 +83,19 @@ where G::Timestamp: Hash {
                                     // Create a buffered writer for this edge's cascade if there is none yet.
                                     let has_writer: bool = cascade_writers.contains_key(&cascade);
                                     if !has_writer {
-                                        // Use the current time for the file name so these results are not appended to
-                                        // previous ones.
-                                        let current_time: Tm = time::now();
-                                        let time_formatted: TmFmt = match current_time.strftime("%Y-%m-%d_%H-%M-%S") {
-                                            // Since the format string is known to be correct, this fallback should
-                                            // never be needed. It just ensures that the execution does not fail for
-                                            // some stupid reason.
-                                            Ok(formatted) => formatted,
-                                            Err(_) => current_time.rfc3339()
-                                        };
-
-                                        let filename: String = format!("cascs-{id}_{time}.csv",
-                                                                       id = cascade, time = time_formatted);
+                                        let filename: String = format!("cascs-{id}.csv", id = cascade);
                                         let path: PathBuf = directory.join(filename);
 
-                                        // Open the file (automatically create it if does not exist).
-                                        let mut open_options = OpenOptions::new();
-                                        let file: File = match open_options.create(true).append(true).open(&path) {
+                                        // Create the file (overwrite existing files).
+                                        let file: File = match File::create(&path) {
                                             Ok(file) => file,
                                             Err(message) => {
-                                                error!("Could not open {file}: {error}",
+                                                error!("Could not create {file}: {error}",
                                                        file = path.display(), error = message);
                                                 continue;
                                             }
                                         };
+                                        trace!("Created result file {file}", file = path.display());
                                         let _ = cascade_writers.insert(cascade, BufWriter::new(file));
                                     }
 
