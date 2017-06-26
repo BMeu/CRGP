@@ -16,7 +16,6 @@ use std::path::PathBuf;
 use timely::dataflow::Stream;
 use timely::dataflow::Scope;
 use timely::dataflow::channels::pact::Exchange;
-use timely::dataflow::channels::pact::Pipeline;
 use timely::dataflow::operators::unary::Unary;
 
 use UserID;
@@ -37,11 +36,6 @@ impl<G: Scope> Write<G> for Stream<G, InfluenceEdge<UserID>>
 where G::Timestamp: Hash {
     #[cfg_attr(feature = "cargo-clippy", allow(print_stdout))]
     fn write(&self, output_target: OutputTarget) -> Stream<G, InfluenceEdge<UserID>> {
-        // If the output target is None, return an operator that does nothing.
-        if let OutputTarget::None = output_target {
-            return self.unary_stream(Pipeline, "Write", |_influences, _output| {})
-        }
-
         // For each cascade, a separate file writer.
         let mut cascade_writers: HashMap<u64, BufWriter<File>> = HashMap::new();
 
