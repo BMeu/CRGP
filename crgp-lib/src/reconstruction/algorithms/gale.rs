@@ -20,7 +20,7 @@ use timely_extensions::operators::Write;
 
 /// The `GALE` algorithm: **G**lobal **A**ctivations, **L**ocal **E**dges
 ///
-/// 1. Send all friendship egdes (`(u1, u2)`, `u1` follows `u2`) to the worker destined to store `u1`.
+/// 1. Send all friendship edges (`(u1, u2)`, `u1` follows `u2`) to the worker destined to store `u1`.
 /// 2. Broadcast the current Retweet `r*` to all workers.
 /// 3. Each worker marks the retweeting user `u*` as active for the Retweet's cascade, and, if this is the first Retweet
 ///    in the cascade, the original user.
