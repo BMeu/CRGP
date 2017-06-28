@@ -96,11 +96,12 @@ where G::Timestamp: Hash {
                             // Iterate over the activations.
                             for (user_id, activation_timestamp) in cascade_activations {
                                 // If the current activation is not a friend, move on.
-                                let friend: UserID = if friends.binary_search(user_id).is_ok() {
-                                    *user_id
+                                let friend: UserID;
+                                if let Ok(_index) = friends.binary_search(user_id) {
+                                    friend = *user_id;
                                 } else {
                                     continue;
-                                };
+                                }
 
                                 // Ensure the influence is possible.
                                 let is_influencer_activated: bool = &retweet.created_at > activation_timestamp;
