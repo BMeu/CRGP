@@ -61,6 +61,7 @@ impl<G: Scope> FindPossibleInfluences<G> for Stream<G, (UserID, Vec<UserID>)>
 
                 // Input 2: Process the retweets.
                 retweets.for_each(|time, retweet_data| {
+                    let mut session = output.session(&time);
                     for retweet in retweet_data.take().iter() {
                         // Skip all tweets that are not retweets.
                         let original_tweet: &Tweet = match retweet.retweeted_status {
@@ -85,7 +86,7 @@ impl<G: Scope> FindPossibleInfluences<G> for Stream<G, (UserID, Vec<UserID>)>
                         for &friend in friends {
                             let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at, retweet.id,
                                                                original_tweet.id, original_tweet.user.id);
-                            output.session(&time).give(influence);
+                            session.give(influence);
                         }
                     }
                 });

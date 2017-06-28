@@ -50,6 +50,7 @@ where G::Timestamp: Hash {
             move |retweets, friendships, output| {
                 // Input 1: Process the retweets.
                 retweets.for_each(|time, retweet_data| {
+                    let mut session = output.session(&time);
                     for retweet in retweet_data.take().iter() {
                         // Skip all tweets that are not retweets.
                         let original_tweet: &Tweet = match retweet.retweeted_status {
@@ -89,7 +90,7 @@ where G::Timestamp: Hash {
                                     let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at,
                                                                        retweet.id, original_tweet.id,
                                                                        original_tweet.user.id);
-                                    output.session(&time).give(influence);
+                                    session.give(influence);
                                 }
                             }
                         } else {
@@ -109,7 +110,7 @@ where G::Timestamp: Hash {
                                     let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at,
                                                                        retweet.id, original_tweet.id,
                                                                        original_tweet.user.id);
-                                    output.session(&time).give(influence);
+                                    session.give(influence);
                                 }
                             }
                         }
