@@ -130,7 +130,7 @@ fn main() {
             .default_value("0")
             .validator(validation::usize))
         .arg(Arg::with_name("report-connection-progress")
-            .long("report-connection-progress")
+            .long("connection-progress")
             .help("Print connection progress to STDOUT when using multiple processes."))
         .arg(Arg::with_name("s3-tweets-bucket")
             .long("s3-tweets-bucket")
