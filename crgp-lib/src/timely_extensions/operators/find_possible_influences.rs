@@ -74,6 +74,10 @@ impl<G: Scope> FindPossibleInfluences<G> for Stream<G, (UserID, Vec<UserID>)>
                                                                original_tweet.id, original_tweet.user.id);
                             session.give(influence);
                         }
+
+                        let influence = InfluenceEdge::new(retweet.user.id, retweet.user.id, 0, retweet.id,
+                                                           original_tweet.id, original_tweet.user.id);
+                        session.give(influence);
                     }
                 });
             }
