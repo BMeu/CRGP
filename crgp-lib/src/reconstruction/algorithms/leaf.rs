@@ -44,16 +44,14 @@ pub fn computation<'a>(scope: &mut Scope<'a>, output: OutputTarget) -> (GraphHan
     // For each cascade, given by its ID, a set of activated users, given by their ID, i.e.
     // those users who have retweeted within this cascade before, per worker. Since this map
     // is required within two closures, dynamic borrow checks are required.
-    let activations_influences: Rc<RefCell<HashMap<u64, HashMap<UserID, u64>>>> =
-        Rc::new(RefCell::new(HashMap::new()));
-    let activations_possible_influences = activations_influences.clone();
+    let activations: Rc<RefCell<HashMap<u64, HashMap<UserID, u64>>>> = Rc::new(RefCell::new(HashMap::new()));
 
     // The actual algorithm.
     let probe = graph_stream
-        .find_possible_influences(retweet_stream, activations_possible_influences)
+        .find_possible_influences(retweet_stream, activations.clone())
         .exchange(|influence: &InfluenceEdge<UserID>| influence.influencer as u64)
         .filter(move |influence: &InfluenceEdge<UserID>| {
-            let is_influencer_activated: bool = match activations_influences.borrow()
+            let is_influencer_activated: bool = match activations.borrow()
                 .get(&influence.cascade_id)
                 {
                     Some(users) => match users.get(&influence.influencer) {
