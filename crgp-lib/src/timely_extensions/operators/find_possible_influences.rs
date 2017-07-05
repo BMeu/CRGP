@@ -6,10 +6,7 @@
 
 //! Find possible influence edges.
 
-use std::cell::RefCell;
-use std::collections::HashMap;
 use std::hash::*;
-use std::rc::Rc;
 
 use timely::dataflow::Scope;
 use timely::dataflow::Stream;
@@ -27,16 +24,12 @@ pub trait FindPossibleInfluences<G: Scope> {
     ///
     /// For a social graph, determine all possible influences for a retweet within that specific
     /// retweet cascade. The `Stream` of retweets may contain multiple retweet cascades.
-    fn find_possible_influences(&self, retweets: Stream<G, Tweet>,
-                                activated_users: Rc<RefCell<HashMap<u64, HashMap<UserID, u64>>>>)
-                                -> Stream<G, InfluenceEdge<UserID>>;
+    fn find_possible_influences(&self, retweets: Stream<G, Tweet>) -> Stream<G, InfluenceEdge<UserID>>;
 }
 
 impl<G: Scope> FindPossibleInfluences<G> for Stream<G, (UserID, Vec<UserID>)>
     where G::Timestamp: Hash {
-    fn find_possible_influences(&self, retweets: Stream<G, Tweet>,
-                                activated_users: Rc<RefCell<HashMap<u64, HashMap<UserID, u64>>>>)
-                                -> Stream<G, InfluenceEdge<UserID>> {
+    fn find_possible_influences(&self, retweets: Stream<G, Tweet>) -> Stream<G, InfluenceEdge<UserID>> {
         // For each user, given by their ID, the set of their friends, given by their ID.
         let mut edges = SocialGraph::new();
 
@@ -68,13 +61,6 @@ impl<G: Scope> FindPossibleInfluences<G> for Stream<G, (UserID, Vec<UserID>)>
                             Some(ref t) => t,
                             None => continue
                         };
-
-                        // Mark this user and the original user as active for this cascade.
-                        let _ = activated_users.borrow_mut()
-                            .entry(original_tweet.id)
-                            .or_insert_with(HashMap::new)
-                            .entry(retweet.user.id)
-                            .or_insert(retweet.created_at);
 
                         // Get the user's friends.
                         let friends = match edges.get(&retweet.user.id) {

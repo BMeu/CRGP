@@ -10,9 +10,11 @@
 //! objects as output. These custom operators are specialized for the use in `CRGP`.
 
 pub use self::find_possible_influences::FindPossibleInfluences;
+pub use self::prefix_filter::PrefixFilter;
 pub use self::reconstruct::Reconstruct;
 pub use self::write::Write;
 
 mod find_possible_influences;
+mod prefix_filter;
 mod reconstruct;
 mod write;
