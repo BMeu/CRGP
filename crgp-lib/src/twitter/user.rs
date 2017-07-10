@@ -22,10 +22,6 @@ use UserID;
 pub struct User {
     /// Integer representation of the unique identifier for this user.
     pub id: UserID,
-
-    /// The screen name, handle, or alias that this user identifies themselves with. Screen names are unique, but
-    /// subject to change.
-    pub screen_name: String
 }
 
-unsafe_abomonate!(User : id, screen_name);
+unsafe_abomonate!(User : id);
