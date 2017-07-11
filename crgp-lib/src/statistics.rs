@@ -364,4 +364,23 @@ mod tests {
             difference <= 1
         }
     }
+
+    #[test]
+    fn fmt_display() {
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
+        let configuration = Configuration::default(retweets, social_graph);
+
+        let statistics = Statistics::new(configuration.clone());
+
+        let fmt = "(Number of Friendships: 0, Number of Retweets: 0, Time to Set Up: 0ns, \
+                   Time to Process Social Graph: 0ns, Time to Load Retweets: 0ns, Time to Process Retweets: 0ns, \
+                   Total Time: 0ns, Retweet Processing Rate: 0RT/s, Configuration: \
+                    (Algorithm: GALE, Batch Size: 500, Hosts: [], Number of Processes: 1, \
+                    Number of Workers: 1, Output Target: STDOUT, Insert Dummy Users: false, \
+                    Process ID: 0, Report Connection Progress: false, Retweet Data Set: path/to/retweets.json, \
+                    Social Graph: path/to/social/graph)\
+                   )";
+        assert_eq!(format!("{}", statistics), fmt);
+    }
 }
