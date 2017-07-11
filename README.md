@@ -1,6 +1,8 @@
 # CRGP
 
-[ ![Codeship Status for BMeu/crgp](https://app.codeship.com/projects/7d2924a0-f1e4-0134-404a-569aa21b12f1/status?branch=master)](https://app.codeship.com/projects/209508)
+[![Build Status on Codeship](https://app.codeship.com/projects/7d2924a0-f1e4-0134-404a-569aa21b12f1/status?branch=master)](https://app.codeship.com/projects/209508)
+[![Build Status on Travis CI](https://travis-ci.org/BMeu/CRGP.svg?branch=master)](https://travis-ci.org/BMeu/CRGP)
+[![codecov](https://codecov.io/gh/BMeu/CRGP/branch/master/graph/badge.svg)](https://codecov.io/gh/BMeu/CRGP)
 
 A graph-parallel approach for reconstructing the influences within Retweet cascades.
 
