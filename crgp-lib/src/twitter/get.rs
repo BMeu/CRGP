@@ -117,21 +117,23 @@ fn from_aws_s3(path: &str, bucket: &Bucket) -> Result<Vec<Tweet>> {
 mod tests {
     use std::error::Error;
     use std::path::PathBuf;
+    use find_folder::Search;
     use Result;
     use twitter::Tweet;
 
     #[test]
     fn from_file() {
         // Invalid file.
-        let path = PathBuf::from(String::from("../data/retweets.invalid.json"));
+        let data_path: PathBuf = Search::ParentsThenKids(3, 3).for_folder("data").expect("Data folder not found.");
+        let path: PathBuf = data_path.join("retweets.invalid.json");
         let retweets: Result<Vec<Tweet>> = super::from_file(&path);
         assert!(retweets.is_err());
         if let Err(message) = retweets {
-            assert_eq!(message.description(), "Retweet data set is not a file: ../data/retweets.invalid.json");
+            assert!(message.description().starts_with("Retweet data set is not a file:"));
         }
 
         // Valid file.
-        let path = PathBuf::from(String::from("../data/retweets.json"));
+        let path: PathBuf = data_path.join("retweets.json");
         let retweets: Result<Vec<Tweet>> = super::from_file(&path);
         assert!(retweets.is_ok());
         let retweets: Vec<Tweet> = retweets.expect("Retweet parsing failed, but previous assertion told otherwise.");

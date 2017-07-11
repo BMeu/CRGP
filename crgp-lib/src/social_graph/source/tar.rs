@@ -502,6 +502,7 @@ fn parse_friend_file<R: Read>(reader: BufReader<R>, file_path: &PathBuf, user: U
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
+    use find_folder::Search;
     use UserID;
 
     #[test]
@@ -552,16 +553,18 @@ mod tests {
 
     #[test]
     fn is_valid_directory() {
-        let valid = PathBuf::from(String::from("../data/social_graph/000"));
+        let data_path: PathBuf = Search::ParentsThenKids(3, 3).for_folder("data").expect("Data folder not found.");
+
+        let valid: PathBuf = data_path.join("social_graph/000");
         assert!(super::is_valid_directory(&valid));
 
-        let valid = PathBuf::from(String::from("../data/social_graph/001"));
+        let valid: PathBuf = data_path.join("social_graph/001");
         assert!(super::is_valid_directory(&valid));
 
-        let invalid = PathBuf::from(String::from("../data/social_graph"));
+        let invalid: PathBuf = data_path.join("social_graph");
         assert!(!super::is_valid_directory(&invalid));
 
-        let invalid = PathBuf::from(String::from("../data/social_graph/000/00.tar"));
+        let invalid: PathBuf = data_path.join("social_graph/000/00.tar");
         assert!(!super::is_valid_directory(&invalid));
     }
 
@@ -603,19 +606,21 @@ mod tests {
 
     #[test]
     fn is_valid_tar_archive() {
-        let valid = PathBuf::from(String::from("../data/social_graph/000/00.tar"));
+        let data_path: PathBuf = Search::ParentsThenKids(3, 3).for_folder("data").expect("Data folder not found.");
+
+        let valid: PathBuf = data_path.join("social_graph/000/00.tar");
         assert!(super::is_valid_tar_archive(&valid));
 
-        let valid = PathBuf::from(String::from("../data/social_graph/001/00.tar"));
+        let valid: PathBuf = data_path.join("social_graph/001/00.tar");
         assert!(super::is_valid_tar_archive(&valid));
 
-        let valid = PathBuf::from(String::from("../data/social_graph/001/01.tar"));
+        let valid: PathBuf = data_path.join("social_graph/001/01.tar");
         assert!(super::is_valid_tar_archive(&valid));
 
-        let invalid = PathBuf::from(String::from("../data/social_graph/001/invalid.tar"));
+        let invalid: PathBuf = data_path.join("social_graph/001/invalid.tar");
         assert!(!super::is_valid_tar_archive(&invalid));
 
-        let invalid = PathBuf::from(String::from("../data/social_graph/000"));
+        let invalid: PathBuf = data_path.join("social_graph/000");
         assert!(!super::is_valid_tar_archive(&invalid));
     }
 }

@@ -18,6 +18,8 @@
 
 #[macro_use]
 extern crate abomonation;
+#[cfg(test)]
+extern crate find_folder;
 extern crate fine_grained;
 #[macro_use]
 extern crate log;
