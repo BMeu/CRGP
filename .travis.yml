@@ -56,8 +56,8 @@ after_success: |
   sudo make install &&
   cd ../.. &&
   rm -rf kcov-master &&
-  for file in target/debug/$PROJECT_NAME-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
-  for file in target/debug/${PROJECT_NAME}_lib-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
+  for file in target/debug/$PROJECT_NAME-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --include-pattern=.rs --verify "target/cov/$(basename $file)" "$file"; done &&
+  for file in target/debug/${PROJECT_NAME}_lib-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --include-pattern=.rs --verify "target/cov/$(basename $file)" "$file"; done &&
   bash <(curl -s https://codecov.io/bash) &&
   echo "Uploaded code coverage";
   fi
