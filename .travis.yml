@@ -6,6 +6,8 @@ rust:
   - nightly
   - nightly-2017-05-03
 dist: trusty
+group: edge
+sudo: required
 os:
   - linux
   - osx
@@ -26,7 +28,6 @@ addons:
       - libelf-dev
       - libdw-dev
       - libiberty-dev
-      - libbfd-dev
       - cmake
       - gcc
       - binutils-dev
