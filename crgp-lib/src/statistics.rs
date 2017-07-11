@@ -196,7 +196,7 @@ mod tests {
         let social_graph = InputSource::new("path/to/social/graph");
         let configuration = Configuration::default(retweets, social_graph);
 
-        let statistics = Statistics::new(configuration.clone())
+        let mut statistics = Statistics::new(configuration.clone())
             .number_of_retweets(42);
         assert_eq!(statistics.configuration, configuration);
         assert_eq!(statistics.number_of_friendships, 0);
@@ -208,6 +208,12 @@ mod tests {
         assert_eq!(statistics.total_time, 0);
         assert_eq!(statistics.retweet_processing_rate, 0);
         assert!(statistics._prevent_outside_initialization);
+
+        statistics.retweet_processing_rate = 42;
+        statistics.time_to_process_retweets = 42;
+        let statistics = statistics.number_of_retweets(42);
+        assert_eq!(statistics.number_of_retweets, 42);
+        assert_eq!(statistics.retweet_processing_rate, 1_000_000_000);
     }
 
     #[test]
