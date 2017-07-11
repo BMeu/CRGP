@@ -549,6 +549,9 @@ mod tests {
 
         let invalid = PathBuf::from(String::from("friends"));
         assert_eq!(super::get_user_id(&invalid), None);
+
+        let invalid = PathBuf::from(String::from(".."));
+        assert_eq!(super::get_user_id(&invalid), None);
     }
 
     #[test]
