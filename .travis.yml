@@ -23,10 +23,12 @@ addons:
     packages:
       - libcurl4-openssl-dev
       - libelf-dev
+      - libiberty-dev
       - libdw-dev
       - cmake
       - gcc
       - binutils-dev
+      - zlib1g-dev
 before_script:
   - bash -c 'if [[ "$TRAVIS_RUST_VERSION" == "$NIGHTLY_VERSION" ]]; then
       cargo install clippy --vers $CLIPPY_VERSION --force;
@@ -52,6 +54,7 @@ after_success: |
   cd ../.. &&
   rm -rf kcov-master &&
   for file in target/debug/$PROJECT_NAME-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
+  for file in target/debug/${PROJECT_NAME}_lib-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
   bash <(curl -s https://codecov.io/bash) &&
   echo "Uploaded code coverage";
   fi
