@@ -25,6 +25,8 @@ addons:
       - libcurl4-openssl-dev
       - libelf-dev
       - libdw-dev
+      - libiberty-dev
+      - libbfd-dev
       - cmake
       - gcc
       - binutils-dev
