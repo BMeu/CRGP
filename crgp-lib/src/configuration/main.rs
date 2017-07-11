@@ -257,9 +257,14 @@ impl fmt::Display for Configuration {
         let hosts: String = match self.hosts {
             Some(ref hosts) => {
                 let mut hosts_list = String::from("[");
-                for host in hosts {
-                    hosts_list += host;
-                }
+                let mut joined_hosts: String = hosts
+                    .iter()
+                    .fold(String::new(), |acc, s| {
+                        acc + s + ", "
+                    });
+                let _ = joined_hosts.pop();
+                let _ = joined_hosts.pop();
+                hosts_list += &joined_hosts;
                 hosts_list += "]";
                 hosts_list
             }
@@ -669,5 +674,27 @@ mod tests {
             String::from("localhost:2102"),
             String::from("localhost:2103")
         ]));
+    }
+
+    #[test]
+    fn fmt_display() {
+        let retweets = InputSource::new("path/to/retweets.json");
+        let social_graph = InputSource::new("path/to/social/graph");
+
+        let configuration = Configuration::default(retweets, social_graph);
+
+        let fmt = "(Algorithm: GALE, Batch Size: 500, Hosts: [], Number of Processes: 1, \
+                   Number of Workers: 1, Output Target: STDOUT, Insert Dummy Users: false, \
+                   Process ID: 0, Report Connection Progress: false, Retweet Data Set: path/to/retweets.json, \
+                   Social Graph: path/to/social/graph)";
+        assert_eq!(format!("{}", configuration), String::from(fmt));
+
+        let configuration = configuration.hosts(Some(vec![String::from("host1:port1"), String::from("host2:port2")]));
+
+        let fmt = "(Algorithm: GALE, Batch Size: 500, Hosts: [host1:port1, host2:port2], Number of Processes: 1, \
+                   Number of Workers: 1, Output Target: STDOUT, Insert Dummy Users: false, \
+                   Process ID: 0, Report Connection Progress: false, Retweet Data Set: path/to/retweets.json, \
+                   Social Graph: path/to/social/graph)";
+        assert_eq!(format!("{}", configuration), String::from(fmt));
     }
 }
