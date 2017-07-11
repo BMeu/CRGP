@@ -58,9 +58,9 @@ after_success: |
   sudo make install &&
   cd ../.. &&
   rm -rf kcov-master &&
-  for file in target/debug/$PROJECT_NAME-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --exclude-region='#[cfg(test)]:#[cfg(testkcovstopmarker)]' --include-pattern=.rs --verify "target/cov/$(basename $file)" "$file"; done &&
-  for file in target/debug/${PROJECT_LIB_NAME}-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --exclude-region='#[cfg(test)]:#[cfg(testkcovstopmarker)]' --include-pattern=.rs --verify "target/cov/$(basename $file)" "$file"; done &&
-  for file in target/debug/${PROJECT_INTEGRATION_TEST}-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --exclude-region='#[cfg(test)]:#[cfg(testkcovstopmarker)]' --include-pattern=.rs --verify "target/cov/$(basename $file)" "$file"; done &&
+  for file in target/debug/$PROJECT_NAME-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib,tests --exclude-region='#[cfg(test)]:#[cfg(testkcovstopmarker)]' --include-pattern=.rs --verify "target/cov/$(basename $file)" "$file"; done &&
+  for file in target/debug/${PROJECT_LIB_NAME}-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib,tests --exclude-region='#[cfg(test)]:#[cfg(testkcovstopmarker)]' --include-pattern=.rs --verify "target/cov/$(basename $file)" "$file"; done &&
+  for file in target/debug/${PROJECT_INTEGRATION_TEST}-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib,tests --exclude-region='#[cfg(test)]:#[cfg(testkcovstopmarker)]' --include-pattern=.rs --verify "target/cov/$(basename $file)" "$file"; done &&
   bash <(curl -s https://codecov.io/bash) &&
   echo "Uploaded code coverage";
   fi
