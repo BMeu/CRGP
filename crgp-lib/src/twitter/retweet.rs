@@ -8,26 +8,29 @@
 
 use abomonation::Abomonation;
 
+use twitter::Tweet;
 use twitter::User;
 
-/// Tweets are the basic atomic building block of all things Twitter.
-///
-/// Tweets are also known as "status updates." Tweets can be embedded, replied to, liked, unliked and deleted.
+/// A Retweet is a re-posting of a Tweet.
 ///
 /// This struct's fields correspond directly to the fields of the same name in the Twitter API.
 ///
 /// # See Also
 /// https://dev.twitter.com/overview/api/tweets
+/// https://support.twitter.com/articles/77606
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
-pub struct Tweet {
+pub struct Retweet {
     /// UTC time when this tweet was created.
     pub created_at: u64,
 
     /// The integer representation of the unique identifier for this tweet.
     pub id: u64,
 
+    /// Representation of the original Tweet that was retweeted.
+    pub retweeted_status: Tweet,
+
     /// The user who posted this tweet.
     pub user: User
 }
 
-unsafe_abomonate!(Tweet : created_at, id, user);
+unsafe_abomonate!(Retweet : created_at, id, retweeted_status, user);

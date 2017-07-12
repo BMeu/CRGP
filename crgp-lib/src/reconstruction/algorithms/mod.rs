@@ -15,7 +15,7 @@ use timely::progress::timestamp::RootTimestamp;
 use timely_communication::allocator::Generic;
 
 use UserID;
-use twitter::Tweet;
+use twitter::Retweet;
 
 pub mod gale;
 pub mod leaf;
@@ -27,7 +27,7 @@ pub type GraphHandle = InputHandle<u64, (UserID, Vec<UserID>)>;
 pub type ProbeHandle = ProgressHandle<Product<RootTimestamp, u64>>;
 
 /// The timely dataflow handle for introducing Retweets into the graph.
-pub type RetweetHandle = InputHandle<u64, Tweet>;
+pub type RetweetHandle = InputHandle<u64, Retweet>;
 
 /// The sub-scope of the dataflow graph containing the actual computation.
 pub type Scope<'a> = Child<'a, Root<Generic>, u64>;

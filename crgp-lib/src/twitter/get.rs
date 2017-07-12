@@ -22,10 +22,10 @@ use serde_json;
 use Error;
 use Result;
 use configuration::InputSource;
-use twitter::Tweet;
+use twitter::Retweet;
 
 /// Load the Retweets from the given input.
-pub fn from_source(input: InputSource) -> Result<Vec<Tweet>> {
+pub fn from_source(input: InputSource) -> Result<Vec<Retweet>> {
     info!("Loading Retweets");
     let path: String = input.path.clone();
     match input.s3 {
@@ -35,7 +35,7 @@ pub fn from_source(input: InputSource) -> Result<Vec<Tweet>> {
 }
 
 /// Load the Retweets from the given `path`.
-fn from_file(path: &PathBuf) -> Result<Vec<Tweet>> {
+fn from_file(path: &PathBuf) -> Result<Vec<Retweet>> {
     if !path.is_file() {
         #[cfg(not(test))]
         error!("Retweet data set is a not a file: {path}", path = path.display());
@@ -54,14 +54,14 @@ fn from_file(path: &PathBuf) -> Result<Vec<Tweet>> {
     let retweet_file: BufReader<File> = BufReader::new(retweet_file);
 
     // Parse the lines while discarding those that are invalid.
-    let retweets: Vec<Tweet> = retweet_file.lines()
-        .filter_map(|line: IOResult<String>| -> Option<Tweet> {
+    let retweets: Vec<Retweet> = retweet_file.lines()
+        .filter_map(|line: IOResult<String>| -> Option<Retweet> {
             match line {
                 Ok(line) => {
-                    match serde_json::from_str::<Tweet>(&line) {
+                    match serde_json::from_str::<Retweet>(&line) {
                         Ok(tweet) => Some(tweet),
                         Err(message) => {
-                            warn!("Failed to parse Tweet: {error}", error = message);
+                            warn!("Failed to parse Retweet: {error}", error = message);
                             None
                         }
                     }
@@ -77,7 +77,7 @@ fn from_file(path: &PathBuf) -> Result<Vec<Tweet>> {
 }
 
 /// Load the Retweets from the given AWS S3 `bucket`.
-fn from_aws_s3(path: &str, bucket: &Bucket) -> Result<Vec<Tweet>> {
+fn from_aws_s3(path: &str, bucket: &Bucket) -> Result<Vec<Retweet>> {
     // Load the file from S3.
     let (contents, code): (Vec<u8>, u32) = bucket.get(path)?;
     if code != 200 {
@@ -90,11 +90,11 @@ fn from_aws_s3(path: &str, bucket: &Bucket) -> Result<Vec<Tweet>> {
     let retweet_file: BufReader<&[u8]> = BufReader::new(&contents);
 
     // Parse the lines while discarding those that are invalid.
-    let retweets: Vec<Tweet> = retweet_file.lines()
-        .filter_map(|line: IOResult<String>| -> Option<Tweet> {
+    let retweets: Vec<Retweet> = retweet_file.lines()
+        .filter_map(|line: IOResult<String>| -> Option<Retweet> {
             match line {
                 Ok(line) => {
-                    match serde_json::from_str::<Tweet>(&line) {
+                    match serde_json::from_str::<Retweet>(&line) {
                         Ok(tweet) => Some(tweet),
                         Err(message) => {
                             warn!("Failed to parse Tweet: {error}", error = message);
@@ -119,14 +119,14 @@ mod tests {
     use std::path::PathBuf;
     use find_folder::Search;
     use Result;
-    use twitter::Tweet;
+    use twitter::Retweet;
 
     #[test]
     fn from_file() {
         // Invalid file.
         let data_path: PathBuf = Search::ParentsThenKids(3, 3).for_folder("data").expect("Data folder not found.");
         let path: PathBuf = data_path.join("retweets.invalid.json");
-        let retweets: Result<Vec<Tweet>> = super::from_file(&path);
+        let retweets: Result<Vec<Retweet>> = super::from_file(&path);
         assert!(retweets.is_err());
         if let Err(message) = retweets {
             assert!(message.description().starts_with("Retweet data set is not a file:"));
@@ -134,9 +134,9 @@ mod tests {
 
         // Valid file.
         let path: PathBuf = data_path.join("retweets.json");
-        let retweets: Result<Vec<Tweet>> = super::from_file(&path);
+        let retweets: Result<Vec<Retweet>> = super::from_file(&path);
         assert!(retweets.is_ok());
-        let retweets: Vec<Tweet> = retweets.expect("Retweet parsing failed, but previous assertion told otherwise.");
+        let retweets: Vec<Retweet> = retweets.expect("Retweet parsing failed, but previous assertion told otherwise.");
         assert_eq!(retweets.len(), 6);
 
         // The Tweets must be sorted on their timestamp.

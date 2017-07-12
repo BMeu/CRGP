@@ -18,6 +18,7 @@ use timely::dataflow::operators::binary::Binary;
 use UserID;
 use social_graph::InfluenceEdge;
 use social_graph::SocialGraph;
+use twitter::Retweet;
 use twitter::Tweet;
 
 /// Reconstruct retweet cascades.
@@ -31,7 +32,7 @@ pub trait Reconstruct<G: Scope> {
     fn reconstruct(&self, graph: Stream<G, (UserID, Vec<UserID>)>) -> Stream<G, InfluenceEdge<UserID>>;
 }
 
-impl<G: Scope> Reconstruct<G> for Stream<G, Tweet>
+impl<G: Scope> Reconstruct<G> for Stream<G, Retweet>
 where G::Timestamp: Hash {
     fn reconstruct(&self, graph: Stream<G, (UserID, Vec<UserID>)>) -> Stream<G, InfluenceEdge<UserID>> {
         // For each user, given by their ID, the set of their friends, given by their ID.
@@ -52,11 +53,7 @@ where G::Timestamp: Hash {
                 retweets.for_each(|time, retweet_data| {
                     let mut session = output.session(&time);
                     for retweet in retweet_data.take().iter() {
-                        // Skip all tweets that are not retweets.
-                        let original_tweet: &Tweet = match retweet.retweeted_status {
-                            Some(ref t) => t,
-                            None => continue
-                        };
+                        let original_tweet: &Tweet = &retweet.retweeted_status;
 
                         // Mark this user as active for this cascade.
                         let cascade_activations: &mut HashMap<UserID, u64> = &mut (*activations.entry(original_tweet.id)

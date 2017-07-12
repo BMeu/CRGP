@@ -25,7 +25,7 @@ use reconstruction::algorithms::leaf;
 use social_graph::source::tar;
 use timely_extensions::Sync;
 use twitter;
-use twitter::Tweet;
+use twitter::Retweet;
 
 /// Execute the reconstruction.
 pub fn run(mut configuration: Configuration) -> Result<Statistics> {
@@ -103,7 +103,7 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
          ************/
 
         // Load the retweets (on the first worker).
-        let retweets: Vec<Tweet> = if index == 0 {
+        let retweets: Vec<Retweet> = if index == 0 {
             twitter::get::from_source(configuration.retweets.clone())?
         } else {
             Vec::new()
