@@ -44,3 +44,67 @@ impl SocialGraph {
         self.graph.get(key)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new() {
+        let sg = SocialGraph::new();
+        assert_eq!(sg.graph, HashMap::new());
+    }
+
+    #[test]
+    fn shrink_to_fit() {
+        let mut sg = SocialGraph::new();
+        sg.graph = HashMap::with_capacity(100);
+        let _ = sg.graph.insert(User::new(1), vec![User::new(2)]);
+        assert!(sg.graph.capacity() >= 100);
+
+        sg.shrink_to_fit();
+        assert!(sg.graph.capacity() >= 1);
+
+        // This assertion could fail in the future, depending on the resize policy.
+        assert!(sg.graph.capacity() < 100);
+    }
+
+    #[test]
+    fn entry() {
+        let user = User::new(1);
+        let friends: Vec<User> = vec![
+            User::new(2),
+            User::new(3),
+            User::new(4),
+        ];
+
+        let mut sg = SocialGraph::new();
+        assert_eq!(sg.graph.len(), 0);
+
+        {
+            let found_friends: &Vec<User> = sg.entry(user)
+                .or_insert(friends.clone());
+            assert_eq!(found_friends, &friends);
+        }
+
+        assert_eq!(sg.graph.len(), 1);
+        assert!(sg.graph.contains_key(&user));
+        assert_eq!(sg.graph.get(&user), Some(&friends));
+    }
+
+    #[test]
+    fn get() {
+        let user = User::new(1);
+        let friends: Vec<User> = vec![
+            User::new(2),
+            User::new(3),
+            User::new(4),
+        ];
+
+        let mut sg = SocialGraph::new();
+        assert_eq!(sg.get(&user), None);
+
+        let _ = sg.graph.insert(user.clone(), friends.clone());
+        assert_eq!(sg.get(&user), Some(&friends));
+    }
+}
