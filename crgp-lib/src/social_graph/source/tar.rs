@@ -21,12 +21,13 @@ use s3::error::ErrorKind as S3ErrorKind;
 use s3::error::S3Error;
 use s3::serde_types::ListBucketResult;
 use tar::Archive;
-use timely::dataflow::operators::input::Handle;
 
 use Error;
 use Result;
 use UserID;
 use configuration::InputSource;
+use reconstruction::algorithms::GraphHandle;
+use twitter::User;
 
 lazy_static! {
     /// A regular expression to validate directory names. The name must consist of exactly three digits.
@@ -58,7 +59,7 @@ lazy_static! {
 pub fn load(input: InputSource,
             pad_with_dummy_users: bool,
             selected_users_file: Option<PathBuf>,
-            graph_input: &mut Handle<u64, (UserID, Vec<UserID>)>
+            graph_input: &mut GraphHandle
     ) -> Result<(u64, u64, u64, u64)>
 {
     let path = input.path.clone();
@@ -76,7 +77,7 @@ pub fn load(input: InputSource,
 fn load_locally(path: &PathBuf,
                 pad_with_dummy_users: bool,
                 selected_users_file: Option<PathBuf>,
-                graph_input: &mut Handle<u64, (UserID, Vec<UserID>)>
+                graph_input: &mut GraphHandle
     ) -> Result<(u64, u64, u64, u64)>
 {
     // Get a set of selected users to load from the social graph. If `None`, the entire social graph will be loaded.
@@ -155,21 +156,22 @@ fn load_locally(path: &PathBuf,
                 }
 
                 // Get the user ID.
-                let user: UserID = match get_user_id(&friends_path) {
+                let user_id: UserID = match get_user_id(&friends_path) {
                     Some(id) => id,
                     None => continue
                 };
 
                 // If only selected users are requested: skip this user if they are not on the VIP list.
                 if let Some(ref selected_users) = selected_users {
-                    if !selected_users.contains(&user) {
+                    if !selected_users.contains(&user_id) {
                         continue;
                     }
                 }
 
                 // Parse the file.
                 let reader = BufReader::new(file);
-                let (expected_friendships, mut friendships) = parse_friend_file(reader, &friends_path, user);
+                let (expected_friendships, mut friendships) = parse_friend_file(reader, &friends_path, user_id);
+                let user = User::new(user_id);
                 let given_friendships: u64 = friendships.len() as u64;
 
                 // Introduce dummy friends if required. To avoid any overflows, we must first ensure that there are less
@@ -210,7 +212,7 @@ fn load_from_s3(path: &str,
                 bucket: &Bucket,
                 pad_with_dummy_users: bool,
                 selected_users_file: Option<PathBuf>,
-                graph_input: &mut Handle<u64, (UserID, Vec<UserID>)>
+                graph_input: &mut GraphHandle
     ) -> Result<(u64, u64, u64, u64)>
 {
     // Get a set of selected users to load from the social graph. If `None`, the entire social graph will be loaded.
@@ -289,21 +291,22 @@ fn load_from_s3(path: &str,
             }
 
             // Get the user ID.
-            let user: UserID = match get_user_id(&friends_path) {
+            let user_id: UserID = match get_user_id(&friends_path) {
                 Some(id) => id,
                 None => continue
             };
 
             // If only selected users are requested: skip this user if they are not on the VIP list.
             if let Some(ref selected_users) = selected_users {
-                if !selected_users.contains(&user) {
+                if !selected_users.contains(&user_id) {
                     continue;
                 }
             }
 
             // Parse the file.
             let reader = BufReader::new(file);
-            let (expected_friendships, mut friendships) = parse_friend_file(reader, &friends_path, user);
+            let (expected_friendships, mut friendships) = parse_friend_file(reader, &friends_path, user_id);
+            let user = User::new(user_id);
             let given_friendships: u64 = friendships.len() as u64;
 
             // Introduce dummy friends if required. To avoid any overflows, we must first ensure that there are less
@@ -339,10 +342,11 @@ fn load_from_s3(path: &str,
 }
 
 /// Create the given `amount` of dummy friends.
-fn create_dummy_friends(amount: u64) -> Vec<UserID> {
-    let mut dummies: Vec<UserID> = Vec::new();
+fn create_dummy_friends(amount: u64) -> Vec<User> {
+    let mut dummies: Vec<User> = Vec::new();
     for dummy_id in 1..(amount + 1) {
-        dummies.push(-(dummy_id as UserID))
+        let dummy = User::new(-(dummy_id as UserID));
+        dummies.push(dummy);
     }
     dummies
 }
@@ -444,11 +448,11 @@ fn is_valid_tar_archive(path: &PathBuf) -> bool {
 /// Read the given friend file `reader` and parse its content. The parameters `file_path` and `user` are used in log
 /// messages for more detailed information on possible failures. Return the number of expected friends (i.e. as
 /// specified in the meta data) and a list of friends actually found in the file.
-fn parse_friend_file<R: Read>(reader: BufReader<R>, file_path: &PathBuf, user: UserID) -> (u64, Vec<UserID>) {
+fn parse_friend_file<R: Read>(reader: BufReader<R>, file_path: &PathBuf, user: UserID) -> (u64, Vec<User>) {
     let mut is_first_line: bool = true;
     let mut expected_number_of_friends: u64 = 0;
 
-    let found_friendships: Vec<UserID> = reader.lines()
+    let found_friendships: Vec<User> = reader.lines()
         .filter_map(|line: IOResult<String>| -> Option<String> {
             // Ensure correct encoding.
             match line {
@@ -459,7 +463,7 @@ fn parse_friend_file<R: Read>(reader: BufReader<R>, file_path: &PathBuf, user: U
                 }
             }
         })
-        .filter_map(|line: String| -> Option<UserID> {
+        .filter_map(|line: String| -> Option<User> {
             // If this is the first line in the file, it may contain meta data.
             if is_first_line && line.contains(';') {
                 is_first_line = false;
@@ -474,14 +478,15 @@ fn parse_friend_file<R: Read>(reader: BufReader<R>, file_path: &PathBuf, user: U
             }
 
             // Otherwise, parse the line as a friend ID.
-            match line.parse::<UserID>() {
-                Ok(id) => Some(id),
+            let id: UserID = match line.parse() {
+                Ok(id) => id,
                 Err(message) => {
                     warn!("Could not parse friend ID '{friend}' of user {user}: {error}",
                           friend = line, user = user, error = message);
-                    None
+                    return None;
                 }
-            }
+            };
+            Some(User::new(id))
         })
         .collect();
 
@@ -503,25 +508,25 @@ fn parse_friend_file<R: Read>(reader: BufReader<R>, file_path: &PathBuf, user: U
 mod tests {
     use std::path::PathBuf;
     use find_folder::Search;
-    use UserID;
+    use twitter::User;
 
     #[test]
     fn create_dummy_friends() {
-        let dummy_friends: Vec<UserID> = super::create_dummy_friends(0);
+        let dummy_friends: Vec<User> = super::create_dummy_friends(0);
         assert_eq!(dummy_friends.len(), 0);
 
-        let dummy_friends: Vec<UserID> = super::create_dummy_friends(10);
+        let dummy_friends: Vec<User> = super::create_dummy_friends(10);
         assert_eq!(dummy_friends.len(), 10);
-        assert_eq!(dummy_friends[0], -1);
-        assert_eq!(dummy_friends[1], -2);
-        assert_eq!(dummy_friends[2], -3);
-        assert_eq!(dummy_friends[3], -4);
-        assert_eq!(dummy_friends[4], -5);
-        assert_eq!(dummy_friends[5], -6);
-        assert_eq!(dummy_friends[6], -7);
-        assert_eq!(dummy_friends[7], -8);
-        assert_eq!(dummy_friends[8], -9);
-        assert_eq!(dummy_friends[9], -10);
+        assert_eq!(dummy_friends[0], User::new(-1));
+        assert_eq!(dummy_friends[1], User::new(-2));
+        assert_eq!(dummy_friends[2], User::new(-3));
+        assert_eq!(dummy_friends[3], User::new(-4));
+        assert_eq!(dummy_friends[4], User::new(-5));
+        assert_eq!(dummy_friends[5], User::new(-6));
+        assert_eq!(dummy_friends[6], User::new(-7));
+        assert_eq!(dummy_friends[7], User::new(-8));
+        assert_eq!(dummy_friends[8], User::new(-9));
+        assert_eq!(dummy_friends[9], User::new(-10));
     }
 
     #[test]

@@ -9,6 +9,6 @@
 pub use self::run::run;
 use self::simplify_result::SimplifyResult;
 
-mod algorithms;
+pub mod algorithms;
 mod run;
 mod simplify_result;

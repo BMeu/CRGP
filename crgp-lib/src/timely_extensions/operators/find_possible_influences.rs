@@ -16,11 +16,11 @@ use timely::dataflow::Stream;
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::operators::binary::Binary;
 
-use UserID;
 use social_graph::InfluenceEdge;
 use social_graph::SocialGraph;
 use twitter::Retweet;
 use twitter::Tweet;
+use twitter::User;
 
 /// Find possible influence edges within social graphs.
 pub trait FindPossibleInfluences<G: Scope> {
@@ -29,30 +29,33 @@ pub trait FindPossibleInfluences<G: Scope> {
     /// For a social graph, determine all possible influences for a retweet within that specific
     /// retweet cascade. The `Stream` of retweets may contain multiple retweet cascades.
     fn find_possible_influences(&self, retweets: Stream<G, Retweet>,
-                                activated_users: Rc<RefCell<HashMap<u64, HashMap<UserID, u64>>>>)
-                                -> Stream<G, InfluenceEdge<UserID>>;
+                                activated_users: Rc<RefCell<HashMap<u64, HashMap<User, u64>>>>)
+                                -> Stream<G, InfluenceEdge<User>>;
 }
 
-impl<G: Scope> FindPossibleInfluences<G> for Stream<G, (UserID, Vec<UserID>)>
+impl<G: Scope> FindPossibleInfluences<G> for Stream<G, (User, Vec<User>)>
     where G::Timestamp: Hash {
     fn find_possible_influences(&self, retweets: Stream<G, Retweet>,
-                                activated_users: Rc<RefCell<HashMap<u64, HashMap<UserID, u64>>>>)
-                                -> Stream<G, InfluenceEdge<UserID>> {
+                                activated_users: Rc<RefCell<HashMap<u64, HashMap<User, u64>>>>)
+                                -> Stream<G, InfluenceEdge<User>> {
         // For each user, given by their ID, the set of their friends, given by their ID.
         let mut edges = SocialGraph::new();
 
         self.binary_stream(
             &retweets,
-            Exchange::new(|edge: &(UserID, Vec<UserID>)| edge.0 as u64),
+            Exchange::new(|edge: &(User, Vec<User>)| edge.0.id as u64),
             Exchange::new(|retweet: &Retweet| retweet.user.id as u64),
             "FindPossibleInfluences",
             move |friendships, retweets, output| {
                 // Input 1: Capture all friends for each user.
                 friendships.for_each(|_time, friendship_data| {
-                    for friendship in friendship_data.take().iter() {
-                        let friendship_set: &mut Vec<UserID> = edges.entry(friendship.0)
-                            .or_insert_with(|| Vec::with_capacity(friendship.1.len()));
-                        friendship_set.extend(friendship.1.iter());
+                    for friendship in friendship_data.drain(..) {
+                        let user: User = friendship.0;
+                        let friends: Vec<User> = friendship.1;
+
+                        let friendship_set: &mut Vec<User> = edges.entry(user)
+                            .or_insert_with(|| Vec::with_capacity(friends.len()));
+                        friendship_set.extend(friends);
                         friendship_set.shrink_to_fit();
                         friendship_set.sort()
                     };
@@ -70,19 +73,19 @@ impl<G: Scope> FindPossibleInfluences<G> for Stream<G, (UserID, Vec<UserID>)>
                         let _ = activated_users.borrow_mut()
                             .entry(original_tweet.id)
                             .or_insert_with(HashMap::new)
-                            .entry(retweet.user.id)
+                            .entry(retweet.user)
                             .or_insert(retweet.created_at);
 
                         // Get the user's friends.
-                        let friends = match edges.get(&retweet.user.id) {
+                        let friends = match edges.get(&retweet.user) {
                             Some(friends) => friends,
                             None => continue
                         };
 
                         // Pass on the possible influence edges.
                         for &friend in friends {
-                            let influence = InfluenceEdge::new(friend, retweet.user.id, retweet.created_at, retweet.id,
-                                                               original_tweet.id, original_tweet.user.id);
+                            let influence = InfluenceEdge::new(friend, retweet.user, retweet.created_at, retweet.id,
+                                                               original_tweet.id, original_tweet.user);
                             session.give(influence);
                         }
                     }

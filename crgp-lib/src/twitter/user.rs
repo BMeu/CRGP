@@ -6,6 +6,8 @@
 
 //! Representations of Twitter users.
 
+use std::fmt;
+
 use abomonation::Abomonation;
 
 use UserID;
@@ -18,10 +20,64 @@ use UserID;
 ///
 /// # See Also
 /// https://dev.twitter.com/overview/api/users
-#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
 pub struct User {
     /// Integer representation of the unique identifier for this user.
     pub id: UserID,
 }
 
+impl User {
+    /// Initialize a new user with the given ID.
+    pub fn new(id: UserID) -> User {
+        User {
+            id: id,
+        }
+    }
+}
+
+impl fmt::Display for User {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(formatter, "{id}", id = self.id)
+    }
+}
+
 unsafe_abomonate!(User : id);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new() {
+        let user = User::new(42);
+        assert_eq!(user.id, 42);
+    }
+
+    #[test]
+    fn fmt_display() {
+        let user = User::new(42);
+        let fmt = String::from("42");
+        assert_eq!(format!("{}", user), fmt);
+    }
+
+    #[test]
+    fn sort() {
+        let mut unsorted: Vec<User> = vec![
+            User::new(5),
+            User::new(3),
+            User::new(4),
+            User::new(2),
+            User::new(1),
+        ];
+        let sorted: Vec<User> = vec![
+            User::new(1),
+            User::new(2),
+            User::new(3),
+            User::new(4),
+            User::new(5),
+        ];
+
+        unsorted.sort();
+        assert_eq!(unsorted, sorted);
+    }
+}

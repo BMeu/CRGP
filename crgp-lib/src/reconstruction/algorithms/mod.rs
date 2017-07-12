@@ -14,14 +14,14 @@ use timely::progress::nested::product::Product;
 use timely::progress::timestamp::RootTimestamp;
 use timely_communication::allocator::Generic;
 
-use UserID;
 use twitter::Retweet;
+use twitter::User;
 
 pub mod gale;
 pub mod leaf;
 
 /// The timely dataflow handle for introducing friendships into the graph.
-pub type GraphHandle = InputHandle<u64, (UserID, Vec<UserID>)>;
+pub type GraphHandle = InputHandle<u64, (User, Vec<User>)>;
 
 /// The timely dataflow handle for getting progress information.
 pub type ProbeHandle = ProgressHandle<Product<RootTimestamp, u64>>;

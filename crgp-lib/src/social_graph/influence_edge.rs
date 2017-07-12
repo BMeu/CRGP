@@ -10,7 +10,7 @@ use std::fmt;
 
 use abomonation::Abomonation;
 
-use UserID;
+use twitter::User;
 
 /// A directed edge between nodes of type `T` representing influence in a Retweet cascade.
 ///
@@ -67,7 +67,7 @@ impl<T: Abomonation + fmt::Display> fmt::Display for InfluenceEdge<T> {
     }
 }
 
-unsafe_abomonate!(InfluenceEdge<UserID> : influencer, influencee, timestamp, cascade_id, original_user);
+unsafe_abomonate!(InfluenceEdge<User> : influencer, influencee, timestamp, cascade_id, original_user);
 
 #[cfg(test)]
 mod tests {

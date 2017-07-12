@@ -16,7 +16,6 @@ use timely::dataflow::operators::Probe;
 use timely::dataflow::operators::exchange::Exchange;
 
 use configuration::OutputTarget;
-use UserID;
 use reconstruction::algorithms::GraphHandle;
 use reconstruction::algorithms::ProbeHandle;
 use reconstruction::algorithms::RetweetHandle;
@@ -24,6 +23,7 @@ use reconstruction::algorithms::Scope;
 use social_graph::InfluenceEdge;
 use timely_extensions::operators::FindPossibleInfluences;
 use timely_extensions::operators::Write;
+use twitter::User;
 
 /// The `LEAF` algorithm: **L**ocal **E**dges, **A**ctivations, and **F**iltering
 ///
@@ -44,13 +44,13 @@ pub fn computation<'a>(scope: &mut Scope<'a>, output: OutputTarget) -> (GraphHan
     // For each cascade, given by its ID, a set of activated users, given by their ID, i.e.
     // those users who have retweeted within this cascade before, per worker. Since this map
     // is required within two closures, dynamic borrow checks are required.
-    let activations: Rc<RefCell<HashMap<u64, HashMap<UserID, u64>>>> = Rc::new(RefCell::new(HashMap::new()));
+    let activations: Rc<RefCell<HashMap<u64, HashMap<User, u64>>>> = Rc::new(RefCell::new(HashMap::new()));
 
     // The actual algorithm.
     let probe = graph_stream
         .find_possible_influences(retweet_stream, activations.clone())
-        .exchange(|influence: &InfluenceEdge<UserID>| influence.influencer as u64)
-        .filter(move |influence: &InfluenceEdge<UserID>| {
+        .exchange(|influence: &InfluenceEdge<User>| influence.influencer.id as u64)
+        .filter(move |influence: &InfluenceEdge<User>| {
             let is_influencer_activated: bool = match activations.borrow()
                 .get(&influence.cascade_id)
                 {

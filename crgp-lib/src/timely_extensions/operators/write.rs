@@ -18,9 +18,9 @@ use timely::dataflow::Scope;
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::operators::unary::Unary;
 
-use UserID;
 use configuration::OutputTarget;
 use social_graph::InfluenceEdge;
+use twitter::User;
 
 /// Write a stream to a file, passing on all seen messages.
 pub trait Write<G: Scope> {
@@ -29,21 +29,21 @@ pub trait Write<G: Scope> {
     ///
     /// On any IO error, an error log message will be generated using the
     /// [`log`](https://doc.rust-lang.org/log/log/index.html) crate.
-    fn write(&self, output_target: OutputTarget) -> Stream<G, InfluenceEdge<UserID>>;
+    fn write(&self, output_target: OutputTarget) -> Stream<G, InfluenceEdge<User>>;
 }
 
-impl<G: Scope> Write<G> for Stream<G, InfluenceEdge<UserID>>
+impl<G: Scope> Write<G> for Stream<G, InfluenceEdge<User>>
 where G::Timestamp: Hash {
     #[cfg_attr(feature = "cargo-clippy", allow(print_stdout))]
-    fn write(&self, output_target: OutputTarget) -> Stream<G, InfluenceEdge<UserID>> {
+    fn write(&self, output_target: OutputTarget) -> Stream<G, InfluenceEdge<User>> {
         // For each cascade, a separate file writer.
         let mut cascade_writers: HashMap<u64, BufWriter<File>> = HashMap::new();
 
         // For each timely time, a list of the influences seen at that time.
-        let mut influences_at_time: HashMap<G::Timestamp, Vec<InfluenceEdge<UserID>>> = HashMap::new();
+        let mut influences_at_time: HashMap<G::Timestamp, Vec<InfluenceEdge<User>>> = HashMap::new();
 
         self.unary_notify(
-            Exchange::new(|influence: &InfluenceEdge<UserID>| influence.cascade_id),
+            Exchange::new(|influence: &InfluenceEdge<User>| influence.cascade_id),
             "Write",
             Vec::new(),
             move |influences, _output, notificator| {
@@ -63,14 +63,14 @@ where G::Timestamp: Hash {
                     // Introduce this sub-scope to unborrow `influences_at_time` so old entries can be removed from it
                     // at the end.
                     {
-                        let influences_now: &Vec<InfluenceEdge<UserID>> = match influences_at_time.get(&time) {
+                        let influences_now: &Vec<InfluenceEdge<User>> = match influences_at_time.get(&time) {
                             Some(influences_now) => influences_now,
                             None => return
                         };
 
                         for influence in influences_now {
                             // Tell the compiler the influence edge is of type 'InfluenceEdge<u64>'.
-                            let influence: &InfluenceEdge<UserID> = influence;
+                            let influence: &InfluenceEdge<User> = influence;
 
                             match output_target {
                                 OutputTarget::Directory(ref directory) => {
