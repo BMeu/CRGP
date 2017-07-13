@@ -46,25 +46,10 @@ script:
   - cargo check --all
   - cargo test --all
   - cargo test --all --release
-after_success: |
-  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-  wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
-  tar xzf master.tar.gz &&
-  cd kcov-master &&
-  mkdir build &&
-  cd build &&
-  cmake .. &&
-  make &&
-  sudo make install &&
-  cd ../.. &&
-  rm -rf kcov-master &&
-  for file in target/debug/$PROJECT_NAME-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib,tests --exclude-region='#[cfg(test)]:#[cfg(testkcovstopmarker)]' --include-pattern=.rs --verify "target/cov/$(basename $file)" "$file"; done &&
-  for file in target/debug/${PROJECT_LIB_NAME}-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib,tests --exclude-region='#[cfg(test)]:#[cfg(testkcovstopmarker)]' --include-pattern=.rs --verify "target/cov/$(basename $file)" "$file"; done &&
-  for file in target/debug/${PROJECT_INTEGRATION_TEST}-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib,tests --exclude-region='#[cfg(test)]:#[cfg(testkcovstopmarker)]' --include-pattern=.rs --verify "target/cov/$(basename $file)" "$file"; done &&
-  bash <(curl -s https://codecov.io/bash) &&
-  echo "Uploaded code coverage";
-  fi
+after_success:
+  - ./scripts/kcov.sh
 matrix:
+  fast_finish: true
   allow_failures:
     - rust: nightly
     - rust: nightly-2017-05-03
