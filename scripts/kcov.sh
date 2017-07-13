@@ -38,7 +38,7 @@ then
 
     mkdir -p "target/cov/${PROJECT_NAME}" &&
     mkdir -p "results" &&
-    kcov ${exclude} --verify "target/cov/${PROJECT_NAME}" "target/debug/${PROJECT_NAME} -o results -vvvv -l results -w 2 data/social_graph data/retweets.json" &&
+    kcov ${exclude} --verify "target/cov/${PROJECT_NAME}" "target/debug/${PROJECT_NAME}" "-o results -vvvv -l results -w 2 data/social_graph data/retweets.json" &&
 
     # Upload the coverage report to Codecov.
     bash <(curl -s https://codecov.io/bash) &&
