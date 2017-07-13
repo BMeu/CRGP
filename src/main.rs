@@ -75,7 +75,7 @@ fn main() {
         .arg(Arg::with_name("algorithm")
             .long("algorithm")
             .takes_value(true)
-            .possible_values(&["GALE", "LEAF"])
+            .possible_values(&["GALE", "LEAF", "THROUGHPUT"])
             .default_value("GALE")
             .help("Use the specified algorithm."))
         .arg(Arg::with_name("batch-size")
@@ -193,6 +193,8 @@ fn main() {
     let given_algorithm: &str = arguments.value_of("algorithm").unwrap();
     let algorithm: configuration::Algorithm = if given_algorithm == "LEAF" {
         configuration::Algorithm::LEAF
+    } else if given_algorithm == "THROUGHPUT" {
+        configuration::Algorithm::THROUGHPUT
     } else {
         configuration::Algorithm::GALE
     };

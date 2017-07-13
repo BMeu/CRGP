@@ -22,10 +22,13 @@ use configuration::OutputTarget;
 use reconstruction::SimplifyResult;
 use reconstruction::algorithms::gale;
 use reconstruction::algorithms::leaf;
+use reconstruction::algorithms::throughput;
 use social_graph::source::tar;
 use timely_extensions::Sync;
 use twitter;
 use twitter::Retweet;
+use twitter::Tweet;
+use twitter::User;
 
 /// Execute the reconstruction.
 pub fn run(mut configuration: Configuration) -> Result<Statistics> {
@@ -51,7 +54,8 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
         let (mut graph_input, mut retweet_input, probe) = computation.dataflow::<u64, _, _>(move |scope| {
             match algorithm {
                 Algorithm::GALE => gale::computation(scope, output_target),
-                Algorithm::LEAF => leaf::computation(scope, output_target)
+                Algorithm::LEAF => leaf::computation(scope, output_target),
+                Algorithm::THROUGHPUT => throughput::computation(scope, output_target),
             }
         });
         let time_to_setup: u64 = stopwatch.lap();
@@ -63,7 +67,7 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
          ****************/
 
         // Load the social graph into the computation (only on the first worker).
-        let counts: (u64, u64, u64, u64) = if index == 0 {
+        let counts: (u64, u64, u64, u64) = if index == 0 && configuration.algorithm != Algorithm::THROUGHPUT {
             info!("Loading social graph...");
             let input: InputSource = configuration.social_graph.clone();
             let selected_users: Option<PathBuf> = configuration.selected_users.clone();
@@ -104,7 +108,26 @@ pub fn run(mut configuration: Configuration) -> Result<Statistics> {
 
         // Load the retweets (on the first worker).
         let retweets: Vec<Retweet> = if index == 0 {
-            twitter::get::from_source(configuration.retweets.clone())?
+            if configuration.algorithm != Algorithm::THROUGHPUT {
+                twitter::get::from_source(configuration.retweets.clone())?
+            } else {
+                let retweet = Retweet {
+                    created_at: 1,
+                    id: 1,
+                    retweeted_status: Tweet {
+                        created_at: 0,
+                        id: 0,
+                        user: User::new(0),
+                    },
+                    user: User::new(1),
+                };
+
+                let mut retweets: Vec<Retweet> = Vec::new();
+                for _ in 0..100_000_000 {
+                    retweets.push(retweet.clone());
+                }
+                retweets
+            }
         } else {
             Vec::new()
         };

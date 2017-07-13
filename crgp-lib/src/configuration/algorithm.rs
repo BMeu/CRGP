@@ -21,6 +21,9 @@ pub enum Algorithm {
     ///
     /// `LEAF` = Local Edges, Activations, and Filtering
     LEAF,
+
+    /// Not a reconstruction algorithm, but a computation to measure the throughput of messages.
+    THROUGHPUT,
 }
 
 impl fmt::Display for Algorithm {
@@ -28,6 +31,7 @@ impl fmt::Display for Algorithm {
         let algorithm_name: &str = match *self {
             Algorithm::GALE => "GALE",
             Algorithm::LEAF => "LEAF",
+            Algorithm::THROUGHPUT => "Throughput",
         };
         write!(formatter, "{algorithm}", algorithm = algorithm_name)
     }
@@ -47,5 +51,11 @@ mod tests {
     fn fmt_display_leaf() {
         let algorithm = Algorithm::LEAF;
         assert_eq!(format!("{}", algorithm), String::from("LEAF"));
+    }
+
+    #[test]
+    fn fmt_display_throughput() {
+        let algorithm = Algorithm::THROUGHPUT;
+        assert_eq!(format!("{}", algorithm), String::from("Throughput"));
     }
 }

@@ -19,6 +19,7 @@ use twitter::User;
 
 pub mod gale;
 pub mod leaf;
+pub mod throughput;
 
 /// The timely dataflow handle for introducing friendships into the graph.
 pub type GraphHandle = InputHandle<u64, (User, Vec<User>)>;
