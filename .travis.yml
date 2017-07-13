@@ -44,6 +44,7 @@ script:
     fi'
   - cargo doc --no-deps
   - cargo check --all
+  - cargo build --all
   - cargo test --all
   - cargo test --all --release
 after_success:
