@@ -72,10 +72,10 @@ fn algorithm_execution_gale() {
         }
         assert_eq!(influences.len(), 7);
     }
-        else {
-            let result: Result<Statistics> = crgp_lib::run(configuration);
-            assert!(result.is_ok());
-        }
+    else {
+        let result: Result<Statistics> = crgp_lib::run(configuration);
+        assert!(result.is_ok());
+    }
 }
 
 #[test]
@@ -167,10 +167,10 @@ fn algorithm_execution_gale_with_dummy_users() {
         }
         assert_eq!(influences.len(), 7);
     }
-        else {
-            let result: Result<Statistics> = crgp_lib::run(configuration);
-            assert!(result.is_ok());
-        }
+    else {
+        let result: Result<Statistics> = crgp_lib::run(configuration);
+        assert!(result.is_ok());
+    }
 }
 
 #[test]
@@ -216,10 +216,10 @@ fn algorithm_execution_gale_with_selected_users_and_dummy_friends() {
         }
         assert_eq!(influences.len(), 7);
     }
-        else {
-            let result: Result<Statistics> = crgp_lib::run(configuration);
-            assert!(result.is_ok());
-        }
+    else {
+        let result: Result<Statistics> = crgp_lib::run(configuration);
+        assert!(result.is_ok());
+    }
 }
 
 #[test]
@@ -263,10 +263,10 @@ fn algorithm_execution_leaf() {
         }
         assert_eq!(influences.len(), 7);
     }
-        else {
-            let result: Result<Statistics> = crgp_lib::run(configuration);
-            assert!(result.is_ok());
-        }
+    else {
+        let result: Result<Statistics> = crgp_lib::run(configuration);
+        assert!(result.is_ok());
+    }
 }
 
 #[test]
@@ -312,10 +312,10 @@ fn algorithm_execution_leaf_with_selected_users() {
         }
         assert_eq!(influences.len(), 7);
     }
-        else {
-            let result: Result<Statistics> = crgp_lib::run(configuration);
-            assert!(result.is_ok());
-        }
+    else {
+        let result: Result<Statistics> = crgp_lib::run(configuration);
+        assert!(result.is_ok());
+    }
 }
 
 #[test]
@@ -360,10 +360,10 @@ fn algorithm_execution_leaf_with_dummy_users() {
         }
         assert_eq!(influences.len(), 7);
     }
-        else {
-            let result: Result<Statistics> = crgp_lib::run(configuration);
-            assert!(result.is_ok());
-        }
+    else {
+        let result: Result<Statistics> = crgp_lib::run(configuration);
+        assert!(result.is_ok());
+    }
 }
 
 #[test]
@@ -410,8 +410,8 @@ fn algorithm_execution_leaf_with_selected_users_and_dummy_friends() {
         }
         assert_eq!(influences.len(), 7);
     }
-        else {
-            let result: Result<Statistics> = crgp_lib::run(configuration);
-            assert!(result.is_ok());
-        }
+    else {
+        let result: Result<Statistics> = crgp_lib::run(configuration);
+        assert!(result.is_ok());
+    }
 }
