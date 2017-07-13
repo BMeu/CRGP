@@ -17,30 +17,29 @@ then
     rm -rf kcov-master &&
 
     # Collect the coverage statistics.
-    exclude="--exclude-pattern=/.cargo,/usr/lib,tests --exclude-region='#[cfg(test)]:#[cfg(testkcovstopmarker)]'"
     for file in target/debug/${PROJECT_NAME}-*[^\.d]
     do
         mkdir -p "target/cov/$(basename ${file})"
-        kcov ${exclude} --verify "target/cov/$(basename ${file})" "${file}"
+        kcov --exclude-pattern=/.cargo,/usr/lib,tests --exclude-region='#[cfg(test)]:#[cfg(testkcovstopmarker)]' --verify "target/cov/$(basename ${file})" "${file}"
     done &&
 
     for file in target/debug/${PROJECT_LIB_NAME}-*[^\.d]
     do
         mkdir -p "target/cov/$(basename ${file})"
-        kcov ${exclude} --verify "target/cov/$(basename ${file})" "${file}"
+        kcov --exclude-pattern=/.cargo,/usr/lib,tests --exclude-region='#[cfg(test)]:#[cfg(testkcovstopmarker)]' --verify "target/cov/$(basename ${file})" "${file}"
     done &&
 
     for file in target/debug/${PROJECT_INTEGRATION_TEST}-*[^\.d]
     do
         mkdir -p "target/cov/$(basename ${file})"
-        kcov ${exclude} --verify "target/cov/$(basename ${file})" "${file}"
+        kcov --exclude-pattern=/.cargo,/usr/lib,tests --exclude-region='#[cfg(test)]:#[cfg(testkcovstopmarker)]' --verify "target/cov/$(basename ${file})" "${file}"
     done &&
 
     mkdir -p "target/cov/${PROJECT_NAME}" &&
     mkdir -p "results" &&
-    kcov ${exclude} --verify "target/cov/${PROJECT_NAME}" "target/debug/${PROJECT_NAME}" -o results -vvvv -l results -w 2 data/social_graph data/retweets.json &&
+    kcov --exclude-pattern=/.cargo,/usr/lib,tests --exclude-region='#[cfg(test)]:#[cfg(testkcovstopmarker)]' --verify "target/cov/${PROJECT_NAME}" "target/debug/${PROJECT_NAME}" -o results -vvvv -l results -w 2 data/social_graph data/retweets.json &&
 
     # Upload the coverage report to Codecov.
     bash <(curl -s https://codecov.io/bash) &&
-    echo "Uploaded code coverage";
+    echo "Uploaded code coverage"
 fi
