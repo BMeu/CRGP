@@ -7,24 +7,15 @@
 //! Measure the iteration performance of multiple structures with containment check on hash sets.
 
 #![feature(test)]
+#![allow(unused_must_use)]
 
 extern crate rand;
 extern crate test;
-
-use std::collections::HashSet;
 
 use rand::Rng;
 use rand::SeedableRng;
 use rand::StdRng;
 
-/// Get a hash set with values in `[start, start + size)`.
-fn get_set(start: i64, size: i64) -> HashSet<i64> {
-    let mut set: HashSet<i64> = HashSet::new();
-    for item in start..start + size {
-        set.insert(item);
-    }
-    set
-}
 
 /// Get an unsorted list of the given `size` of integers. Values are in the range `[0, size)`.
 fn get_unsorted_list_of_size(size: i64) -> Vec<i64> {
@@ -63,7 +54,6 @@ fn get_succeeding_elements() -> Vec<i64> {
 mod hashset {
     use std::collections::HashSet;
     use std::iter::FromIterator;
-    use super::get_set;
     use super::get_unsorted_list_of_size;
     use super::get_100_failing_elements;
     use super::get_succeeding_elements;
@@ -79,7 +69,6 @@ mod hashset {
         use std::collections::HashSet;
         use test::black_box;
         use test::Bencher;
-        use super::get_set;
         use super::get_hashset_of_size;
         use super::get_100_failing_elements;
 
@@ -156,7 +145,7 @@ mod hashset {
         }
 
         #[bench]
-        fn f_10000(bencher: &mut Bencher) {
+        fn g_10000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_100_failing_elements();
             let set: HashSet<i64> = get_hashset_of_size(10_000);
 
@@ -168,7 +157,7 @@ mod hashset {
         }
 
         #[bench]
-        fn g_50000(bencher: &mut Bencher) {
+        fn h_50000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_100_failing_elements();
             let set: HashSet<i64> = get_hashset_of_size(50_000);
 
@@ -180,7 +169,7 @@ mod hashset {
         }
 
         #[bench]
-        fn h_100000(bencher: &mut Bencher) {
+        fn i_100000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_100_failing_elements();
             let set: HashSet<i64> = get_hashset_of_size(100_000);
 
@@ -197,7 +186,6 @@ mod hashset {
         use std::collections::HashSet;
         use test::black_box;
         use test::Bencher;
-        use super::get_set;
         use super::get_hashset_of_size;
         use super::get_succeeding_elements;
 
@@ -274,7 +262,7 @@ mod hashset {
         }
 
         #[bench]
-        fn f_10000(bencher: &mut Bencher) {
+        fn g_10000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_succeeding_elements();
             let set: HashSet<i64> = get_hashset_of_size(10_000);
 
@@ -286,7 +274,7 @@ mod hashset {
         }
 
         #[bench]
-        fn g_50000(bencher: &mut Bencher) {
+        fn h_50000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_succeeding_elements();
             let set: HashSet<i64> = get_hashset_of_size(50_000);
 
@@ -298,7 +286,7 @@ mod hashset {
         }
 
         #[bench]
-        fn h_100000(bencher: &mut Bencher) {
+        fn i_100000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_succeeding_elements();
             let set: HashSet<i64> = get_hashset_of_size(100_000);
 
@@ -313,7 +301,6 @@ mod hashset {
 
 /// Measure the performance of sorted vectors.
 mod vector_sorted {
-    use super::get_set;
     use super::get_unsorted_list_of_size;
     use super::get_100_failing_elements;
     use super::get_succeeding_elements;
@@ -327,10 +314,8 @@ mod vector_sorted {
 
     /// Do the containment check on a set with 100 entries not present in the list.
     mod fail {
-        use std::collections::HashSet;
         use test::black_box;
         use test::Bencher;
-        use super::get_set;
         use super::get_sorted_list_of_size;
         use super::get_100_failing_elements;
 
@@ -407,7 +392,7 @@ mod vector_sorted {
         }
 
         #[bench]
-        fn f_10000(bencher: &mut Bencher) {
+        fn g_10000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_100_failing_elements();
             let set: Vec<i64> = get_sorted_list_of_size(10_000);
 
@@ -419,7 +404,7 @@ mod vector_sorted {
         }
 
         #[bench]
-        fn g_50000(bencher: &mut Bencher) {
+        fn h_50000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_100_failing_elements();
             let set: Vec<i64> = get_sorted_list_of_size(50_000);
 
@@ -431,7 +416,7 @@ mod vector_sorted {
         }
 
         #[bench]
-        fn h_100000(bencher: &mut Bencher) {
+        fn i_100000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_100_failing_elements();
             let set: Vec<i64> = get_sorted_list_of_size(100_000);
 
@@ -445,10 +430,8 @@ mod vector_sorted {
 
     /// Do the containment check on a set of the same size as the list, with matching elements for all list elements.
     mod succeed {
-        use std::collections::HashSet;
         use test::black_box;
         use test::Bencher;
-        use super::get_set;
         use super::get_sorted_list_of_size;
         use super::get_succeeding_elements;
 
@@ -525,7 +508,7 @@ mod vector_sorted {
         }
 
         #[bench]
-        fn f_10000(bencher: &mut Bencher) {
+        fn g_10000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_succeeding_elements();
             let set: Vec<i64> = get_sorted_list_of_size(10_000);
 
@@ -537,7 +520,7 @@ mod vector_sorted {
         }
 
         #[bench]
-        fn g_50000(bencher: &mut Bencher) {
+        fn h_50000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_succeeding_elements();
             let set: Vec<i64> = get_sorted_list_of_size(50_000);
 
@@ -549,7 +532,7 @@ mod vector_sorted {
         }
 
         #[bench]
-        fn h_100000(bencher: &mut Bencher) {
+        fn i_100000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_succeeding_elements();
             let set: Vec<i64> = get_sorted_list_of_size(100_000);
 
@@ -564,7 +547,6 @@ mod vector_sorted {
 
 /// Measure the performance of unsorted vectors.
 mod vector_unsorted {
-    use super::get_set;
     use super::get_unsorted_list_of_size;
     use super::get_100_failing_elements;
     use super::get_succeeding_elements;
@@ -572,10 +554,8 @@ mod vector_unsorted {
 
     /// Do the containment check on a set with 100 entries not present in the list.
     mod fail {
-        use std::collections::HashSet;
         use test::black_box;
         use test::Bencher;
-        use super::get_set;
         use super::get_unsorted_list_of_size;
         use super::get_100_failing_elements;
 
@@ -652,7 +632,7 @@ mod vector_unsorted {
         }
 
         #[bench]
-        fn f_10000(bencher: &mut Bencher) {
+        fn g_10000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_100_failing_elements();
             let set: Vec<i64> = get_unsorted_list_of_size(10_000);
 
@@ -664,7 +644,7 @@ mod vector_unsorted {
         }
 
         #[bench]
-        fn g_50000(bencher: &mut Bencher) {
+        fn h_50000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_100_failing_elements();
             let set: Vec<i64> = get_unsorted_list_of_size(50_000);
 
@@ -676,7 +656,7 @@ mod vector_unsorted {
         }
 
         #[bench]
-        fn h_100000(bencher: &mut Bencher) {
+        fn i_100000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_100_failing_elements();
             let set: Vec<i64> = get_unsorted_list_of_size(100_000);
 
@@ -690,10 +670,8 @@ mod vector_unsorted {
 
     /// Do the containment check on a set of the same size as the list, with matching elements for all list elements.
     mod succeed {
-        use std::collections::HashSet;
         use test::black_box;
         use test::Bencher;
-        use super::get_set;
         use super::get_unsorted_list_of_size;
         use super::get_succeeding_elements;
 
@@ -770,7 +748,7 @@ mod vector_unsorted {
         }
 
         #[bench]
-        fn f_10000(bencher: &mut Bencher) {
+        fn g_10000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_succeeding_elements();
             let set: Vec<i64> = get_unsorted_list_of_size(10_000);
 
@@ -782,7 +760,7 @@ mod vector_unsorted {
         }
 
         #[bench]
-        fn g_50000(bencher: &mut Bencher) {
+        fn h_50000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_succeeding_elements();
             let set: Vec<i64> = get_unsorted_list_of_size(50_000);
 
@@ -794,7 +772,7 @@ mod vector_unsorted {
         }
 
         #[bench]
-        fn h_100000(bencher: &mut Bencher) {
+        fn i_100000(bencher: &mut Bencher) {
             let list: Vec<i64> = get_succeeding_elements();
             let set: Vec<i64> = get_unsorted_list_of_size(100_000);
 
