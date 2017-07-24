@@ -36,14 +36,13 @@ impl<G: Scope> Write<G> for Stream<G, InfluenceEdge<User>>
 where G::Timestamp: Hash {
     #[cfg_attr(feature = "cargo-clippy", allow(print_stdout))]
     fn write(&self, output_target: OutputTarget) -> Stream<G, InfluenceEdge<User>> {
-        // For each cascade, a separate file writer.
-        let mut cascade_writers: HashMap<u64, BufWriter<File>> = HashMap::new();
+        let mut file_writer: Option<BufWriter<File>> = None;
 
         // For each timely time, a list of the influences seen at that time.
         let mut influences_at_time: HashMap<G::Timestamp, Vec<InfluenceEdge<User>>> = HashMap::new();
 
         self.unary_notify(
-            Exchange::new(|influence: &InfluenceEdge<User>| influence.cascade_id),
+            Exchange::new(|_: &InfluenceEdge<User>| 0),
             "Write",
             Vec::new(),
             move |influences, _output, notificator| {
@@ -74,15 +73,9 @@ where G::Timestamp: Hash {
 
                             match output_target {
                                 OutputTarget::Directory(ref directory) => {
-                                    let cascade: u64 = influence.cascade_id;
-
-                                    // Create a buffered writer for this edge's cascade if there is none yet.
-                                    let has_writer: bool = cascade_writers.contains_key(&cascade);
-                                    if !has_writer {
-                                        let filename: String = format!("cascs-{id}.csv", id = cascade);
+                                    if file_writer.is_none() {
+                                        let filename: String = String::from("cascs.csv");
                                         let path: PathBuf = directory.join(filename);
-
-                                        // Create the file (overwrite existing files).
                                         let file: File = match File::create(&path) {
                                             Ok(file) => file,
                                             Err(message) => {
@@ -91,14 +84,14 @@ where G::Timestamp: Hash {
                                                 continue;
                                             }
                                         };
+
                                         trace!("Created result file {file}", file = path.display());
-                                        let _ = cascade_writers.insert(cascade, BufWriter::new(file));
+                                        file_writer = Some(BufWriter::new(file));
                                     }
 
                                     // Get the writer. Failing is impossible since the writer has just been created.
-                                    let writer: Option<&mut BufWriter<File>> = cascade_writers.get_mut(&cascade);
-                                    let writer: &mut BufWriter<File> = match writer {
-                                        Some(writer) => writer,
+                                    let writer: &mut BufWriter<File> = match file_writer {
+                                        Some(ref mut writer) => writer,
                                         None => continue,
                                     };
 
