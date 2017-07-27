@@ -1,9 +1,9 @@
 [package]
 name = "crgp"
-version = "0.4.0"
+version = "1.0.0"
 authors = ["Bastian Meyer <bastian@bastianmeyer.eu>"]
 description = "A graph-parallel approach to reconstructing the influences within Retweet cascades."
-repository = "https://bitbucket.org/BMeu/crgp"
+repository = "https://github.com/BMeu/CRGP"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
 keywords = ["twitter", "cascade", "reconstruct", "graph", "influence"]
