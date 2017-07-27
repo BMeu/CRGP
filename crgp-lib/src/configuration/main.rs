@@ -41,7 +41,7 @@ use configuration::OutputTarget;
 ///     .workers(2);
 ///
 /// assert_eq!(configuration.algorithm, Algorithm::GALE);
-/// assert_eq!(configuration.batch_size, 500);
+/// assert_eq!(configuration.batch_size, 50000);
 /// assert_eq!(configuration.hosts, None);
 /// assert_eq!(configuration.number_of_processes, 1);
 /// assert_eq!(configuration.number_of_workers, 2);
@@ -111,8 +111,8 @@ impl Configuration {
     ///
     /// The following default values will be set:
     ///
-    ///  * `algorithm`: `Algorithm::GlobalActivations`
-    ///  * `batch_size`: `500`
+    ///  * `algorithm`: `Algorithm::GALE`
+    ///  * `batch_size`: `50000`
     ///  * `hosts`: `None`
     ///  * `number_of_processes`: `1`
     ///  * `number_of_workers`: `1`
@@ -124,7 +124,7 @@ impl Configuration {
     pub fn default(retweets: InputSource, social_graph: InputSource) -> Configuration {
         Configuration {
             algorithm: Algorithm::GALE,
-            batch_size: 500,
+            batch_size: 50000,
             hosts: None,
             number_of_processes: 1,
             number_of_workers: 1,
@@ -301,7 +301,7 @@ mod tests {
         let configuration = Configuration::default(retweets, social_graph);
 
         assert_eq!(configuration.algorithm, Algorithm::GALE);
-        assert_eq!(configuration.batch_size, 500);
+        assert_eq!(configuration.batch_size, 50000);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 1);
@@ -324,7 +324,7 @@ mod tests {
             .algorithm(Algorithm::LEAF);
 
         assert_eq!(configuration.algorithm, Algorithm::LEAF);
-        assert_eq!(configuration.batch_size, 500);
+        assert_eq!(configuration.batch_size, 50000);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 1);
@@ -375,7 +375,7 @@ mod tests {
             .hosts(Some(hosts));
 
         assert_eq!(configuration.algorithm, Algorithm::GALE);
-        assert_eq!(configuration.batch_size, 500);
+        assert_eq!(configuration.batch_size, 50000);
         assert_eq!(configuration.hosts, Some(vec![
             String::from("host1:2101"),
             String::from("host1:2102"),
@@ -403,7 +403,7 @@ mod tests {
             .output_target(OutputTarget::Directory(output));
 
         assert_eq!(configuration.algorithm, Algorithm::GALE);
-        assert_eq!(configuration.batch_size, 500);
+        assert_eq!(configuration.batch_size, 50000);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 1);
@@ -427,7 +427,7 @@ mod tests {
             .pad_with_dummy_users(true);
 
         assert_eq!(configuration.algorithm, Algorithm::GALE);
-        assert_eq!(configuration.batch_size, 500);
+        assert_eq!(configuration.batch_size, 50000);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 1);
@@ -450,7 +450,7 @@ mod tests {
             .process_id(42);
 
         assert_eq!(configuration.algorithm, Algorithm::GALE);
-        assert_eq!(configuration.batch_size, 500);
+        assert_eq!(configuration.batch_size, 50000);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 1);
@@ -473,7 +473,7 @@ mod tests {
             .processes(42);
 
         assert_eq!(configuration.algorithm, Algorithm::GALE);
-        assert_eq!(configuration.batch_size, 500);
+        assert_eq!(configuration.batch_size, 50000);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 42);
         assert_eq!(configuration.number_of_workers, 1);
@@ -496,7 +496,7 @@ mod tests {
             .report_connection_progress(true);
 
         assert_eq!(configuration.algorithm, Algorithm::GALE);
-        assert_eq!(configuration.batch_size, 500);
+        assert_eq!(configuration.batch_size, 50000);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 1);
@@ -520,7 +520,7 @@ mod tests {
             .selected_users(Some(selected_users));
 
         assert_eq!(configuration.algorithm, Algorithm::GALE);
-        assert_eq!(configuration.batch_size, 500);
+        assert_eq!(configuration.batch_size, 50000);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 1);
@@ -543,7 +543,7 @@ mod tests {
             .workers(42);
 
         assert_eq!(configuration.algorithm, Algorithm::GALE);
-        assert_eq!(configuration.batch_size, 500);
+        assert_eq!(configuration.batch_size, 50000);
         assert_eq!(configuration.hosts, None);
         assert_eq!(configuration.number_of_processes, 1);
         assert_eq!(configuration.number_of_workers, 42);
@@ -683,7 +683,7 @@ mod tests {
 
         let configuration = Configuration::default(retweets, social_graph);
 
-        let fmt = "(Algorithm: GALE, Batch Size: 500, Hosts: [], Number of Processes: 1, \
+        let fmt = "(Algorithm: GALE, Batch Size: 50000, Hosts: [], Number of Processes: 1, \
                    Number of Workers: 1, Output Target: STDOUT, Insert Dummy Users: false, \
                    Process ID: 0, Report Connection Progress: false, Retweet Data Set: path/to/retweets.json, \
                    Social Graph: path/to/social/graph)";
@@ -691,7 +691,7 @@ mod tests {
 
         let configuration = configuration.hosts(Some(vec![String::from("host1:port1"), String::from("host2:port2")]));
 
-        let fmt = "(Algorithm: GALE, Batch Size: 500, Hosts: [host1:port1, host2:port2], Number of Processes: 1, \
+        let fmt = "(Algorithm: GALE, Batch Size: 50000, Hosts: [host1:port1, host2:port2], Number of Processes: 1, \
                    Number of Workers: 1, Output Target: STDOUT, Insert Dummy Users: false, \
                    Process ID: 0, Report Connection Progress: false, Retweet Data Set: path/to/retweets.json, \
                    Social Graph: path/to/social/graph)";

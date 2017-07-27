@@ -376,7 +376,7 @@ mod tests {
         let fmt = "(Number of Friendships: 0, Number of Retweets: 0, Time to Set Up: 0ns, \
                    Time to Process Social Graph: 0ns, Time to Load Retweets: 0ns, Time to Process Retweets: 0ns, \
                    Total Time: 0ns, Retweet Processing Rate: 0RT/s, Configuration: \
-                    (Algorithm: GALE, Batch Size: 500, Hosts: [], Number of Processes: 1, \
+                    (Algorithm: GALE, Batch Size: 50000, Hosts: [], Number of Processes: 1, \
                     Number of Workers: 1, Output Target: STDOUT, Insert Dummy Users: false, \
                     Process ID: 0, Report Connection Progress: false, Retweet Data Set: path/to/retweets.json, \
                     Social Graph: path/to/social/graph)\

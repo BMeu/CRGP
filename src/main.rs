@@ -73,6 +73,7 @@ fn main() {
                             access = aws_s3::ACCESS_KEY_VAR_NAME, secret = aws_s3::SECRET_VAR_NAME,
                             token = aws_s3::TOKEN_VAR_NAME).as_str())
         .arg(Arg::with_name("algorithm")
+            .short("a")
             .long("algorithm")
             .takes_value(true)
             .possible_values(&["GALE", "LEAF"])
@@ -84,7 +85,7 @@ fn main() {
             .value_name("SIZE")
             .help("Size of retweet batches")
             .takes_value(true)
-            .default_value("500")
+            .default_value("50000")
             .validator(validation::positive_usize))
         .arg(Arg::with_name("hostfile")
             .short("f")
