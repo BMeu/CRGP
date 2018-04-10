@@ -19,7 +19,7 @@ members = [
 panic = "abort"
 
 [dependencies]
-clap = "2.25"
+clap = "2.31"
 crgp_lib = { path = "crgp-lib" }
 flexi_logger = "0.5"
 time = "0.1"
