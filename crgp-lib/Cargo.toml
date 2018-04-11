@@ -13,7 +13,7 @@ categories = ["algorithms", "science"]
 abomonation = "0.4"
 fine_grained = "0.1"
 lazy_static = "1.0"
-log = "0.3"
+log = "0.4"
 regex = "0.2"
 rust-s3 = { git = "https://github.com/BMeu/rust-s3", branch = "large-sizes-and-missing-fields" }
 serde = "1.0"
