@@ -26,7 +26,7 @@ timely_communication = "0.1"
 [dev-dependencies]
 find_folder = "0.3"
 fnv = "1.0"
-quickcheck = "0.6"
+quickcheck = "0.8"
 rand = "0.4"
 
 [target.'cfg(unix)'.dev-dependencies]
