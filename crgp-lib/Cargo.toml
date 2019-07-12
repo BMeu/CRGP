@@ -10,7 +10,7 @@ keywords = ["twitter", "cascade", "reconstruct", "graph", "influence"]
 categories = ["algorithms", "science"]
 
 [dependencies]
-abomonation = "0.4"
+abomonation = "0.7"
 fine_grained = "0.1"
 lazy_static = "1.0"
 log = "0.4"
